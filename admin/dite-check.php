@@ -38,6 +38,29 @@ DITE_WEBHOOK_SECRET  = <?= htmlspecialchars(mask(defined('DITE_WEBHOOK_SECRET') 
 
 DITE_PLANS           = <?= dump($plans) ?></pre>
 
+<h2>0) Schema da API (openapi) — endpoints de PLANOS</h2>
+<p>Pra eu programar o envio automático dos pacotes. Mostra os paths com "plan" e os schemas de criação.</p>
+<pre><?php
+  $oa = dite_api('GET', '/api/v1/openapi.json');
+  echo '_status = ' . ($oa['_status'] ?? '?') . "\n\n";
+  $paths = $oa['paths'] ?? [];
+  echo "== PATHS com 'plan' ==\n";
+  foreach ($paths as $p => $methods) {
+    if (stripos($p, 'plan') !== false) {
+      echo "  $p  ->  " . strtoupper(implode(', ', array_keys((array) $methods))) . "\n";
+    }
+  }
+  echo "\n== nó completo de /api/v1/plans ==\n";
+  foreach ($paths as $p => $node) {
+    if (preg_match('#/plans/?$#', $p)) { echo dump([$p => $node]) . "\n"; }
+  }
+  echo "\n== schemas (components) com 'plan' no nome ==\n";
+  $schemas = $oa['components']['schemas'] ?? ($oa['definitions'] ?? []);
+  foreach ($schemas as $name => $def) {
+    if (stripos($name, 'plan') !== false) { echo "--- $name ---\n" . dump($def) . "\n\n"; }
+  }
+?></pre>
+
 <h2>2) GET /api/v1/plans — planos REAIS no gateway</h2>
 <p>Compare os <span class="k">id</span> daqui com o DITE_PLANS acima. Se forem diferentes, é por isso que o checkout falha.</p>
 <pre><?php
