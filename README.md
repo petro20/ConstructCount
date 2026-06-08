@@ -1,7 +1,12 @@
 # Portal ConstructCount (M2PB)
 
-Portal de licenças com **contas de cliente**, **Stripe** (assinatura recorrente, ativa/renova sozinho),
-**PT/EN/ES**. PHP + MySQL, sem Composer (Stripe via REST/cURL). Deploy no `public_html` do **domínio novo**.
+Portal de licenças com **contas de cliente**, **Dite Gateway** (pay.diteads.com — assinatura recorrente,
+ativa/renova por webhook), **PT/EN/ES**. PHP + MySQL, sem Composer (REST/cURL). Deploy no `public_html`.
+
+**Pagamento (Dite):** `lib/dite.php` cria a assinatura (`POST /api/v1/subscriptions`, header `X-Api-Key`) e
+redireciona pro `checkout_url`; `webhooks/dite.php` recebe os eventos (assinados por HMAC em `X-Dite-Signature`)
+e libera/estende/revoga a licença pelo `external_reference` (`user_<id>`). Config: `DITE_BASE_URL`,
+`DITE_API_KEY`, `DITE_WEBHOOK_SECRET`, `DITE_PLANS`. No painel Apps do Dite: `webhook_url = https://constructcount.com/webhooks/dite`.
 
 ## Estrutura
 ```

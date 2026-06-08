@@ -18,15 +18,23 @@ define('APP_SECRET', 'troque-string-longa-aleatoria-para-sessao-e-csrf');   // s
 define('LIC_SECRET', 'troque-string-longa-aleatoria-para-tokens-de-licenca'); // HMAC dos tokens do app
 define('LIC_GRACE_DAYS', 7);                                                  // carência offline do app
 
-// ---- Stripe (https://dashboard.stripe.com/apikeys) ----
-define('STRIPE_SECRET_KEY',   'sk_live_xxx');     // chave secreta
-define('STRIPE_WEBHOOK_SECRET','whsec_xxx');      // segredo do endpoint de webhook
-// Preços (Products → Prices) por plano. Crie no Stripe e cole os price_id:
-define('STRIPE_PRICES', [
-  'mensal' => 'price_xxx_mensal',
-  'anual'  => 'price_xxx_anual',
+// ---- Dite Gateway (pay.diteads.com) — pagamento/assinatura ----
+// Gere a API key e o webhook secret no painel "Apps" do Dite e configure lá o
+// webhook_url = https://constructcount.com/webhooks/dite
+define('DITE_BASE_URL', 'https://pay.diteads.com');
+define('DITE_API_KEY', 'dg_live_xxx');            // X-Api-Key
+define('DITE_WEBHOOK_SECRET', 'whsec_xxx');       // assina o webhook (HMAC sha256)
+// plan_id de cada plano (criados no painel do Dite):
+define('DITE_PLANS', [
+  'mensal' => 1,
+  'anual'  => 2,
 ]);
-define('STRIPE_DEFAULT_DEVICES', 1);              // dispositivos por licença emitida pelo Stripe
+
+// (LEGADO/opcional — Stripe; não usado quando o Dite está configurado)
+// define('STRIPE_SECRET_KEY', 'sk_live_xxx');
+// define('STRIPE_WEBHOOK_SECRET', 'whsec_xxx');
+// define('STRIPE_PRICES', ['mensal' => 'price_x', 'anual' => 'price_y']);
+// define('STRIPE_DEFAULT_DEVICES', 1);
 
 // Preços de EXIBIÇÃO na landing, em DÓLAR (apenas visual — a cobrança real é o
 // price do Stripe, que você cria em USD). Ajuste os valores.

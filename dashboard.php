@@ -34,7 +34,7 @@ layout_top(t('dashboard'));
       <?php endforeach; ?>
     </table>
     <p class="muted" style="margin-top:10px"><?= h(t('use_in_app')) ?></p>
-    <div style="margin-top:12px"><a class="btn ghost" href="<?= h(url('billing.php')) ?>"><?= h(t('manage_billing')) ?></a></div>
+    <div style="margin-top:12px"><a class="btn ghost" href="<?= h(url('billing.php')) ?>" onclick="return confirm('<?= h(t('confirm_cancel')) ?>')"><?= h(t('cancel_sub')) ?></a></div>
   <?php endif; ?>
 </div>
 <?php layout_bottom(); ?>

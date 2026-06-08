@@ -1,11 +1,18 @@
 # Portal ConstructCount — proteção básica (Apache/Hostinger)
 Options -Indexes
 
-# bloqueia acesso direto a config, libs e schema
+# bloqueia acesso direto a config, libs, schema e logs
 <FilesMatch "^(config\.php|config\.example\.php|schema\.sql)$">
   Require all denied
 </FilesMatch>
+<FilesMatch "\.log$">
+  Require all denied
+</FilesMatch>
 RedirectMatch 403 ^/lib/.*$
+
+# rota do webhook do Dite: /webhooks/dite -> webhooks/dite.php (sem redirect)
+RewriteEngine On
+RewriteRule ^webhooks/dite/?$ webhooks/dite.php [L]
 
 # força HTTPS (descomente se o domínio já tiver SSL ativo)
 # RewriteEngine On
