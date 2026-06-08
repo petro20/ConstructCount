@@ -1,2 +1,12 @@
 # Segredos do portal — NUNCA versionar
 config.php
+
+# Banco local / temporários
+data/
+*.sqlite
+*.sqlite3
+*.log
+
+# Sistema operacional
+Thumbs.db
+.DS_Store
