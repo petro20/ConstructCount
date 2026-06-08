@@ -41,21 +41,47 @@ function dite_api(string $method, string $path, ?array $body = null, array $extr
 function _dite_data(array $r): array { return isset($r['data']) && is_array($r['data']) ? $r['data'] : $r; }
 
 /**
+ * Definição de um pacote do NOSSO catálogo (config: DITE_PLAN_CATALOG).
+ * Fonte da verdade fica do nosso lado — enviamos o plano "inline" a cada
+ * checkout (forma recomendada na doc do Dite). Mudou preço/pacote no config,
+ * vale no próximo checkout — sem criar plano no painel nem usar plan_id.
+ */
+function dite_plan_def(string $plan): ?array {
+  cfg_loaded();
+  $cat = defined('DITE_PLAN_CATALOG') ? DITE_PLAN_CATALOG : [];
+  return $cat[$plan] ?? null;
+}
+
+/**
  * Cria uma ASSINATURA recorrente no Dite e devolve o checkout_url p/ redirecionar.
+ * Envia o plano INLINE (name/amount/currency/interval) a partir do catálogo.
+ * Fallback: se o pacote não tiver definição mas houver DITE_PLANS[$plan] (id),
+ * usa plan_id (plano cadastrado no painel).
  * external_reference = "user_<id>" (o webhook usa isso p/ achar o usuário).
  */
 function dite_create_subscription(array $user, string $plan): ?array {
   cfg_loaded();
-  $plans = defined('DITE_PLANS') ? DITE_PLANS : [];
-  $planId = $plans[$plan] ?? null;
-  if (!$planId) return null;
-  $r = dite_api('POST', '/api/v1/subscriptions', [
-    'plan_id'            => (int) $planId,
+  $payload = [
     'customer'           => ['name' => $user['name'] ?: $user['email'], 'email' => $user['email']],
     'external_reference' => 'user_' . (int) $user['id'],
     'success_url'        => url('success.php'),
     'cancel_url'         => url('cancel.php'),
-  ]);
+  ];
+  $def = dite_plan_def($plan);
+  if ($def) {
+    $payload['plan'] = [
+      'name'     => (string) $def['name'],
+      'amount'   => (float) $def['amount'],
+      'currency' => (string) $def['currency'],
+      'interval' => (string) $def['interval'],   // "month" | "year"
+    ];
+  } else {
+    $plans  = defined('DITE_PLANS') ? DITE_PLANS : [];
+    $planId = $plans[$plan] ?? null;
+    if (!$planId) return null;
+    $payload['plan_id'] = (int) $planId;
+  }
+  $r = dite_api('POST', '/api/v1/subscriptions', $payload);
   $d = _dite_data($r);
   $checkout = $d['checkout_url'] ?? null;
   $subId    = $d['subscription_id'] ?? ($d['id'] ?? null);

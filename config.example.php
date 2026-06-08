@@ -24,11 +24,17 @@ define('LIC_GRACE_DAYS', 7);                                                  //
 define('DITE_BASE_URL', 'https://pay.diteads.com');
 define('DITE_API_KEY', 'dg_live_xxx');            // X-Api-Key
 define('DITE_WEBHOOK_SECRET', 'whsec_xxx');       // assina o webhook (HMAC sha256)
-// plan_id de cada plano (criados no painel do Dite):
-define('DITE_PLANS', [
-  'mensal' => 1,
-  'anual'  => 2,
+
+// CATÁLOGO DE PACOTES — fonte da verdade do NOSSO lado.
+// O portal envia o plano INLINE pro Dite a cada checkout (forma recomendada na
+// doc). Mudou preço/pacote aqui → vale no próximo checkout, sem criar plano no
+// painel do Dite nem usar plan_id. interval = "month" | "year".
+define('DITE_PLAN_CATALOG', [
+  'mensal' => ['name' => 'ConstructCount Monthly', 'amount' => 19.00,  'currency' => 'USD', 'interval' => 'month'],
+  'anual'  => ['name' => 'ConstructCount Annual',  'amount' => 190.00, 'currency' => 'USD', 'interval' => 'year'],
 ]);
+// (alternativa/legado: referenciar planos cadastrados no painel por id)
+// define('DITE_PLANS', ['mensal' => 1, 'anual' => 2]);
 
 // (LEGADO/opcional — Stripe; não usado quando o Dite está configurado)
 // define('STRIPE_SECRET_KEY', 'sk_live_xxx');

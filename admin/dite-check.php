@@ -20,7 +20,8 @@ function mask(string $s): string {
 }
 function dump($x): string { return htmlspecialchars(json_encode($x, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8'); }
 
-$plans = defined('DITE_PLANS') ? DITE_PLANS : [];
+$catalog = defined('DITE_PLAN_CATALOG') ? DITE_PLAN_CATALOG : [];
+$plans   = defined('DITE_PLANS') ? DITE_PLANS : [];
 ?><!doctype html><html lang="pt"><head><meta charset="utf-8">
 <title>Dite — diagnóstico</title>
 <style>body{font:14px/1.5 monospace;background:#100d08;color:#f1ece0;max-width:1000px;margin:24px auto;padding:0 16px}
@@ -36,33 +37,12 @@ DITE_API_KEY         = <?= htmlspecialchars(mask(defined('DITE_API_KEY') ? (stri
 
 DITE_WEBHOOK_SECRET  = <?= htmlspecialchars(mask(defined('DITE_WEBHOOK_SECRET') ? (string) DITE_WEBHOOK_SECRET : '')) ?>
 
-DITE_PLANS           = <?= dump($plans) ?></pre>
+DITE_PLAN_CATALOG    = <?= dump($catalog) ?>
 
-<h2>0) Schema da API (openapi) — endpoints de PLANOS</h2>
-<p>Pra eu programar o envio automático dos pacotes. Mostra os paths com "plan" e os schemas de criação.</p>
-<pre><?php
-  $oa = dite_api('GET', '/api/v1/openapi.json');
-  echo '_status = ' . ($oa['_status'] ?? '?') . "\n\n";
-  $paths = $oa['paths'] ?? [];
-  echo "== PATHS com 'plan' ==\n";
-  foreach ($paths as $p => $methods) {
-    if (stripos($p, 'plan') !== false) {
-      echo "  $p  ->  " . strtoupper(implode(', ', array_keys((array) $methods))) . "\n";
-    }
-  }
-  echo "\n== nó completo de /api/v1/plans ==\n";
-  foreach ($paths as $p => $node) {
-    if (preg_match('#/plans/?$#', $p)) { echo dump([$p => $node]) . "\n"; }
-  }
-  echo "\n== schemas (components) com 'plan' no nome ==\n";
-  $schemas = $oa['components']['schemas'] ?? ($oa['definitions'] ?? []);
-  foreach ($schemas as $name => $def) {
-    if (stripos($name, 'plan') !== false) { echo "--- $name ---\n" . dump($def) . "\n\n"; }
-  }
-?></pre>
+DITE_PLANS (legado)  = <?= dump($plans) ?></pre>
 
-<h2>2) GET /api/v1/plans — planos REAIS no gateway</h2>
-<p>Compare os <span class="k">id</span> daqui com o DITE_PLANS acima. Se forem diferentes, é por isso que o checkout falha.</p>
+<h2>2) GET /api/v1/plans — planos no gateway (informativo)</h2>
+<p>Com plano <b>inline</b> não precisamos cadastrar planos aqui — pode vir vazio.</p>
 <pre><?php
   $rp = dite_api('GET', '/api/v1/plans');
   echo '_status = ' . ($rp['_status'] ?? '?') . "\n\n" . dump($rp);
@@ -74,23 +54,30 @@ DITE_PLANS           = <?= dump($plans) ?></pre>
   echo '_status = ' . ($rs['_status'] ?? '?') . "\n\n" . dump($rs);
 ?></pre>
 
-<h2>4) Teste real: criar assinatura (plano "mensal")</h2>
-<p>Mesma chamada que o botão "Assinar" faz. A resposta crua mostra o erro exato.</p>
+<h2>4) Teste real: criar assinatura (plano "mensal") — PLANO INLINE</h2>
+<p>Mesma chamada que o botão "Assinar" faz: envia o plano <b>inline</b> do catálogo.</p>
 <pre><?php
-  $planId = $plans['mensal'] ?? null;
-  if (!$planId) { echo "<span class='bad'>DITE_PLANS['mensal'] não definido</span>"; }
+  $def = $catalog['mensal'] ?? null;
+  if (!$def) { echo "<span class='bad'>DITE_PLAN_CATALOG['mensal'] não definido no config.php</span>"; }
   else {
-    $rc = dite_api('POST', '/api/v1/subscriptions', [
-      'plan_id'            => (int) $planId,
+    $payload = [
+      'plan'               => [
+        'name'     => (string) $def['name'],
+        'amount'   => (float) $def['amount'],
+        'currency' => (string) $def['currency'],
+        'interval' => (string) $def['interval'],
+      ],
       'customer'           => ['name' => $u['name'] ?: $u['email'], 'email' => $u['email']],
       'external_reference' => 'user_' . (int) $u['id'],
       'success_url'        => url('success.php'),
       'cancel_url'         => url('cancel.php'),
-    ]);
-    echo '_status = ' . ($rc['_status'] ?? '?') . "\n\n" . dump($rc);
+    ];
+    echo "ENVIANDO:\n" . dump($payload) . "\n\n";
+    $rc = dite_api('POST', '/api/v1/subscriptions', $payload);
+    echo 'RESPOSTA _status = ' . ($rc['_status'] ?? '?') . "\n\n" . dump($rc);
     $d = _dite_data($rc);
     $co = $d['checkout_url'] ?? null;
-    echo "\n\ncheckout_url => " . ($co ? "<span class='ok'>" . htmlspecialchars($co) . "</span>" : "<span class='bad'>AUSENTE (é por isso que o checkout falha)</span>");
+    echo "\n\ncheckout_url => " . ($co ? "<span class='ok'>" . htmlspecialchars($co) . "</span>" : "<span class='bad'>AUSENTE</span>");
   }
 ?></pre>
 
