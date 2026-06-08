@@ -49,5 +49,11 @@ define('PLAN_DISPLAY', [
   'anual'  => ['price' => '$190', 'period_pt' => '/ano', 'period_en' => '/yr', 'period_es' => '/año'],
 ]);
 
+// ---- Download do app (instalador Windows) ----
+// Recomendado: repo PÚBLICO só de releases no GitHub (código-fonte fica privado).
+// Use /releases/latest/download/<asset> p/ apontar sempre pra última versão.
+// Deixe '' para ocultar o botão de download no dashboard.
+define('APP_DOWNLOAD_URL', 'https://github.com/SEU-USUARIO/constructcount-releases/releases/latest/download/ConstructCount.zip');
+
 // ---- Admin (M2PB) ----
 define('ADMIN_EMAILS', ['voce@m2pb.com']);        // e-mails com acesso ao /admin

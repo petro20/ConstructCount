@@ -34,6 +34,12 @@ layout_top(t('dashboard'));
       <?php endforeach; ?>
     </table>
     <p class="muted" style="margin-top:10px"><?= h(t('use_in_app')) ?></p>
+    <?php if (defined('APP_DOWNLOAD_URL') && APP_DOWNLOAD_URL): ?>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bd);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <a class="btn" href="<?= h(APP_DOWNLOAD_URL) ?>"><?= h(t('download_app')) ?></a>
+        <span class="muted" style="font-size:13px"><?= h(t('download_hint')) ?></span>
+      </div>
+    <?php endif; ?>
     <div style="margin-top:12px"><a class="btn ghost" href="<?= h(url('billing.php')) ?>" onclick="return confirm('<?= h(t('confirm_cancel')) ?>')"><?= h(t('cancel_sub')) ?></a></div>
   <?php endif; ?>
 </div>

@@ -47,12 +47,27 @@ portal/
 - **IA (extract.php do app)**: em `api/config.php` defina
   `FENESTRA_LICENSE_VALIDATE_URL = 'https://SEU-DOMINIO/api/validate.php'`.
 
-## Fluxo
-1. Cliente cria conta → **Assinar** → Stripe Checkout → paga.
-2. Stripe chama `webhook.php` → cria/renova a licença (vencimento = fim do período).
+## Fluxo (Dite Gateway)
+1. Cliente cria conta → **Assinar** → `checkout.php` faz `POST /api/v1/subscriptions` com o **plano INLINE**
+   (`{plan:{name,amount,currency,interval}}` vindo de `DITE_PLAN_CATALOG`) → redireciona pro `checkout_url`.
+2. Cliente paga uma vez; o Dite cobra sozinho a cada ciclo e chama `webhooks/dite.php` (assinado HMAC) →
+   cria/renova a licença (vencimento = fim do período), por `external_reference = user_<id>`.
 3. Cliente vê a chave no **dashboard** → cola no app → `api/validate.php` aprova → app abre.
 4. A IA do app revalida a cada uso; renovação/cancelamento refletem automático via webhook.
 
+> **Catálogo de planos = nossa fonte da verdade** (`DITE_PLAN_CATALOG` no config.php). Não se cadastra plano
+> no painel do Dite nem se usa `plan_id`: o plano vai inline a cada checkout. Mudou preço/pacote no config →
+> vale no próximo checkout. `api/dite-plans.php` expõe o catálogo em JSON (campo opcional do app no painel Dite).
+
+## Deploy na Hostinger (Git) — ARMADILHAS
+- **Diretório de instalação = EM BRANCO** no formulário do Git (publica em `public_html`). Se preencher
+  `public_html`, ele aninha em `public_html/public_html/` (404 nos arquivos novos).
+- **Auto-deploy não puxa sozinho de forma confiável**: após o Push, clique **⋮ → Deploy (Implantar)** no hPanel
+  (espera "Repositório Git implantado com sucesso"). O webhook de deploy só "acusa recebimento".
+- `config.php` é gitignored → editar **direto no servidor** (File Manager). A `DITE_API_KEY` pertence a um **app**
+  do painel Dite; se recriar o app, atualize a key (a antiga vira 401).
+
 ## Segurança
 - Enforcement real = servidor (validação online + gate da IA). App é dissuasão (motor local decompilável).
-- `config.php` nunca vai pro Git. HTTPS obrigatório. Webhook verifica assinatura (`Stripe-Signature`).
+- `config.php` nunca vai pro Git. HTTPS obrigatório. Webhook verifica assinatura HMAC (`X-Dite-Signature`).
+- Produção: tirar `display_errors`/`error_reporting` de debug do config.php; trocar o app do Dite p/ modo LIVE.
