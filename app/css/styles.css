@@ -6,6 +6,11 @@
 /* Tipografia (Inter) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+/* esconde a barra de rolagem da JANELA (só visual — rolagem segue funcionando;
+   os painéis internos como wsRight/wsPages mantêm a barra própria) */
+html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display: none; }
+html, body { scrollbar-width: none; -ms-overflow-style: none; }
+
 html { scroll-behavior: smooth; }
 
 /* Números monoespaçados nas tabelas/valores */
