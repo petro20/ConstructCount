@@ -16,7 +16,7 @@
     scale: 1, ox: 0, oy: 0, dragging: false, moved: false, lastX: 0, lastY: 0,
     countMode: false, autoMode: false, delMode: false, busy: false, highlight: null,
     calibMode: false, measMode: false, mmPerPx: null, clickA: null, measures: [],
-    lineMode: false, linePts: [], lines: [],   // LINEAR (traço contínuo, por camada/trade)
+    lineMode: false, linePts: [], lines: [], lineSel: new Set(),   // LINEAR (traço contínuo, por camada/trade) + seleção
     snap: false, ortho: false, hover: null, snapData: null, lastMeas: null, dragMeas: null, selSet: null, curX: null, curY: null,
     marquee: null, maybeMarquee: false, marqStart: null, marqMods: null, marqCrossing: false, selMarks: null,
     autoDragStart: null, autoSample: null, autoRegion: null,   // área de busca do Auto Count (arraste)
@@ -35,7 +35,7 @@
     S.onConsolidate = opts.onConsolidate || null;
     S.labelIdx = {}; S.countMode = false; S.autoMode = false; S.delMode = false;
     S.calibMode = false; S.measMode = false; S.clickA = null; S.measures = [];
-    S.lineMode = false; S.linePts = []; S.lines = [];
+    S.lineMode = false; S.linePts = []; S.lines = []; S.lineSel = new Set();
     S.schedulePages = (opts.schedulePages || []).slice();
     S.sections = (opts.sections && opts.sections.length) ? opts.sections.slice() : ['Geral'];
     S.activeSection = opts.activeSection || S.sections[0];
@@ -579,7 +579,8 @@
     (S.lines || []).forEach(ln => {
       if (ln.page !== S.page || !layerVisible(ln.layer)) return;
       const lay = layerById(ln.layer), col = (lay && lay.color) || '#e3b653';
-      ctx.lineWidth = 3; ctx.strokeStyle = col; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      const seld = S.lineSel && S.lineSel.has(ln);
+      ctx.lineWidth = seld ? 5 : 3; ctx.strokeStyle = seld ? '#ef4444' : col; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       ctx.beginPath();
       ln.path.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
       ctx.stroke();
@@ -974,7 +975,30 @@
     }
     S.linePts = []; draw();
   }
-  F._framingLines = () => S.lines;   // o pacote Framing lê os traços daqui (próximo passo)
+  F._framingLines = () => S.lines;   // o pacote Framing lê os traços daqui
+
+  // seleção de traços Linear (igual às marcas do Contar): clicar seleciona, Del apaga
+  function distToSeg(px, py, ax, ay, bx, by) {
+    const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy;
+    let t = L2 ? ((px - ax) * dx + (py - ay) * dy) / L2 : 0; t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+  }
+  function hitLine(sx, sy) {
+    for (const ln of (S.lines || [])) {
+      if (ln.page !== S.page || !layerVisible(ln.layer) || !ln.path) continue;
+      for (let i = 1; i < ln.path.length; i++) {
+        const ax = ln.path[i - 1][0] * S.scale + S.ox, ay = ln.path[i - 1][1] * S.scale + S.oy;
+        const bx = ln.path[i][0] * S.scale + S.ox, by = ln.path[i][1] * S.scale + S.oy;
+        if (distToSeg(sx, sy, ax, ay, bx, by) <= 6) return ln;
+      }
+    }
+    return null;
+  }
+  function pickLine(ln, e) {
+    if (!(e.ctrlKey || e.metaKey || e.shiftKey)) S.lineSel.clear();
+    if (S.lineSel.has(ln)) S.lineSel.delete(ln); else S.lineSel.add(ln);
+    markSaved(F.tr('{n} linha(s) selecionada(s) · Del p/ apagar', { n: S.lineSel.size }));
+  }
 
   function updateSchedUI() {
     const on = S.schedulePages.indexOf(S.page) >= 0;
@@ -1363,9 +1387,11 @@
         // sem arraste (só clique) → segue o fluxo normal (folha toda) abaixo
       }
       if (S.moved) return;                            // foi arraste, não clique
-      if (!S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.clickA) {  // clicar numa medida = selecionar (Ctrl/Shift = múltiplas)
+      if (!S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.clickA) {  // clicar numa medida/linha = selecionar (Ctrl/Shift = múltiplas)
         const hm = hitMeasLine(e.offsetX, e.offsetY);
         if (hm) { pickMeasure(hm, e); markSaved(F.tr('{n} medida(s) selecionada(s) · Del p/ apagar', { n: selSet().size })); draw(); return; }
+        const hl = hitLine(e.offsetX, e.offsetY);
+        if (hl) { pickLine(hl, e); draw(); return; }
       }
       if (S.lineMode) { handleLine(e.offsetX, e.offsetY); return; }
       if (S.calibMode || S.measMode) { handleRuler(e.offsetX, e.offsetY); return; }
@@ -1402,6 +1428,7 @@
       S.measMode = which === 'measure' && !S.measMode;
       S.lineMode = which === 'linear' && !S.lineMode;
       if (which !== 'linear') S.linePts = [];
+      if (S.lineSel) S.lineSel.clear();
       S.clickA = null; S.hover = null; S.maybeMarquee = false; S.marquee = null;
       S.autoDragStart = null; S.autoRegion = null; S.autoSample = null;
       const act = (id, on) => { const b = $(id); if (b) b.classList.toggle('ws-tool-active', on); };
@@ -1542,11 +1569,14 @@
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '');
       if (e.key === 'Escape') {                        // Linear: finaliza; senão cancela ponto/arraste/seleção
         if (S.lineMode && S.linePts.length) { finishLine(); return; }
+        if (S.lineSel && S.lineSel.size) { S.lineSel.clear(); draw(); }
         if (S.clickA || S.dragMeas || selCount()) { S.clickA = null; S.dragMeas = null; clearSel(); updateMeasSel(); markSaved(F.tr('Cancelado')); draw(); }
-      } else if (e.key === 'Enter' && S.lineMode && S.linePts.length) {
-        e.preventDefault(); finishLine();              // Enter também finaliza o Linear
+      } else if ((e.key === 'Enter' || e.key === 'n' || e.key === 'N') && !typing && S.lineMode && S.linePts.length) {
+        e.preventDefault(); finishLine();              // Enter/N finaliza a linha e libera p/ começar OUTRA
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.lineMode && S.linePts.length) {
         e.preventDefault(); S.linePts.pop(); draw();    // desfaz último ponto do Linear
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.lineSel && S.lineSel.size) {
+        e.preventDefault(); S.lines = S.lines.filter(l => !S.lineSel.has(l)); S.lineSel.clear(); draw(); markSaved(F.tr('Linha(s) apagada(s)'));   // apaga traço(s) Linear selecionado(s)
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && selCount()) {
         e.preventDefault(); deleteSelMeas();           // apaga a medida selecionada
       }
