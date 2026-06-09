@@ -215,11 +215,16 @@
     draw();
   }
   function finishWall() {
+    // remove ponto(s) duplicado(s) no fim (ex.: 2º clique de um duplo-clique)
+    while (CV.pts.length >= 2) {
+      var a = CV.pts[CV.pts.length - 1], b = CV.pts[CV.pts.length - 2];
+      if (Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1) CV.pts.pop(); else break;
+    }
     if (CV.pts.length >= 2) {
       if (!FR.pxPerFt) { alert(tr('Calibre a escala primeiro (📏).')); CV.pts = []; draw(); return; }
       var lenFt = pathLenPx(CV.pts) / FR.pxPerFt;
       FR.segments.push({ id: uid('sg'), wtId: CV.drawWT || (FR.wallTypes[0] || {}).id, len: Math.round(lenFt * 10) / 10, qty: 1, path: CV.pts.slice(), source: 'draw' });
-      renderSegs(); renderMaterials();
+      renderSegs(); renderMaterials(); renderLegend();
     }
     CV.pts = []; draw();
   }
@@ -264,8 +269,9 @@
     cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     document.addEventListener('keydown', function (e) {
       if (document.getElementById('framingScreen').classList.contains('hidden')) return;
-      if (e.key === 'Enter' && CV.tool === 'wall') finishWall();
-      else if (e.key === 'Escape') { CV.pts = []; CV.calA = null; draw(); }
+      if (CV.tool === 'wall' && (e.key === 'Escape' || e.key === 'Enter')) { e.preventDefault(); finishWall(); }   // Esc/Enter = finaliza a parede
+      else if (CV.tool === 'wall' && e.key === 'Backspace' && CV.pts.length) { e.preventDefault(); CV.pts.pop(); draw(); }  // desfaz último ponto
+      else if (e.key === 'Escape') { CV.calA = null; draw(); }
     });
   }
   function updateScaleBadge() {
@@ -313,7 +319,7 @@
       + '  <main class="min-h-0 relative bg-steel-900">'
       + '    <canvas id="frCanvas" class="block w-full h-full" style="cursor:grab"></canvas>'
       + '    <div id="frLegend" class="absolute top-3 left-3 bg-black/65 text-white rounded-lg px-3 py-2 text-xs space-y-1 pointer-events-none"></div>'
-      + '    <div class="absolute bottom-3 left-3 bg-black/55 text-steel-200 rounded px-2 py-1 text-[11px] pointer-events-none">' + tr('Calibre (📏) → Traçe a parede (🧱). Enter/2 cliques finaliza · Esc cancela · roda do mouse = zoom.') + '</div>'
+      + '    <div class="absolute bottom-3 left-3 bg-black/55 text-steel-200 rounded px-2 py-1 text-[11px] pointer-events-none">' + tr('Calibre (📏) → Traçe a parede (🧱): clique pra mudar de direção · Esc/Enter finaliza · Backspace desfaz ponto · roda = zoom.') + '</div>'
       + '  </main>'
       // ----- col 3: materiais -----
       + '  <aside class="min-h-0 overflow-y-auto border-l border-steel-200 bg-white p-4">'
