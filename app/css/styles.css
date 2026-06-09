@@ -117,29 +117,33 @@ button:focus-visible {
    RIBBON (faixa de menu estilo PlanSwift) — abas + grupos de botões
    ========================================================================= */
 .ribbon { font-size: 13px; }
+/* barra de abas = continuação ESCURA do header, abas estilo underline dourado */
 .rb-tabs {
-  display: flex; align-items: flex-end; gap: 2px;
-  padding: 5px 8px 0; background: linear-gradient(#e8e6e0, #dcdad3);
-  border-bottom: 1px solid #cfccc4;
+  display: flex; align-items: stretch; gap: 2px;
+  padding: 0 10px;
+  background: linear-gradient(180deg, #211f1a 0%, #1b1a16 100%);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  box-shadow: 0 8px 22px rgba(20,18,12,.22);
 }
-.rb-brand {
-  background: #fff; color: #1b1a16;
-  padding: 6px 16px; font-weight: 800; letter-spacing: .02em;
-  border: 1px solid #cfccc4; border-bottom: 0;
-  border-radius: 7px 7px 0 0; cursor: pointer; position: relative; top: 1px;
-}
-.rb-brand:hover { background: #f4f3ef; }
 .rb-tab {
-  padding: 6px 14px; font-weight: 600; color: #34322c;
-  border: 1px solid transparent; border-bottom: 0;
-  border-radius: 7px 7px 0 0; cursor: pointer; position: relative; top: 1px;
-  transition: background .15s ease, color .15s ease;
+  padding: 13px 16px; font-weight: 600; color: #b3aea2;
+  background: transparent; border: 0; border-bottom: 2px solid transparent;
+  border-radius: 0; cursor: pointer; position: relative; top: 0;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
-.rb-tab:hover { background: rgba(255,255,255,.55); }
-.rb-tab.active {
-  background: #fff; color: #1b1a16;
-  border-color: #cfccc4; border-bottom: 1px solid #fff;
+.rb-tab:hover { background: rgba(255,255,255,.06); color: #fff; }
+.rb-tab.active { background: transparent; color: #fff; border-bottom-color: #d9a02a; }
+/* aba-marca (ConstructCount) — destaque dourado, vence as regras .rb-tab */
+.rb-brand {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 18px; font-weight: 800; letter-spacing: .02em;
+  color: #f1c66a; background: transparent;
+  border: 0; border-bottom: 2px solid transparent; border-radius: 0;
+  cursor: pointer; position: relative; top: 0;
 }
+.rb-brand::before { content: "◆"; font-size: 9px; color: #d9a02a; }
+.rb-brand:hover { background: rgba(217,160,42,.1); color: #ffe2a6; }
+.rb-brand.active { color: #fff; border-bottom-color: #d9a02a; }
 /* aba como PÁGINA cheia (preenche a área abaixo da barra de abas) */
 .rb-panel.rb-page {
   position: fixed; left: 0; right: 0; bottom: 0;
@@ -147,7 +151,7 @@ button:focus-visible {
 }
 .rb-body {
   background: #fff; border-bottom: 1px solid #d9d7d1;
-  box-shadow: 0 2px 6px rgba(36,52,75,.06);
+  box-shadow: 0 6px 14px rgba(20,18,12,.1);
 }
 .rb-panel { display: flex; align-items: stretch; flex-wrap: wrap; padding: 8px 6px; gap: 2px; }
 .rb-panel.hidden { display: none; }
