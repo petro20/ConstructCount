@@ -47,6 +47,10 @@ $GLOBALS['I18N'] = [
   'pay_cancel'    => ['Pagamento cancelado.', 'Payment canceled.', 'Pago cancelado.'],
 
   // ---- landing ----
+  'hero_badge'=> ['⚡ Estimating de esquadrias com IA', '⚡ AI-powered window & door estimating', '⚡ Estimación de carpintería con IA'],
+  'stat_fast' => ['mais rápido que manual', 'faster than manual', 'más rápido que manual'],
+  'stat_min'  => ['min por folha', 'min per sheet', 'min por hoja'],
+  'stat_rep'  => ['relatórios: Excel + PDF', 'reports: Excel + PDF', 'informes: Excel + PDF'],
   'hero_h1'   => ['Orçamento de esquadrias direto da planta', 'Window & door quotes straight from the plans', 'Cotización de carpinterías directo del plano'],
   'hero_sub'  => ['Leia o PDF do projeto, levante portas e janelas automaticamente e gere orçamento, pedido e planta marcada em minutos.', 'Read the project PDF, take off doors and windows automatically and generate quotes, supplier orders and marked plans in minutes.', 'Lee el PDF del proyecto, computa puertas y ventanas automáticamente y genera cotizaciones, pedidos y planos marcados en minutos.'],
   'cta_start' => ['Começar agora', 'Get started', 'Empezar ahora'],

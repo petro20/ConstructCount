@@ -9,7 +9,7 @@ function layout_top(string $title): void {
   echo '<!doctype html><html lang="' . h($L) . '"><head><meta charset="utf-8">';
   echo '<meta name="viewport" content="width=device-width,initial-scale=1">';
   echo '<title>' . h($title) . ' · ConstructCount</title>';
-  echo '<link rel="icon" href="assets/favicon.ico"><link rel="stylesheet" href="assets/style.css?v=3"></head><body>';
+  echo '<link rel="icon" href="assets/favicon.ico"><link rel="stylesheet" href="assets/style.css?v=4"></head><body>';
   echo '<header class="nav"><a class="brand" href="' . h(url('')) . '"><img class="brand-logo" src="assets/logo.png" alt="ConstructCount"><span class="brand-name">ConstructCount</span></a>';
   echo '<nav>';
   $here = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');

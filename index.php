@@ -18,17 +18,30 @@ $plan_disp = function (string $plan) use ($L) {
 
 layout_top(t('app_name'));
 ?>
-<section class="hero">
-  <img src="assets/hero.png" alt="ConstructCount" class="hero-logo">
-  <h1><?= h(t('hero_h1')) ?></h1>
-  <p><?= h(t('hero_sub')) ?></p>
-  <div class="hero-cta">
-    <a class="btn lg" href="<?= h(url('register.php')) ?>"><?= h(t('cta_start')) ?></a>
-    <a class="btn ghost lg" href="#planos"><?= h(t('cta_plans')) ?></a>
+<section class="vhero">
+  <video class="vhero-vid" autoplay muted loop playsinline preload="auto" poster="assets/hero.png">
+    <source src="assets/video/hero-construction.mp4" type="video/mp4">
+  </video>
+  <div class="vhero-grid" aria-hidden="true"></div>
+  <div class="vhero-overlay" aria-hidden="true"></div>
+  <div class="vhero-inner">
+    <span class="vhero-badge"><?= h(t('hero_badge')) ?></span>
+    <h1 class="vhero-h1"><?= h(t('hero_h1')) ?></h1>
+    <p class="vhero-sub"><?= h(t('hero_sub')) ?></p>
+    <div class="hero-cta">
+      <a class="btn lg glow" href="<?= h(url('register.php')) ?>"><?= h(t('cta_start')) ?></a>
+      <a class="btn ghost lg" href="#planos"><?= h(t('cta_plans')) ?></a>
+    </div>
+    <div class="vhero-stats">
+      <div class="vstat"><b><span class="vnum" data-to="10">0</span><span class="vsuf">×</span></b><span><?= h(t('stat_fast')) ?></span></div>
+      <div class="vstat"><b><span class="vnum" data-to="3">0</span></b><span><?= h(t('stat_min')) ?></span></div>
+      <div class="vstat"><b><span class="vsuf">＋</span></b><span><?= h(t('stat_rep')) ?></span></div>
+    </div>
   </div>
+  <a href="#features" class="vhero-scroll" aria-hidden="true">▾</a>
 </section>
 
-<section class="sec">
+<section class="sec reveal" id="features">
   <h2 class="sec-title"><?= h(t('feat_title')) ?></h2>
   <div class="features">
     <?php foreach (['f1','f2','f3','f4','f5','f6'] as $i => $f): $ic = ['🤖','📐','📄','🗺️','🌐','💻'][$i]; ?>
@@ -37,7 +50,7 @@ layout_top(t('app_name'));
   </div>
 </section>
 
-<section class="sec">
+<section class="sec reveal">
   <h2 class="sec-title"><?= h(t('how_title')) ?></h2>
   <div class="steps">
     <?php foreach (['how1','how2','how3'] as $n => $s): ?>
@@ -46,7 +59,7 @@ layout_top(t('app_name'));
   </div>
 </section>
 
-<section class="sec" id="planos">
+<section class="sec reveal" id="planos">
   <h2 class="sec-title"><?= h(t('pricing_title')) ?></h2>
   <div class="grid">
     <div class="card plan center">
@@ -86,8 +99,28 @@ layout_top(t('app_name'));
   </div>
 </section>
 
-<section class="sec center cta-final">
+<section class="sec center cta-final reveal">
   <h2><?= h(t('final_cta')) ?></h2>
   <a class="btn lg" href="<?= h(url('register.php')) ?>"><?= h(t('cta_start')) ?></a>
 </section>
+<script>
+(function () {
+  // contadores animados (ease-out)
+  document.querySelectorAll('.vnum').forEach(function (el) {
+    var to = parseFloat(el.dataset.to || '0'), dur = 1400, t0 = null;
+    function step(ts) { if (!t0) t0 = ts; var p = Math.min((ts - t0) / dur, 1);
+      el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); }
+    requestAnimationFrame(step);
+  });
+  // revelar seções ao rolar
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
+  }
+})();
+</script>
 <?php layout_bottom(); ?>
