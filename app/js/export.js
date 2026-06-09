@@ -79,6 +79,58 @@ window.ConstructCount = window.ConstructCount || {};
     return (w || h) ? ((w || '?') + ' × ' + (h || '?')) : '';
   };
 
+  /* ============ Marca dos relatórios (logo · empresa · cor) — salvo por máquina ============ */
+  const BRAND_KEY = 'cc_report_brand';
+  F.reportBrand = function () {
+    let b = {};
+    try { b = JSON.parse(localStorage.getItem(BRAND_KEY) || '{}') || {}; } catch (e) {}
+    return {
+      company: (b.company || '').trim() || 'ConstructCount',
+      line2: (b.line2 || '').trim(),
+      logo: b.logo || '', logoAR: b.logoAR || 1,
+      accent: b.accent || '#2c476a',
+      footer: (b.footer || '').trim(),
+    };
+  };
+  F.saveReportBrand = function (b) { try { localStorage.setItem(BRAND_KEY, JSON.stringify(b || {})); } catch (e) {} };
+  function brAccentRGB() {
+    let h = (F.reportBrand().accent || '#2c476a').replace('#', '');
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    const n = parseInt(h || '2c476a', 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  /** cabeçalho de marca num PDF jsPDF (faixa colorida + logo + empresa + subtítulo) */
+  function pdfBrandHeader(doc, subtitle) {
+    const W = 210, H = 28, b = F.reportBrand();
+    const [r, g, bl] = brAccentRGB();
+    doc.setFillColor(r, g, bl); doc.rect(0, 0, W, H, 'F');
+    let tx = 14;
+    if (b.logo) {
+      try {
+        const hh = 18, ww = Math.max(6, Math.min(46, hh * (b.logoAR || 1)));
+        const fmt = /image\/jpe?g/i.test(b.logo) ? 'JPEG' : 'PNG';
+        doc.addImage(b.logo, fmt, 14, 5, ww, hh); tx = 14 + ww + 5;
+      } catch (e) {}
+    }
+    doc.setTextColor(255);
+    doc.setFontSize(18); doc.setFont(undefined, 'bold');
+    doc.text(b.company, tx, 13);
+    if (subtitle) { doc.setFontSize(9.5); doc.setFont(undefined, 'normal'); doc.text(String(subtitle), tx, 20); }
+    if (b.line2) { doc.setFontSize(8); doc.setFont(undefined, 'normal'); doc.text(b.line2, W - 14, 12, { align: 'right' }); }
+    doc.setFont(undefined, 'normal');
+  }
+  /** rodapé opcional (texto centralizado no rodapé de cada página) */
+  function pdfBrandFooterAll(doc) {
+    const b = F.reportBrand();
+    if (!b.footer) return;
+    const W = 210, np = doc.getNumberOfPages(), Hh = doc.internal.pageSize.getHeight();
+    for (let i = 1; i <= np; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8); doc.setTextColor(120, 130, 145); doc.setFont(undefined, 'normal');
+      doc.text(b.footer, W / 2, Hh - 6, { align: 'center' });
+    }
+  }
+
   /* ----- Orçamento Cliente (PDF) — detalhado, conforme o projeto ----- */
   F.exportClientPDF = async function () {
     const L = F.pickDocLang ? await F.pickDocLang() : (F.getLang ? F.getLang() : 'pt');
@@ -91,14 +143,8 @@ window.ConstructCount = window.ConstructCount || {};
     const items = F.state.items || [];
     const W = 210;
 
-    // cabeçalho
-    doc.setFillColor(44, 71, 106);
-    doc.rect(0, 0, W, 28, 'F');
-    doc.setTextColor(255);
-    doc.setFontSize(18); doc.setFont(undefined, 'bold');
-    doc.text('ConstructCount', 14, 14);
-    doc.setFontSize(10); doc.setFont(undefined, 'normal');
-    doc.text(t('Orçamento ao Cliente — Esquadrias (portas & janelas)'), 14, 21);
+    // cabeçalho de marca (empresa · logo · cor) — configurável em "Marca / Relatórios"
+    pdfBrandHeader(doc, t('Orçamento ao Cliente — Esquadrias (portas & janelas)'));
 
     // dados do projeto
     doc.setTextColor(36, 52, 75);
@@ -191,6 +237,7 @@ window.ConstructCount = window.ConstructCount || {};
     doc.setFontSize(8); doc.setTextColor(120);
     doc.text(t('Especificações lidas do projeto (door/window schedule). Itens sem dado: "a definir" — nada foi assumido.'), 14, 286);
 
+    pdfBrandFooterAll(doc);                           // rodapé da empresa (se definido)
     F.saveBytes(fileName('quote', L, 'pdf'), doc.output('arraybuffer'));
     F.flashExport('✓ ' + t('Orçamento Cliente') + ' (PDF) ✓');
   };
@@ -201,14 +248,16 @@ window.ConstructCount = window.ConstructCount || {};
     if (!L) return;
     const t = (s, v) => T(s, v, L);
     const p = F.state.project;
-    const aoa = [
-      [t('PEDIDO AO FORNECEDOR')],
-      [t('Projeto'), p.name || '-', '', t('Cliente'), p.client || '-'],
-      [t('Data'), new Date().toLocaleDateString(DATE_LOC[L] || 'pt-BR')],
-      [],
-      ['Item', t('Marca (cor)'), t('Forma'), t('Medida (mm)'), t('Medida original'), t('Qtd'), t('Tipo'),
-        t('Material'), t('Vidro'), t('Cor'), t('Dobradiças'), t('Fechadura'), t('Soleira'), t('Corta-fogo'), t('Mão'), t('Observacoes')]
-    ];
+    const brand = F.reportBrand();
+    const aoa = [[brand.company]];
+    if (brand.line2) aoa.push([brand.line2]);
+    const titleRow = aoa.length;                      // linha do título (após empresa/contato)
+    aoa.push([t('PEDIDO AO FORNECEDOR')]);
+    aoa.push([t('Projeto'), p.name || '-', '', t('Cliente'), p.client || '-']);
+    aoa.push([t('Data'), new Date().toLocaleDateString(DATE_LOC[L] || 'pt-BR')]);
+    aoa.push([]);
+    aoa.push(['Item', t('Marca (cor)'), t('Forma'), t('Medida (mm)'), t('Medida original'), t('Qtd'), t('Tipo'),
+        t('Material'), t('Vidro'), t('Cor'), t('Dobradiças'), t('Fechadura'), t('Soleira'), t('Corta-fogo'), t('Mão'), t('Observacoes')]);
     F.state.items.forEach((it, idx) => {
       const orig = (it.widthOrig || it.heightOrig) ? `${it.widthOrig || '?'} x ${it.heightOrig || '?'}` : '';
       const obs = [it.notes, it.missingMark ? t('⚠ marca reconstruída do texto — confirmar marcação') : '', !it.missingMark && it.discrepancy ? '⚠ ' + it.discrepancy : '']
@@ -223,7 +272,10 @@ window.ConstructCount = window.ConstructCount || {};
       { wch: 8 }, { wch: 11 }, { wch: 9 }, { wch: 14 }, { wch: 14 }, { wch: 6 }, { wch: 20 },
       { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 14 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 30 }
     ];
-    ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 15 } }];
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 15 } },                  // nome da empresa
+      { s: { r: titleRow, c: 0 }, e: { r: titleRow, c: 15 } },    // título PEDIDO AO FORNECEDOR
+    ];
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, t('Pedido Fornecedor').slice(0, 31));
@@ -255,14 +307,10 @@ window.ConstructCount = window.ConstructCount || {};
     const doc = new jsPDF();
     const p = F.state.project;
 
-    // cabeçalho
-    doc.setFillColor(44, 71, 106);
-    doc.rect(0, 0, 210, 26, 'F');
-    doc.setTextColor(255);
-    doc.setFontSize(16); doc.setFont(undefined, 'bold');
-    doc.text(t('Quadro Resumo de Esquadrias'), 14, 13);
-    doc.setFontSize(10); doc.setFont(undefined, 'normal');
-    doc.text((p.name || '') + (p.client ? ' — ' + p.client : ''), 14, 20);
+    // cabeçalho de marca + linha de projeto/cliente
+    pdfBrandHeader(doc, t('Quadro Resumo de Esquadrias'));
+    doc.setTextColor(90, 100, 115); doc.setFontSize(9); doc.setFont(undefined, 'normal');
+    doc.text((p.name || '') + (p.client ? ' — ' + p.client : ''), 14, 34);
 
     // colunas
     doc.setTextColor(36, 52, 75);
@@ -312,5 +360,73 @@ window.ConstructCount = window.ConstructCount || {};
     el.classList.remove('hidden');
     setTimeout(() => el.classList.add('hidden'), 4000);
   };
+
+  /* ---- painel "Marca / Relatórios" (logo/empresa/cor/rodapé) ---- */
+  function downscaleLogo(file, cb) {
+    const rd = new FileReader();
+    rd.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxH = 120, ar = (img.width / img.height) || 1;
+        const h = Math.min(maxH, img.height), w = Math.round(h * ar);
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        const isJpg = /jpe?g/i.test(file.type);
+        cb(c.toDataURL(isJpg ? 'image/jpeg' : 'image/png', 0.9), ar);
+      };
+      img.onerror = () => cb('', 1);
+      img.src = rd.result;
+    };
+    rd.readAsDataURL(file);
+  }
+  F.openReportBrand = function () {
+    const m = document.querySelector('#brandModal'); if (!m) return;
+    const b = F.reportBrand();
+    const set = (id, v) => { const e = document.querySelector(id); if (e) e.value = v; };
+    set('#brName', b.company === 'ConstructCount' ? '' : b.company);
+    set('#brLine2', b.line2); set('#brAccent', b.accent || '#2c476a'); set('#brFooter', b.footer);
+    const prev = document.querySelector('#brLogoPrev'), clr = document.querySelector('#brLogoClear');
+    m._logo = b.logo; m._logoAR = b.logoAR;
+    if (b.logo && prev) { prev.src = b.logo; prev.classList.remove('hidden'); if (clr) clr.classList.remove('hidden'); }
+    else { if (prev) prev.classList.add('hidden'); if (clr) clr.classList.add('hidden'); }
+    m.classList.remove('hidden');
+  };
+  (function wireBrand() {
+    const onReady = () => {
+      const m = document.querySelector('#brandModal'); if (!m) return;
+      const $ = (id) => document.querySelector(id);
+      const open = $('#miReportBrand'); if (open) open.addEventListener('click', F.openReportBrand);
+      const cancel = $('#brCancel'); if (cancel) cancel.addEventListener('click', () => m.classList.add('hidden'));
+      const logoIn = $('#brLogo');
+      if (logoIn) logoIn.addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0]; if (!f) return;
+        downscaleLogo(f, (data, ar) => {
+          m._logo = data; m._logoAR = ar;
+          const prev = $('#brLogoPrev'), clr = $('#brLogoClear');
+          if (prev && data) { prev.src = data; prev.classList.remove('hidden'); if (clr) clr.classList.remove('hidden'); }
+        });
+      });
+      const clr = $('#brLogoClear');
+      if (clr) clr.addEventListener('click', () => {
+        m._logo = ''; m._logoAR = 1;
+        const prev = $('#brLogoPrev'); if (prev) prev.classList.add('hidden'); clr.classList.add('hidden');
+        const inp = $('#brLogo'); if (inp) inp.value = '';
+      });
+      const save = $('#brSave');
+      if (save) save.addEventListener('click', () => {
+        const val = (id) => { const e = $(id); return e ? (e.value || '').trim() : ''; };
+        F.saveReportBrand({
+          company: val('#brName'), line2: val('#brLine2'),
+          accent: val('#brAccent') || '#2c476a',
+          logo: m._logo || '', logoAR: m._logoAR || 1,
+          footer: val('#brFooter'),
+        });
+        m.classList.add('hidden');
+        if (F.flashExport) F.flashExport('✓ Marca dos relatórios salva ✓');
+      });
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onReady);
+    else onReady();
+  })();
 
 })(window.ConstructCount);

@@ -141,6 +141,7 @@
           <div class="rb-group">
             <div class="rb-row">
               <button id="miSettings" class="rb-btn"><span class="ico">⚙️</span><span>Motor local</span></button>
+              <button id="miReportBrand" class="rb-btn"><span class="ico">🎨</span><span>Marca / Relatórios</span></button>
             </div>
             <div class="rb-label">Configurações</div>
           </div>
@@ -207,6 +208,40 @@
       <div class="flex justify-end gap-2 mt-5">
         <button id="cfgCancel" class="px-3 py-1.5 rounded border border-steel-300 hover:bg-steel-50">Cancelar</button>
         <button id="cfgSave" class="px-3 py-1.5 rounded bg-steel-600 text-white font-medium hover:bg-steel-700">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Marca / Relatórios (branding dos documentos) -->
+  <div id="brandModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
+      <h3 class="text-lg font-semibold mb-1">🎨 Marca dos relatórios</h3>
+      <p class="text-xs text-steel-500 mb-4">Aparece no cabeçalho de todos os relatórios (Orçamento, Pedido Fornecedor, Quadro Resumo). Fica salvo neste computador.</p>
+      <div class="grid grid-cols-2 gap-4 text-sm">
+        <label class="col-span-2">Nome da empresa
+          <input id="brName" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" placeholder="Sua Empresa Ltda" />
+        </label>
+        <label class="col-span-2">Linha de contato (telefone · e-mail · site)
+          <input id="brLine2" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" placeholder="(11) 99999-0000 · contato@empresa.com" />
+        </label>
+        <label>Cor de destaque
+          <input id="brAccent" type="color" value="#2c476a" class="mt-1 w-full h-9 rounded border border-steel-200 px-1 py-0.5" />
+        </label>
+        <label>Logo (PNG/JPG)
+          <input id="brLogo" type="file" accept="image/png,image/jpeg" class="mt-1 w-full text-xs" />
+        </label>
+        <div class="col-span-2 flex items-center gap-3">
+          <span class="text-xs text-steel-500">Prévia:</span>
+          <img id="brLogoPrev" class="h-10 rounded border border-steel-200 hidden" alt="logo" />
+          <button id="brLogoClear" class="text-xs text-rose-600 hover:underline hidden">remover logo</button>
+        </div>
+        <label class="col-span-2">Rodapé (opcional)
+          <input id="brFooter" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" placeholder="Validade 15 dias · CNPJ 00.000.000/0001-00" />
+        </label>
+      </div>
+      <div class="flex justify-end gap-2 mt-5">
+        <button id="brCancel" class="px-3 py-1.5 rounded border border-steel-300 hover:bg-steel-50">Cancelar</button>
+        <button id="brSave" class="px-3 py-1.5 rounded bg-steel-600 text-white font-medium hover:bg-steel-700">Salvar</button>
       </div>
     </div>
   </div>
@@ -780,7 +815,7 @@
   <script src="js/license.js?v=202"></script>
   <script src="js/calculator.js?v=200"></script>
   <script src="js/svg-engine.js?v=200"></script>
-  <script src="js/export.js?v=200"></script>
+  <script src="js/export.js?v=212"></script>
   <script src="js/plan-marker.js?v=200"></script>
   <script src="js/import-takeoff.js?v=200"></script>
   <script src="js/proposal.js?v=200"></script>
