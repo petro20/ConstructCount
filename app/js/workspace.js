@@ -999,6 +999,27 @@
     if (S.lineSel.has(ln)) S.lineSel.delete(ln); else S.lineSel.add(ln);
     markSaved(F.tr('{n} linha(s) selecionada(s) · Del p/ apagar', { n: S.lineSel.size }));
   }
+  // laço de seleção também pega os traços Linear (igual marcas/medidas)
+  function ptInRect(x, y, r) { return x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1; }
+  function segSeg(ax, ay, bx, by, cx, cy, dx, dy) {
+    const d1 = (dx - cx) * (ay - cy) - (dy - cy) * (ax - cx), d2 = (dx - cx) * (by - cy) - (dy - cy) * (bx - cx);
+    const d3 = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax), d4 = (bx - ax) * (dy - ay) - (by - ay) * (dx - ax);
+    return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+  }
+  function segHitsRect(ax, ay, bx, by, r) {
+    if (ptInRect(ax, ay, r) || ptInRect(bx, by, r)) return true;
+    return segSeg(ax, ay, bx, by, r.x0, r.y0, r.x1, r.y0) || segSeg(ax, ay, bx, by, r.x1, r.y0, r.x1, r.y1)
+      || segSeg(ax, ay, bx, by, r.x1, r.y1, r.x0, r.y1) || segSeg(ax, ay, bx, by, r.x0, r.y1, r.x0, r.y0);
+  }
+  function lineInRect(ln, r, crossing) {
+    if (ln.page !== S.page || !layerVisible(ln.layer) || !ln.path) return false;
+    const pts = ln.path.map(p => [p[0] * S.scale + S.ox, p[1] * S.scale + S.oy]);
+    if (crossing) {                                   // toca o retângulo (arrasto p/ esquerda)
+      for (let i = 1; i < pts.length; i++) if (segHitsRect(pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1], r)) return true;
+      return false;
+    }
+    return pts.every(p => ptInRect(p[0], p[1], r));    // totalmente dentro (arrasto p/ direita)
+  }
 
   // ✨ IA (CV local): detecta as paredes da folha e cria os traços Linear na camada ativa
   async function detectWallsAI() {
@@ -1382,16 +1403,20 @@
       if (S.maybeMarquee && S.marquee) {              // soltou o laço
         const crossing = S.marqCrossing;             // p/ esquerda = APAGAR; p/ direita = selecionar
         const set = selSet(), mset = selMarks();
-        if (crossing || !(S.marqMods && (S.marqMods.ctrl || S.marqMods.shift))) { set.clear(); mset.clear(); }
+        if (crossing || !(S.marqMods && (S.marqMods.ctrl || S.marqMods.shift))) { set.clear(); mset.clear(); S.lineSel.clear(); }
         S.measures.forEach(m => { if (measInRect(m, S.marquee, crossing)) set.add(m); });
         S.marks.forEach(m => { if (markInRect(m, S.marquee, crossing)) mset.add(m); });
+        (S.lines || []).forEach(ln => { if (lineInRect(ln, S.marquee, crossing)) S.lineSel.add(ln); });   // traços Linear
         S.maybeMarquee = false; S.marquee = null;
         if (crossing) {                              // ARRASTE P/ ESQUERDA = apagar tudo que tocou
+          const nL = S.lineSel.size;
+          if (nL) { S.lines = S.lines.filter(l => !S.lineSel.has(l)); S.lineSel.clear(); }
           const n = selCount();
-          if (n) { deleteSelMeas(); markSaved(F.tr('🗑 Apagadas {n} (laço ←)', { n: n })); }
-          else { draw(); }
+          if (n) { deleteSelMeas(); }
+          const tot = n + nL;
+          if (tot) markSaved(F.tr('🗑 Apagadas {n} (laço ←)', { n: tot })); else draw();
         } else {                                     // p/ direita = apenas selecionar
-          updateMeasSel(); draw(); markSaved(F.tr('{n} selecionada(s) · Del p/ apagar', { n: selCount() }));
+          updateMeasSel(); draw(); markSaved(F.tr('{n} selecionada(s) · Del p/ apagar', { n: selCount() + S.lineSel.size }));
         }
         return;
       }
