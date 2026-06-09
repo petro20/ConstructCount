@@ -25,7 +25,7 @@ layout_top(t('app_name'));
   .vhero-by{margin-top:24px;color:#cabfa4;font-size:13px;text-shadow:0 1px 10px rgba(0,0,0,.6)}
   .vhero-by a{color:#e3b653;font-weight:700;text-decoration:none}
   .vhero-by a:hover{text-decoration:underline}
-  .nav{position:absolute;top:0;left:0;right:0;z-index:30;background:transparent;border-bottom:0}
+  .nav{position:absolute;top:0;left:0;right:0;max-width:1160px;margin:0 auto;z-index:30;background:transparent;border-bottom:0;padding-left:28px;padding-right:28px}
   main{position:relative}                          /* sem z-index: o vídeo fixo cai pro fundo (z-10) e NÃO cobre o rodapé */
   .vhero{min-height:100vh;align-items:flex-start;padding-top:92px}   /* conteúdo encostado no menu (não centralizado no meio) */
   .vhero-inner .hero-logo{display:block;height:auto;width:min(200px,52%);margin:0 auto 16px}
