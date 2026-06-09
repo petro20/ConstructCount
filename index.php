@@ -23,7 +23,7 @@ layout_top(t('app_name'));
   .nav{position:absolute;top:0;left:0;right:0;z-index:30;background:transparent;border-bottom:0}
   main{position:relative;z-index:1}
   .vhero{min-height:100vh}
-  .vhero-inner .hero-logo{width:min(210px,56%);margin:0 auto 14px}
+  .vhero-inner .hero-logo{display:block;height:auto;width:min(200px,52%);margin:0 auto 16px}
   .feat,.card,.plan{background:rgba(24,20,12,.72);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
   .sec-title{text-shadow:0 2px 16px rgba(0,0,0,.6)}
 </style>
