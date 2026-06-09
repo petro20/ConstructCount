@@ -26,13 +26,13 @@ layout_top(t('app_name'));
   .vhero-by a{color:#e3b653;font-weight:700;text-decoration:none}
   .vhero-by a:hover{text-decoration:underline}
   .nav{position:absolute;top:0;left:0;right:0;z-index:30;background:transparent;border-bottom:0}
-  main{position:relative;z-index:1}
+  main{position:relative}                          /* sem z-index: o vídeo fixo cai pro fundo (z-10) e NÃO cobre o rodapé */
   .vhero{min-height:100vh}
   .vhero-inner .hero-logo{display:block;height:auto;width:min(200px,52%);margin:0 auto 16px}
   .feat,.card,.plan{background:rgba(24,20,12,.72);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
   .sec-title{text-shadow:0 2px 16px rgba(0,0,0,.6)}
   /* rodapé destacado sobre o vídeo (crédito do desenvolvedor bem visível) */
-  footer{text-align:center;background:rgba(12,10,6,.66);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid rgba(53,44,29,.7);border-radius:12px;color:#dccfb2;margin-top:30px;font-size:13.5px}
+  footer{position:relative;z-index:2;text-align:center;background:rgba(12,10,6,.78);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid rgba(53,44,29,.7);border-radius:12px;color:#dccfb2;margin-top:30px;font-size:13.5px}
   footer a{color:#e3b653;font-weight:700}
 </style>
 <video class="bgfix-vid" autoplay muted loop playsinline preload="auto" poster="assets/hero.png">
