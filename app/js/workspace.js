@@ -373,7 +373,36 @@
     });
     if (!Object.keys(c).length) el.innerHTML = '<div class="px-3 py-2 text-xs text-steel-500">' + F.tr('Nenhuma marca confirmada nesta folha.') + '</div>';
     updateSmartPanel();
+    renderSummary();
   }
+  /** tabela de resumo da marcação (rodapé): Marca · Tipo · Medida · Qtd (com pavimentos e Twin) */
+  function renderSummary() {
+    const panel = document.querySelector('#wsSummary');
+    if (!panel || panel.classList.contains('hidden')) return;
+    const body = document.querySelector('#wsSummaryBody'); if (!body) return;
+    const counts = {};
+    (S.marks || []).forEach(m => { if (m.confirmed) { const k = m.label || ''; counts[k] = (counts[k] || 0) + 1; } });
+    const codes = Object.keys(counts).sort((a, b) => (a || '~').localeCompare(b || '~', undefined, { numeric: true }));
+    const meta = (S.pages || []).find(p => p.page === S.page) || {};
+    const pmult = +meta.mult || 1;
+    const fol = document.querySelector('#wsSummaryFolha');
+    if (fol) fol.textContent = (meta.sheet || ('folha ' + S.page)) + (pmult > 1 ? ' · pavimentos×' + pmult : '');
+    let rows = '', tot = 0;
+    codes.forEach(k => {
+      const r = (S.sched || {})[k] || {};
+      const ty = (F.typeLabel ? F.typeLabel(r.type || '') : (r.type || '')) || '—';
+      const dim = (r.w_raw && r.h_raw) ? (r.w_raw + ' × ' + r.h_raw) : (r.w_mm && r.h_mm ? (r.w_mm + '×' + r.h_mm + 'mm') : '—');
+      const tw = r.type === 'Twin Window' ? 2 : 1;
+      const q = counts[k] * pmult * tw; tot += q;
+      const calc = '' + counts[k] + (pmult > 1 ? '×' + pmult + 'pav' : '') + (tw > 1 ? '×2tw' : '');
+      const qtd = (calc !== '' + counts[k]) ? (calc + ' = <b>' + q + '</b>') : ('<b>' + q + '</b>');
+      rows += '<tr class="border-t border-steel-700/60"><td class="px-3 py-1.5 font-semibold">' + (k || '—') + '</td><td class="px-3 py-1.5 text-steel-300">' + ty + '</td><td class="px-3 py-1.5 text-steel-300">' + dim + '</td><td class="px-3 py-1.5 text-right">' + qtd + '</td></tr>';
+    });
+    if (!codes.length) rows = '<tr><td colspan="4" class="px-3 py-3 text-steel-500">Nenhuma marca confirmada nesta folha.</td></tr>';
+    else rows += '<tr class="border-t-2 border-amber-600/60"><td colspan="3" class="px-3 py-1.5 font-semibold text-right">Total desta folha</td><td class="px-3 py-1.5 text-right font-bold text-amber-300">' + tot + '</td></tr>';
+    body.innerHTML = rows;
+  }
+  F._toggleSummary = function () { const p = document.querySelector('#wsSummary'); if (p) { p.classList.toggle('hidden'); renderSummary(); } };
 
   /** Clicar num item da lista → realça TODAS as marcas iguais e enquadra todas juntas. */
   function selectItem(label) {
@@ -1378,6 +1407,7 @@
     $('#wsZoomOut').addEventListener('click', () => { S.scale /= 1.2; draw(); });
     $('#wsFit').addEventListener('click', () => { fit(); draw(); });
     $('#wsClose').addEventListener('click', async () => { await flushSave(); $('#workspace').classList.add('hidden'); });
+    { const sb = $('#wsSummaryBtn'); if (sb) sb.addEventListener('click', F._toggleSummary); const sc = $('#wsSummaryClose'); if (sc) sc.addEventListener('click', () => { const p = $('#wsSummary'); if (p) p.classList.add('hidden'); }); }
     const scopeBtn = $('#wsScopeBtn');
     if (scopeBtn) scopeBtn.addEventListener('click', async () => {
       if (!F.pickScope) return;
