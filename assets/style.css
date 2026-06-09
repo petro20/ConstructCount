@@ -94,3 +94,17 @@ footer{max-width:920px;margin:24px auto;padding:18px 20px;color:var(--mut);font-
 .music-btn:hover{transform:scale(1.08);box-shadow:0 6px 26px rgba(217,160,42,.45)}
 .music-btn.playing{animation:musicPulse 2.2s ease-in-out infinite}
 @keyframes musicPulse{0%,100%{box-shadow:0 0 0 0 rgba(227,182,83,0)}50%{box-shadow:0 0 0 7px rgba(227,182,83,.14)}}
+
+/* ===================== AUTENTICAÇÃO (login / criar conta) — premium ===================== */
+.auth{min-height:calc(100vh - 230px);display:flex;align-items:center;justify-content:center;padding:30px 16px;position:relative}
+.auth::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(680px 380px at 50% 8%,rgba(217,160,42,.10),transparent 65%)}
+.auth .card.form{width:100%;max-width:430px;margin:0;padding:36px 32px;background:linear-gradient(180deg,rgba(36,29,18,.96),rgba(22,18,12,.96));border:1px solid #3c3220;border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.5),0 1px 0 rgba(227,182,83,.10) inset}
+.auth-logo{display:block;height:58px;width:auto;margin:0 auto 16px;filter:drop-shadow(0 6px 18px rgba(0,0,0,.5))}
+.auth .card.form h2{text-align:center;font-size:25px;margin:0 0 4px}
+.auth-sub{text-align:center;color:var(--mut);font-size:14px;margin:0 0 22px}
+.auth label{margin-top:14px;font-size:13px;color:#cdbf9f}
+.auth input{background:#191510;border:1px solid #413623;padding:12px 13px;border-radius:11px;font-size:15px;color:var(--txt);transition:border-color .15s,box-shadow .15s}
+.auth input:focus{outline:none;border-color:var(--ok);box-shadow:0 0 0 3px rgba(217,160,42,.2)}
+.auth .btn.block{padding:13px;font-size:16px;margin-top:22px;box-shadow:0 8px 24px rgba(217,160,42,.28)}
+.auth .btn.block:hover{filter:brightness(1.05)}
+.auth .muted.center{margin-top:18px;font-size:14px}
