@@ -49,6 +49,7 @@ $GLOBALS['I18N'] = [
   // ---- landing ----
   'hero_badge'=> ['⚡ Estimating de esquadrias com IA', '⚡ AI-powered window & door estimating', '⚡ Estimación de carpintería con IA'],
   'dev_by'    => ['Desenvolvido por', 'Developed by', 'Desarrollado por'],
+  'rights'    => ['Todos os direitos reservados.', 'All rights reserved.', 'Todos los derechos reservados.'],
   'stat_fast' => ['mais rápido que manual', 'faster than manual', 'más rápido que manual'],
   'stat_min'  => ['min por folha', 'min per sheet', 'min por hoja'],
   'stat_rep'  => ['relatórios: Excel + PDF', 'reports: Excel + PDF', 'informes: Excel + PDF'],

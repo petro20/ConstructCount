@@ -30,5 +30,5 @@ function layout_top(string $title): void {
 }
 
 function layout_bottom(): void {
-  echo '</main><footer>© 2026 ConstructCount · <a href="https://m2pb.com" target="_blank">M2PB</a></footer></body></html>';
+  echo '</main><footer>© 2026 ConstructCount · ' . h(t('dev_by')) . ' <a href="https://m2pb.com" target="_blank">M2PB</a> · ' . h(t('rights')) . '</footer></body></html>';
 }
