@@ -17,7 +17,8 @@
     tabs.forEach(tab => tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.toggle('active', t === tab));
       const target = tab.dataset.tab;
-      const isPage = (target === 'rbAbout' || target === 'rbHelp'); // ConstructCount e Ajuda = páginas cheias
+      const isPage = (target === 'rbAbout' || target === 'rbHelp' || target === 'rbPkg'); // páginas cheias
+      if (target === 'rbPkg' && F._renderPackage) F._renderPackage();
       const panels = [...document.querySelectorAll('.rb-panel')];
       panels.forEach(p => { p.classList.toggle('hidden', p.id !== target); p.classList.remove('rb-page'); });
       const main = document.querySelector('main');
@@ -86,7 +87,36 @@
     const ch = $('#ccHelp'); if (ch) ch.addEventListener('click', () => {
       const t = document.querySelector('.rb-tab[data-tab="rbHelp"]'); if (t) t.click();
     });
+    // ----- Pacote (plano / assinatura) -----
+    const psub = $('#pkgSubscribe'); if (psub) psub.addEventListener('click', () => { window.open('https://constructcount.com/assinar', '_blank'); });
+    const pact = $('#pkgActivate'); if (pact) pact.addEventListener('click', () => { if (F.openLicenseGate) F.openLicenseGate(); else openLic(); });
   }
+
+  // ----------------------------------------------------------------- aba Pacote: status da assinatura
+  async function renderPackage() {
+    const box = $('#pkgStatus'), txt = $('#pkgStatusText'); if (!box || !txt) return;
+    box.classList.remove('is-ok', 'is-warn', 'is-off');
+    txt.textContent = F.tr('Verificando assinatura…');
+    let st = null;
+    try { if (F.licenseStatus) st = await F.licenseStatus(); } catch (e) {}
+    if (!st) { txt.textContent = F.tr('Não foi possível verificar a assinatura agora.'); return; }
+    const fmt = (d) => { if (!d) return ''; try { const t = (typeof d === 'number') ? new Date(d * 1000) : new Date(d); return t.toLocaleDateString(); } catch (e) { return ''; } };
+    if (st.state === 'valid') {
+      box.classList.add('is-ok');
+      const exp = fmt(st.expires_at); const plan = st.plan ? (' · ' + st.plan) : '';
+      txt.textContent = F.tr('Assinatura ativa') + plan + (exp ? (' · ' + F.tr('válida até {d}', { d: exp })) : '');
+    } else if (st.state === 'grace') {
+      box.classList.add('is-warn');
+      txt.textContent = F.tr('Modo offline — {d} dia(s) de carência', { d: st.grace_days_left != null ? st.grace_days_left : '?' });
+    } else if (st.state === 'none') {
+      box.classList.add('is-off');
+      txt.textContent = F.tr('Sem assinatura ativa — assine ou ative sua chave');
+    } else {
+      box.classList.add('is-off');
+      txt.textContent = F.tr('Assinatura não autorizada') + (st.reason ? (' · ' + st.reason) : '');
+    }
+  }
+  F._renderPackage = renderPackage;
 
   // ----------------------------------------------------------------- configurações
   async function openSettings() {

@@ -143,6 +143,16 @@
     gate();
   }
   F.recheckLicense = gate;
+  F.licenseStatus = getStatus;                 // p/ a aba Pacote ler o estado atual
+  F.openLicenseGate = function () {            // abre o overlay de ativação/troca de chave
+    var o = el();
+    o.querySelector('#licTitle').textContent = tr('Ativar / trocar licença');
+    o.querySelector('#licMsg').textContent = tr('Insira a chave de licença fornecida pela M2PB.');
+    o.querySelector('#licBtn').textContent = tr('Ativar licença');
+    o.querySelector('#licErr').textContent = '';
+    o.style.display = 'flex';
+    var k = o.querySelector('#licKey'); if (k) { k.value = ''; k.focus(); }
+  };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', kick);
   else kick();
