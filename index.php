@@ -27,7 +27,8 @@ layout_top(t('app_name'));
   .vhero-by a:hover{text-decoration:underline}
   .nav{position:absolute;top:0;left:0;right:0;max-width:1160px;margin:0 auto;z-index:30;background:transparent;border-bottom:0;padding-left:28px;padding-right:28px}
   main{position:relative}                          /* sem z-index: o vídeo fixo cai pro fundo (z-10) e NÃO cobre o rodapé */
-  .vhero{min-height:100vh;align-items:flex-start;padding-top:92px}   /* conteúdo encostado no menu (não centralizado no meio) */
+  .vhero{min-height:0;padding-top:108px;padding-bottom:56px}   /* altura guiada pelo conteúdo (sem vão de 100vh) → cards sobem, hero cheio estilo Dite */
+  .sec{margin:36px 0}                                          /* respiro entre seções mais próximo do Dite */
   .vhero-inner .hero-logo{display:block;height:auto;width:min(200px,52%);margin:0 auto 16px}
   .feat,.card,.plan{background:rgba(24,20,12,.72);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
   .sec-title{text-shadow:0 2px 16px rgba(0,0,0,.6)}
