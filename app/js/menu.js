@@ -80,7 +80,12 @@
     const lm = $('#licenseModal'); if (lm) lm.addEventListener('click', (e) => { if (e.target === lm) lm.classList.add('hidden'); });
     const about = $('#miAbout'); if (about) about.addEventListener('click', () => {
       closeMenus();
-      alert(F.tr('ConstructCount — motor local\n\n1) Projeto ▸ Abrir projeto (PDF): o motor lê a planta.\n   • PDF com texto → tabela direto.\n   • PDF vetorizado → prepara a pasta do projeto e abre o workspace (folhas + marcas editáveis).\n2) Configurações: DPI, pasta, escopo e folhas do schedule.\n3) Projetos salvos: reabrir sem reprocessar, reprocessar ou excluir.'));
+      const hp = $('#howPage'); if (hp) { hp.classList.remove('hidden'); hp.scrollTop = 0; }
+    });
+    const hb = $('#howBack'); if (hb) hb.addEventListener('click', () => { const hp = $('#howPage'); if (hp) hp.classList.add('hidden'); });
+    const hs = $('#howStart'); if (hs) hs.addEventListener('click', () => {
+      const hp = $('#howPage'); if (hp) hp.classList.add('hidden');
+      const mo = $('#miOpen'); if (mo) mo.click();
     });
   }
 
