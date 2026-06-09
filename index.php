@@ -18,13 +18,25 @@ $plan_disp = function (string $plan) use ($L) {
 
 layout_top(t('app_name'));
 ?>
+<style>
+  /* landing: vídeo FIXO no fundo + menu transparente por cima (conteúdo rola sobre o vídeo) */
+  .nav{position:absolute;top:0;left:0;right:0;z-index:30;background:transparent;border-bottom:0}
+  main{position:relative;z-index:1}
+  .vhero{min-height:100vh}
+  .vhero-inner .hero-logo{width:min(210px,56%);margin:0 auto 14px}
+  .feat,.card,.plan{background:rgba(24,20,12,.72);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
+  .sec-title{text-shadow:0 2px 16px rgba(0,0,0,.6)}
+</style>
+<video class="bgfix-vid" autoplay muted loop playsinline preload="auto" poster="assets/hero.png">
+  <source src="assets/video/hero-construction.mp4" type="video/mp4">
+</video>
+<div class="bgfix-overlay" aria-hidden="true"></div>
+
 <section class="vhero">
-  <video class="vhero-vid" autoplay muted loop playsinline preload="auto" poster="assets/hero.png">
-    <source src="assets/video/hero-construction.mp4" type="video/mp4">
-  </video>
   <div class="vhero-grid" aria-hidden="true"></div>
   <div class="vhero-overlay" aria-hidden="true"></div>
   <div class="vhero-inner">
+    <img src="assets/hero.png" alt="ConstructCount" class="hero-logo">
     <span class="vhero-badge"><?= h(t('hero_badge')) ?></span>
     <h1 class="vhero-h1"><?= h(t('hero_h1')) ?></h1>
     <p class="vhero-sub"><?= h(t('hero_sub')) ?></p>
@@ -127,7 +139,7 @@ layout_top(t('app_name'));
   // ---- música ambiente: liga por padrão; navegador exige 1º gesto p/ tocar com som ----
   var bgm = document.getElementById('bgm'), mbtn = document.getElementById('musicBtn');
   if (bgm && mbtn) {
-    bgm.volume = 0.35;
+    bgm.volume = 0.28;
     var want = localStorage.getItem('cc_music') !== 'off';   // padrão: ligada
     function icon() {
       var playing = want && !bgm.paused;
