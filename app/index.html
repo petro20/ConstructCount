@@ -53,7 +53,7 @@
   <!-- pdf-lib (sobreposição das marcas + legenda sobre o PDF da planta) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
-  <link rel="stylesheet" href="css/styles.css?v=101" />
+  <link rel="stylesheet" href="css/styles.css?v=102" />
 </head>
 
 <body class="bg-steel-50 text-steel-900 font-sans min-h-screen">
@@ -91,15 +91,20 @@
       <div class="rb-body">
         <!-- ConstructCount: o que o app faz -->
         <div id="rbAbout" class="rb-panel hidden">
-          <div class="flex gap-2 px-3 py-2 overflow-x-auto">
-            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">🤖</span><div><div class="font-semibold text-steel-800 text-sm">Leitura por IA</div><div class="text-steel-500 text-xs">Lê o PDF e extrai janelas e portas automaticamente.</div></div></div>
-            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">📐</span><div><div class="font-semibold text-steel-800 text-sm">Takeoff automático</div><div class="text-steel-500 text-xs">Conta e dimensiona por tipo, com o schedule.</div></div></div>
-            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">🪟</span><div><div class="font-semibold text-steel-800 text-sm">Tipos + Twin</div><div class="text-steel-500 text-xs">Casement, correr, fixa, Twin (geminada conta ×2)…</div></div></div>
-            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">🏢</span><div><div class="font-semibold text-steel-800 text-sm">Pavimentos×</div><div class="text-steel-500 text-xs">Multiplica a contagem pelo nº de andares iguais.</div></div></div>
-            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">🔀</span><div><div class="font-semibold text-steel-800 text-sm">Split de folhas</div><div class="text-steel-500 text-xs">Duas folhas lado a lado pra comparar (planta × schedule).</div></div></div>
-            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">📊</span><div><div class="font-semibold text-steel-800 text-sm">Resumo editável</div><div class="text-steel-500 text-xs">Corrige tipo e medida direto na tabela.</div></div></div>
-            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">📄</span><div><div class="font-semibold text-steel-800 text-sm">Relatórios prontos</div><div class="text-steel-500 text-xs">Orçamento, Pedido (Excel), Proposta e Planta Marcada.</div></div></div>
-            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">🌐</span><div><div class="font-semibold text-steel-800 text-sm">PT · EN · ES</div><div class="text-steel-500 text-xs">Interface e documentos em três idiomas.</div></div></div>
+          <div class="max-w-5xl mx-auto px-6 py-10">
+            <h2 class="text-2xl font-bold text-steel-800">O que o ConstructCount faz</h2>
+            <p class="text-steel-500 mt-1 mb-7">Levantamento de esquadrias direto da planta — leitura por IA, contagem, medidas e relatórios prontos em minutos.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-3xl mb-2">🤖</div><div class="font-semibold text-steel-800">Leitura por IA</div><div class="text-steel-500 text-sm mt-1">Lê o PDF do projeto e extrai janelas e portas automaticamente.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-3xl mb-2">📐</div><div class="font-semibold text-steel-800">Takeoff automático</div><div class="text-steel-500 text-sm mt-1">Conta e dimensiona por tipo, usando o schedule do projeto.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-3xl mb-2">🪟</div><div class="font-semibold text-steel-800">Tipos + Twin</div><div class="text-steel-500 text-sm mt-1">Casement, de correr, fixa, e Twin (geminada que conta ×2).</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-3xl mb-2">🏢</div><div class="font-semibold text-steel-800">Pavimentos×</div><div class="text-steel-500 text-sm mt-1">Multiplica a contagem pelo número de andares iguais.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-3xl mb-2">🔀</div><div class="font-semibold text-steel-800">Split de folhas</div><div class="text-steel-500 text-sm mt-1">Duas folhas lado a lado pra comparar (planta × schedule).</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-3xl mb-2">📊</div><div class="font-semibold text-steel-800">Resumo editável</div><div class="text-steel-500 text-sm mt-1">Corrige o tipo e a medida direto na tabela do rodapé.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-3xl mb-2">📄</div><div class="font-semibold text-steel-800">Relatórios prontos</div><div class="text-steel-500 text-sm mt-1">Orçamento, Pedido (Excel), Proposta e Planta Marcada.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-3xl mb-2">🗺️</div><div class="font-semibold text-steel-800">Planta marcada</div><div class="text-steel-500 text-sm mt-1">PDF com as marcas coloridas + legenda em cada folha.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-3xl mb-2">🌐</div><div class="font-semibold text-steel-800">PT · EN · ES</div><div class="text-steel-500 text-sm mt-1">Interface e documentos em três idiomas.</div></div>
+            </div>
           </div>
         </div>
         <!-- Início -->
@@ -882,7 +887,7 @@
   <script src="js/annotator.js?v=200"></script>
   <script src="js/workspace.js?v=226"></script>
   <script src="js/desktop.js?v=213"></script>
-  <script src="js/menu.js?v=213"></script>
+  <script src="js/menu.js?v=227"></script>
   <script src="js/cards.js?v=200"></script>
 </body>
 </html>
