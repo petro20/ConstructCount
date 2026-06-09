@@ -36,7 +36,8 @@ layout_top(t('app_name'));
   .feat,.card,.plan{background:rgba(24,20,12,.72);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
   /* TEXTO DOS CARDS maior (estava pequeno) */
   .feat{padding:24px}
-  .feat-ic{font-size:32px}
+  .bgfix-overlay{background:linear-gradient(180deg,rgba(8,7,4,.76) 0%,rgba(8,7,4,.88) 100%)}   /* fundo bem mais escuro/limpo (estilo Dite) */
+  .feat-ic{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:13px;background:rgba(227,182,83,.14);border:1px solid rgba(227,182,83,.32);font-size:24px;margin-bottom:14px}   /* ícone em quadradinho (estilo Dite) */
   .feat h3{font-size:20px}
   .feat p{font-size:16px;line-height:1.55}
   .step h3{font-size:19px}
