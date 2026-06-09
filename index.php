@@ -28,7 +28,7 @@ layout_top(t('app_name'));
   .sec-title{text-shadow:0 2px 16px rgba(0,0,0,.6)}
 </style>
 <video class="bgfix-vid" autoplay muted loop playsinline preload="auto" poster="assets/hero.png">
-  <source src="assets/video/hero-construction.mp4" type="video/mp4">
+  <source src="assets/video/hero-office.mp4" type="video/mp4">
 </video>
 <div class="bgfix-overlay" aria-hidden="true"></div>
 
