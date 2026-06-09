@@ -33,6 +33,7 @@ $GLOBALS['I18N'] = [
   'use_in_app'    => ['Cole esta chave na tela de ativação do app.', 'Paste this key in the app activation screen.', 'Pega esta clave en la pantalla de activación de la app.'],
   'download_app'  => ['⬇ Baixar o app (Windows)', '⬇ Download the app (Windows)', '⬇ Descargar la app (Windows)'],
   'download_hint' => ['Baixe, descompacte e abra o ConstructCount; cole sua chave para ativar.', 'Download, unzip and open ConstructCount; paste your key to activate.', 'Descarga, descomprime y abre ConstructCount; pega tu clave para activar.'],
+  'download_warn' => ['⚠️ O Windows pode mostrar um aviso de segurança (app novo). Clique em “Mais informações” → “Executar mesmo assim”. É normal e seguro.', '⚠️ Windows may show a security warning (new app). Click “More info” → “Run anyway”. It’s normal and safe.', '⚠️ Windows puede mostrar un aviso de seguridad (app nueva). Haz clic en “Más información” → “Ejecutar de todos modos”. Es normal y seguro.'],
   'manage_billing'=> ['Gerenciar assinatura', 'Manage billing', 'Gestionar suscripción'],
   'cancel_sub'    => ['Cancelar assinatura', 'Cancel subscription', 'Cancelar suscripción'],
   'confirm_cancel'=> ['Cancelar sua assinatura? O acesso continua até o fim do período.', 'Cancel your subscription? Access continues until the end of the period.', '¿Cancelar tu suscripción? El acceso continúa hasta el fin del período.'],

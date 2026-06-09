@@ -39,6 +39,7 @@ layout_top(t('dashboard'));
         <a class="btn" href="<?= h(APP_DOWNLOAD_URL) ?>"><?= h(t('download_app')) ?></a>
         <span class="muted" style="font-size:13px"><?= h(t('download_hint')) ?></span>
       </div>
+      <p class="muted" style="margin-top:8px;font-size:12.5px;line-height:1.5"><?= h(t('download_warn')) ?></p>
     <?php endif; ?>
     <div style="margin-top:12px"><a class="btn ghost" href="<?= h(url('billing.php')) ?>" onclick="return confirm('<?= h(t('confirm_cancel')) ?>')"><?= h(t('cancel_sub')) ?></a></div>
   <?php endif; ?>
