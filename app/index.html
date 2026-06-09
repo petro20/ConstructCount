@@ -78,7 +78,7 @@
     <div class="ribbon max-w-7xl mx-auto">
       <!-- abas -->
       <div class="rb-tabs">
-        <span class="rb-brand">ConstructCount</span>
+        <button class="rb-brand rb-tab" data-tab="rbAbout" title="O que o ConstructCount faz">ConstructCount</button>
         <button class="rb-tab active" data-tab="rbHome">Início</button>
         <button class="rb-tab" data-tab="rbDocs">Documentos</button>
         <button class="rb-tab" data-tab="rbView">Exibir</button>
@@ -89,6 +89,19 @@
 
       <!-- painéis -->
       <div class="rb-body">
+        <!-- ConstructCount: o que o app faz -->
+        <div id="rbAbout" class="rb-panel hidden">
+          <div class="flex gap-2 px-3 py-2 overflow-x-auto">
+            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">🤖</span><div><div class="font-semibold text-steel-800 text-sm">Leitura por IA</div><div class="text-steel-500 text-xs">Lê o PDF e extrai janelas e portas automaticamente.</div></div></div>
+            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">📐</span><div><div class="font-semibold text-steel-800 text-sm">Takeoff automático</div><div class="text-steel-500 text-xs">Conta e dimensiona por tipo, com o schedule.</div></div></div>
+            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">🪟</span><div><div class="font-semibold text-steel-800 text-sm">Tipos + Twin</div><div class="text-steel-500 text-xs">Casement, correr, fixa, Twin (geminada conta ×2)…</div></div></div>
+            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">🏢</span><div><div class="font-semibold text-steel-800 text-sm">Pavimentos×</div><div class="text-steel-500 text-xs">Multiplica a contagem pelo nº de andares iguais.</div></div></div>
+            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">🔀</span><div><div class="font-semibold text-steel-800 text-sm">Split de folhas</div><div class="text-steel-500 text-xs">Duas folhas lado a lado pra comparar (planta × schedule).</div></div></div>
+            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">📊</span><div><div class="font-semibold text-steel-800 text-sm">Resumo editável</div><div class="text-steel-500 text-xs">Corrige tipo e medida direto na tabela.</div></div></div>
+            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">📄</span><div><div class="font-semibold text-steel-800 text-sm">Relatórios prontos</div><div class="text-steel-500 text-xs">Orçamento, Pedido (Excel), Proposta e Planta Marcada.</div></div></div>
+            <div class="flex items-start gap-2 bg-steel-50 border border-steel-200 rounded-lg px-3 py-2 min-w-[200px]"><span class="text-2xl">🌐</span><div><div class="font-semibold text-steel-800 text-sm">PT · EN · ES</div><div class="text-steel-500 text-xs">Interface e documentos em três idiomas.</div></div></div>
+          </div>
+        </div>
         <!-- Início -->
         <div id="rbHome" class="rb-panel">
           <div class="rb-group">
