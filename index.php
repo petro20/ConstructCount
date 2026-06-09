@@ -29,6 +29,9 @@ layout_top(t('app_name'));
   main{position:relative}                          /* sem z-index: o vídeo fixo cai pro fundo (z-10) e NÃO cobre o rodapé */
   .vhero{min-height:0;padding-top:108px;padding-bottom:56px}   /* altura guiada pelo conteúdo (sem vão de 100vh) → cards sobem, hero cheio estilo Dite */
   .sec{margin:36px 0}                                          /* respiro entre seções mais próximo do Dite */
+  .vhero-inner{max-width:1040px}                               /* container mais largo (Dite) → título respira */
+  .vhero-h1{font-size:clamp(34px,6.6vw,72px);line-height:1.02;letter-spacing:-.025em}   /* título maior/dominante */
+  .vhero-sub{font-size:clamp(17px,2.1vw,21px);max-width:700px} /* subtítulo um pouco maior e mais largo */
   .vhero-inner .hero-logo{display:block;height:auto;width:min(200px,52%);margin:0 auto 16px}
   .feat,.card,.plan{background:rgba(24,20,12,.72);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
   .sec-title{text-shadow:0 2px 16px rgba(0,0,0,.6)}
