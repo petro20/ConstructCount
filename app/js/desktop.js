@@ -21,6 +21,10 @@
     const hs = document.querySelector('#homeShortcuts'); if (hs) hs.classList.remove('hidden');
     const hp = document.querySelector('#homeOpenPdf'); if (hp) hp.addEventListener('click', newProject);
     const hj = document.querySelector('#homeOpenJobs'); if (hj) hj.addEventListener('click', () => { if (F._openJobs) F._openJobs(); });
+    // proteção do cliente: abrir a pasta dos projetos + backup .zip de tudo
+    F.openJobsFolder = () => window.pywebview.api.open_jobs_folder();
+    F.backupJobs = () => window.pywebview.api.backup_jobs();
+    (async () => { try { const r = await window.pywebview.api.jobs_root(); if (r && r.path) F._jobsRootPath = r.path; } catch (e) {} })();
     // no desktop, a Planta Marcada é gerada pelo backend (tem o PDF + marcas do job)
     if (F.exportMarkedPlan) {
       const _web = F.exportMarkedPlan;

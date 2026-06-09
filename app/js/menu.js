@@ -196,6 +196,26 @@
     const jvg = $('#jobsViewGrid'); const jvl = $('#jobsViewList');
     if (jvg) jvg.addEventListener('click', () => { JOBS_VIEW = 'grid'; jvg.classList.add('bg-steel-100'); if (jvl) jvl.classList.remove('bg-steel-100'); renderJobs(); });
     if (jvl) jvl.addEventListener('click', () => { JOBS_VIEW = 'list'; jvl.classList.add('bg-steel-100'); if (jvg) jvg.classList.remove('bg-steel-100'); renderJobs(); });
+    // proteção do cliente: abrir a pasta dos projetos + backup .zip
+    const jof = $('#jobsOpenFolder');
+    if (jof) jof.addEventListener('click', async () => {
+      if (!F.openJobsFolder) { alert(F.tr('Disponível no app de desktop.')); return; }
+      try { await F.openJobsFolder(); } catch (e) {}
+    });
+    const jbk = $('#jobsBackup');
+    if (jbk) jbk.addEventListener('click', async () => {
+      if (!F.backupJobs) { alert(F.tr('Disponível no app de desktop.')); return; }
+      const st = $('#jobsStatus'); const old = st ? st.textContent : '';
+      if (st) st.textContent = F.tr('Fazendo backup… (pode levar um momento em projetos grandes)');
+      jbk.disabled = true;
+      try {
+        const r = await F.backupJobs();
+        if (r && r.ok) { if (st) st.textContent = F.tr('✓ Backup salvo: {n} projeto(s) · {mb} MB', { n: r.n, mb: r.mb }); }
+        else if (r && r.cancelled) { if (st) st.textContent = old; }
+        else { if (st) st.textContent = F.tr('Backup: {e}', { e: (r && r.error) || 'falhou' }); }
+      } catch (e) { if (st) st.textContent = F.tr('Backup: {e}', { e: String(e) }); }
+      jbk.disabled = false;
+    });
     // clicar no fundo escuro fecha os modais
     ['#jobsModal', '#settingsModal'].forEach(sel => {
       const el = $(sel); if (el) el.addEventListener('click', (e) => { if (e.target === el) el.classList.add('hidden'); });

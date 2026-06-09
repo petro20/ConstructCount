@@ -259,6 +259,13 @@
           <button id="jobsClose" class="px-2 py-1 text-steel-500 hover:text-steel-800 text-xl leading-none">&times;</button>
         </div>
       </div>
+      <!-- proteção do cliente: os trabalhos não se perdem -->
+      <div class="flex items-center gap-3 px-5 py-2.5 bg-emerald-50 border-b border-emerald-100 text-[13px] text-emerald-900">
+        <span class="text-base">💾</span>
+        <span class="flex-1">Seus projetos ficam salvos <b>no seu computador</b>. Atualizar ou reinstalar o app <b>não apaga</b> nada.</span>
+        <button id="jobsOpenFolder" class="px-2.5 py-1 rounded border border-emerald-300 bg-white hover:bg-emerald-100 text-emerald-800 text-xs whitespace-nowrap">📁 Abrir pasta</button>
+        <button id="jobsBackup" class="px-2.5 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700 text-xs whitespace-nowrap">💾 Fazer backup (.zip)</button>
+      </div>
       <div id="jobsBody" class="flex-1 overflow-y-auto p-4 bg-steel-50"></div>
       <div id="jobsStatus" class="px-5 py-2 border-t border-steel-100 text-xs text-steel-500"></div>
     </div>
@@ -822,8 +829,8 @@
   <script src="js/main.js?v=200"></script>
   <script src="js/annotator.js?v=200"></script>
   <script src="js/workspace.js?v=212"></script>
-  <script src="js/desktop.js?v=211"></script>
-  <script src="js/menu.js?v=200"></script>
+  <script src="js/desktop.js?v=213"></script>
+  <script src="js/menu.js?v=213"></script>
   <script src="js/cards.js?v=200"></script>
 </body>
 </html>
