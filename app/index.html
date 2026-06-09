@@ -668,7 +668,7 @@
     </div>
 
     <!-- RESUMO da marcação (overlay no rodapé — não toca no canvas) -->
-    <div id="wsSummary" class="hidden absolute bottom-0 left-0 right-0 z-20 bg-steel-800/97 border-t-2 border-amber-600/70 text-steel-100 flex flex-col" style="height:230px">
+    <div id="wsSummary" class="hidden absolute bottom-0 left-0 right-0 z-40 border-t-2 border-amber-600/70 text-steel-100 flex flex-col" style="height:230px;background:#16140e">
       <div class="flex items-center gap-3 px-3 py-1.5 border-b border-steel-700 text-xs shrink-0">
         <span class="font-semibold">📊 Resumo da marcação</span>
         <span id="wsSummaryFolha" class="text-steel-400"></span>
@@ -676,7 +676,7 @@
       </div>
       <div class="overflow-auto flex-1 min-h-0">
         <table class="w-full text-sm" id="wsSummaryTable">
-          <thead class="sticky top-0 bg-steel-800 text-steel-400 text-xs">
+          <thead class="sticky top-0 text-steel-400 text-xs" style="background:#16140e">
             <tr><th class="text-left px-3 py-1.5">Marca</th><th class="text-left px-3 py-1.5">Tipo</th><th class="text-left px-3 py-1.5">Medida</th><th class="text-right px-3 py-1.5">Qtd</th></tr>
           </thead>
           <tbody id="wsSummaryBody"></tbody>
