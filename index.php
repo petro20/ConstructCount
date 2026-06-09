@@ -20,7 +20,11 @@ layout_top(t('app_name'));
 ?>
 <style>
   /* landing: vídeo FIXO no fundo + menu transparente por cima (conteúdo rola sobre o vídeo) */
-  html,body{overflow-x:hidden;max-width:100%}      /* mata a barra horizontal do hero full-bleed (100vw) */
+  html,body{overflow-x:hidden;max-width:100%;scrollbar-width:none;-ms-overflow-style:none}  /* sem barra horizontal + tela "infinita" (esconde scrollbar, rolagem segue) */
+  html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
+  .vhero-by{margin-top:24px;color:#cabfa4;font-size:13px;text-shadow:0 1px 10px rgba(0,0,0,.6)}
+  .vhero-by a{color:#e3b653;font-weight:700;text-decoration:none}
+  .vhero-by a:hover{text-decoration:underline}
   .nav{position:absolute;top:0;left:0;right:0;z-index:30;background:transparent;border-bottom:0}
   main{position:relative;z-index:1}
   .vhero{min-height:100vh}
@@ -50,6 +54,7 @@ layout_top(t('app_name'));
       <div class="vstat"><b><span class="vnum" data-to="3">0</span></b><span><?= h(t('stat_min')) ?></span></div>
       <div class="vstat"><b><span class="vsuf">＋</span></b><span><?= h(t('stat_rep')) ?></span></div>
     </div>
+    <p class="vhero-by"><?= h(t('dev_by')) ?> <a href="https://m2pb.com" target="_blank" rel="noopener">M2PB</a></p>
   </div>
   <a href="#features" class="vhero-scroll" aria-hidden="true">▾</a>
 </section>
