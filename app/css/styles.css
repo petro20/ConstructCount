@@ -1,0 +1,249 @@
+/* =========================================================================
+   styles.css — estilos complementares
+   (a base visual vem do Tailwind via CDN; aqui ficam ajustes finos)
+   ========================================================================= */
+
+/* Tipografia (Inter) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+html { scroll-behavior: smooth; }
+
+/* Números monoespaçados nas tabelas/valores */
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* Remove as setinhas dos inputs number (visual mais limpo) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] { -moz-appearance: textfield; }
+
+/* SVG responsivo dentro do holder */
+#svgHolder svg { display: block; width: 100%; height: auto; }
+
+/* Foco acessível nos botões */
+button:focus-visible {
+  outline: 2px solid #8b887f;
+  outline-offset: 2px;
+}
+
+/* Animação suave ao revelar cards */
+.bg-white.rounded-xl { animation: fadeIn .35s ease both; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================================================
+   Animação dos ícones das barras recolhidas (hover sem clicar)
+   ========================================================================= */
+.wsBarTool, .wsLeftIco {
+  position: relative;
+  transition: transform .15s ease, background-color .15s ease, color .15s ease;
+}
+.wsBarTool:hover, .wsLeftIco:hover {
+  transform: scale(1.25);                 /* cresce suavemente */
+}
+.wsBarTool:active, .wsLeftIco:active { transform: scale(1.05); }
+
+/* Balãozinho (tooltip) deslizante com o nome — usa data-tip */
+.wsBarTool[data-tip]::after,
+.wsLeftIco[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: 50%;
+  background: #111827;
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 60;
+  box-shadow: 0 4px 12px rgba(0,0,0,.35);
+  transition: opacity .15s ease, transform .15s ease;
+}
+/* barra direita: tooltip sai para a ESQUERDA */
+.wsBarTool[data-tip]::after {
+  right: calc(100% + 10px);
+  transform: translateY(-50%) translateX(6px);
+}
+.wsBarTool[data-tip]:hover::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+/* barra esquerda: tooltip sai para a DIREITA */
+.wsLeftIco[data-tip]::after {
+  left: calc(100% + 10px);
+  transform: translateY(-50%) translateX(-6px);
+}
+.wsLeftIco[data-tip]:hover::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* Toolbar de ações do painel Páginas (estilo PlanSwift) */
+.pgTool {
+  position: relative;
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px; line-height: 1;
+  transition: transform .12s ease, background-color .12s ease;
+}
+.pgTool:hover { background: #34322c; transform: scale(1.18); }
+.pgTool:active { transform: scale(1.02); }
+.pgTool[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute; top: calc(100% + 6px); left: 0;
+  transform: translateY(4px);
+  background: #111827; color: #fff; padding: 3px 8px; border-radius: 6px;
+  font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none; z-index: 60;
+  box-shadow: 0 4px 12px rgba(0,0,0,.35); transition: opacity .12s ease, transform .12s ease;
+}
+.pgTool[data-tip]:hover::after { opacity: 1; transform: translateY(0); }
+/* últimos ícones: balão cresce p/ a esquerda pra não vazar do painel */
+.pgTool[data-tip]:nth-last-child(-n+2)::after { left: auto; right: 0; }
+
+/* =========================================================================
+   RIBBON (faixa de menu estilo PlanSwift) — abas + grupos de botões
+   ========================================================================= */
+.ribbon { font-size: 13px; }
+.rb-tabs {
+  display: flex; align-items: flex-end; gap: 2px;
+  padding: 5px 8px 0; background: linear-gradient(#e8e6e0, #dcdad3);
+  border-bottom: 1px solid #cfccc4;
+}
+.rb-brand {
+  background: linear-gradient(#57534b, #34322c); color: #fff;
+  padding: 6px 16px; font-weight: 700; letter-spacing: .02em;
+  border-radius: 7px 7px 0 0; box-shadow: 0 -1px 0 rgba(255,255,255,.15) inset;
+}
+.rb-tab {
+  padding: 6px 14px; font-weight: 600; color: #34322c;
+  border: 1px solid transparent; border-bottom: 0;
+  border-radius: 7px 7px 0 0; cursor: pointer; position: relative; top: 1px;
+  transition: background .15s ease, color .15s ease;
+}
+.rb-tab:hover { background: rgba(255,255,255,.55); }
+.rb-tab.active {
+  background: #fff; color: #1b1a16;
+  border-color: #cfccc4; border-bottom: 1px solid #fff;
+}
+.rb-body {
+  background: #fff; border-bottom: 1px solid #d9d7d1;
+  box-shadow: 0 2px 6px rgba(36,52,75,.06);
+}
+.rb-panel { display: flex; align-items: stretch; flex-wrap: wrap; padding: 8px 6px; gap: 2px; }
+.rb-panel.hidden { display: none; }
+.rb-group {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 0 12px; border-right: 1px solid #f2f1ee; min-width: 0;
+}
+.rb-group:last-child { border-right: 0; }
+.rb-row { display: flex; gap: 4px; flex: 1; align-items: stretch; }
+.rb-label {
+  margin-top: 5px; font-size: 10px; color: #8b887f;
+  text-transform: uppercase; letter-spacing: .05em; text-align: center;
+}
+.rb-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  gap: 4px; width: 78px; padding: 7px 4px 5px; border-radius: 9px;
+  font-size: 11px; line-height: 1.1; color: #34322c; text-align: center;
+  background: transparent; border: 1px solid transparent; cursor: pointer;
+  transition: background .14s ease, transform .12s ease, box-shadow .14s ease, border-color .14s ease;
+}
+.rb-btn .ico { font-size: 24px; line-height: 1; }
+.rb-btn:hover {
+  background: #f4f3f0; border-color: #e4e2dc;
+  transform: translateY(-1px); box-shadow: 0 3px 8px rgba(52,50,44,.14);
+}
+.rb-btn:active { transform: translateY(0); box-shadow: none; }
+/* botões de idioma (aba Exibir) */
+.rb-lang {
+  min-width: 40px; padding: 8px 10px; border-radius: 8px; font-weight: 700;
+  color: #34322c; border: 1px solid #d9d7d1; background: #fff; cursor: pointer;
+  transition: background .14s ease, color .14s ease, box-shadow .14s ease;
+}
+.rb-lang:hover { background: #f4f3f0; }
+.rb-lang.active { background: #c4881a; color: #1b1a16; border-color: #c4881a; box-shadow: 0 2px 6px rgba(52,50,44,.25); }
+
+/* =========================================================================
+   CARDS recolhíveis + visual renovado (seções 1..8)
+   ========================================================================= */
+.app-card {
+  border-radius: 1rem;
+  transition: box-shadow .22s ease, transform .22s ease, border-color .22s ease;
+}
+.app-card:hover { box-shadow: 0 12px 32px rgba(36, 52, 75, .12); transform: translateY(-1px); }
+
+/* cabeçalho clicável */
+.card-head { display: flex; align-items: center; gap: .5rem; }
+.card-head h2 { transition: color .15s ease; }
+.card-head h2:hover { color: #34322c; }
+
+/* numerador em gradiente (era cinza) */
+.card-num {
+  background: linear-gradient(135deg, #d9a02a, #a06b12) !important;
+  color: #fff !important;
+  border-radius: 9px !important;
+  box-shadow: 0 2px 7px rgba(44, 71, 106, .28);
+  font-weight: 700;
+}
+
+/* botão chevron */
+.card-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.7rem; height: 1.7rem; border-radius: .55rem; flex: 0 0 auto;
+  color: #8b887f; background: transparent; cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.card-toggle:hover { background: #f4f3f0; color: #34322c; }
+.card-toggle svg { width: 1.15rem; height: 1.15rem; transition: transform .28s ease; }
+.app-card.collapsed .card-toggle svg { transform: rotate(-90deg); }
+
+/* corpo recolhível — altura/opacidade controladas inline pelo cards.js;
+   aqui só a transição e o overflow (animação suave). */
+.card-body {
+  overflow: hidden;
+  transition: max-height .32s ease, opacity .22s ease;
+}
+.app-card.collapsed .card-body { pointer-events: none; }
+/* quando recolhido, tira a folga inferior do cabeçalho p/ ficar compacto */
+.app-card.collapsed .card-head { margin-bottom: 0 !important; }
+
+/* Impressão (caso o usuário use Ctrl+P na página) */
+@media print {
+  header, footer, #dropzone, #exportCard, #unitToggle { display: none !important; }
+  .app-card.collapsed .card-body { max-height: none !important; opacity: 1 !important; }
+}
+
+/* ---- Ferramenta ATIVA no workspace (modo em funcionamento) -------------- */
+/* Destaque forte e consistente (vence as utilitárias bg-steel-* / hover). */
+.ws-tool-active,
+.wsBarTool.ws-tool-active {
+  background: #c4881a !important;            /* emerald-500 */
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: inset 4px 0 0 #ffffff, 0 0 0 2px #e3b653, 0 2px 8px rgba(196,136,26,.45) !important;
+}
+.ws-tool-active:hover,
+.wsBarTool.ws-tool-active:hover { background: #a06b12 !important; }
+
+/* variante destrutiva (Apagar) — vermelho */
+.ws-tool-active-del,
+.wsBarTool.ws-tool-active-del {
+  background: #f43f5e !important;            /* rose-500 */
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: inset 4px 0 0 #ffffff, 0 0 0 2px #fb7185, 0 2px 8px rgba(244,63,94,.45) !important;
+}
+.ws-tool-active-del:hover,
+.wsBarTool.ws-tool-active-del:hover { background: #e11d48 !important; }
+
+/* pulso sutil p/ reforçar que está "em uso" */
+@keyframes wsToolPulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.12); } }
+.ws-tool-active, .ws-tool-active-del { animation: wsToolPulse 1.8s ease-in-out infinite; }

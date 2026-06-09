@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ConstructCount</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=3" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=3" />
+  <link rel="icon" href="assets/favicon.ico?v=3" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=3" />
+
+  <!-- Tailwind CSS (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            /* paleta da LOGO: grafite/prata (estrutura) + dourado (destaque) */
+            steel: {
+              50: '#f7f7f5', 100: '#ececea', 200: '#d9d7d1',
+              300: '#b8b5ac', 400: '#8b887f', 500: '#615e57',
+              600: '#46433c', 700: '#34322c', 800: '#262420', 900: '#1b1a16'
+            },
+            gold: {
+              50: '#fbf4e2', 100: '#f6e7bf', 200: '#eccd84', 300: '#e3b653',
+              400: '#d9a02a', 500: '#c4881a', 600: '#a06b12', 700: '#7c5210',
+              800: '#573a0d', 900: '#3a2708'
+            },
+            /* sobrescreve os acentos antigos → dourado (recolore o app inteiro) */
+            emerald: {
+              50: '#fbf4e2', 100: '#f6e7bf', 200: '#eccd84', 300: '#e3b653',
+              400: '#d9a02a', 500: '#c4881a', 600: '#a06b12', 700: '#7c5210',
+              800: '#573a0d', 900: '#3a2708'
+            },
+            cyan: {
+              50: '#fbf4e2', 100: '#f6e7bf', 200: '#eccd84', 300: '#e3b653',
+              400: '#d9a02a', 500: '#c4881a', 600: '#a06b12', 700: '#7c5210',
+              800: '#573a0d', 900: '#3a2708'
+            }
+          },
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+
+  <!-- jsPDF + autoTable (geração de PDF do orçamento) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <!-- SheetJS (geração de Excel .xlsx do pedido ao fornecedor) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- pdf-lib (sobreposição das marcas + legenda sobre o PDF da planta) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+
+  <link rel="stylesheet" href="css/styles.css?v=99" />
+</head>
+
+<body class="bg-steel-50 text-steel-900 font-sans min-h-screen">
+
+  <!-- ===== HEADER ===== -->
+  <header class="bg-gradient-to-r from-steel-800 to-steel-600 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-6 py-5 flex items-center gap-4">
+      <img src="assets/logo.png?v=3" alt="ConstructCount"
+           class="w-12 h-12 object-contain drop-shadow" />
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">ConstructCount</h1>
+        <p class="text-steel-100 text-sm">Extração inteligente de esquadrias &middot; Orçamento &amp; Pedido em segundos</p>
+      </div>
+      <a id="brandBadge" href="https://m2pb.com" target="_blank" rel="noopener noreferrer"
+         class="ml-auto text-xs font-semibold tracking-wide px-3 py-1 rounded-full bg-white/10 ring-1 ring-white/20 hover:bg-white/20 transition"
+         title="M2PB">M2PB</a>
+    </div>
+  </header>
+
+  <!-- ===== RIBBON (faixa estilo PlanSwift) — abas + grupos de botões ===== -->
+  <nav id="menubar" class="hidden relative z-30">
+    <div class="ribbon max-w-7xl mx-auto">
+      <!-- abas -->
+      <div class="rb-tabs">
+        <span class="rb-brand">ConstructCount</span>
+        <button class="rb-tab active" data-tab="rbHome">Início</button>
+        <button class="rb-tab" data-tab="rbDocs">Documentos</button>
+        <button class="rb-tab" data-tab="rbView">Exibir</button>
+        <button class="rb-tab" data-tab="rbCfg">Configurações</button>
+        <button class="rb-tab" data-tab="rbHelp">Ajuda</button>
+        <span id="menuProjName" class="ml-auto self-center text-steel-400 text-xs pr-3"></span>
+      </div>
+
+      <!-- painéis -->
+      <div class="rb-body">
+        <!-- Início -->
+        <div id="rbHome" class="rb-panel">
+          <div class="rb-group">
+            <div class="rb-row">
+              <button id="miOpen"   class="rb-btn"><span class="ico">📂</span><span>Novo projeto</span></button>
+              <button id="miJobs"   class="rb-btn"><span class="ico">🗂️</span><span>Projetos salvos</span></button>
+              <button id="miImport" class="rb-btn"><span class="ico">📥</span><span>Importar Takeoff</span></button>
+            </div>
+            <div class="rb-label">Projeto</div>
+          </div>
+        </div>
+        <!-- Documentos -->
+        <div id="rbDocs" class="rb-panel hidden">
+          <div class="rb-group">
+            <div class="rb-row">
+              <button id="miDocQuote"    class="rb-btn"><span class="ico">📄</span><span>Orçamento Cliente</span></button>
+              <button id="miDocProposal" class="rb-btn"><span class="ico">📝</span><span>Proposta Cliente</span></button>
+            </div>
+            <div class="rb-label">Cliente</div>
+          </div>
+          <div class="rb-group">
+            <div class="rb-row">
+              <button id="miDocSupplier" class="rb-btn"><span class="ico">📊</span><span>Pedido Fornecedor</span></button>
+            </div>
+            <div class="rb-label">Fornecedor</div>
+          </div>
+          <div class="rb-group">
+            <div class="rb-row">
+              <button id="miDocMarked"  class="rb-btn"><span class="ico">🗺️</span><span>Planta Marcada</span></button>
+              <button id="miDocSummary" class="rb-btn"><span class="ico">📋</span><span>Quadro Resumo</span></button>
+            </div>
+            <div class="rb-label">Plantas</div>
+          </div>
+        </div>
+        <!-- Exibir -->
+        <div id="rbView" class="rb-panel hidden">
+          <div class="rb-group">
+            <div class="rb-row">
+              <button id="miUnit" class="rb-btn"><span class="ico">↔️</span><span>Unidade m²/ft²</span></button>
+            </div>
+            <div class="rb-label">Medida</div>
+          </div>
+          <div class="rb-group">
+            <div class="rb-row" id="rbLangRow"></div>
+            <div class="rb-label">Idioma</div>
+          </div>
+        </div>
+        <!-- Configurações -->
+        <div id="rbCfg" class="rb-panel hidden">
+          <div class="rb-group">
+            <div class="rb-row">
+              <button id="miSettings" class="rb-btn"><span class="ico">⚙️</span><span>Motor local</span></button>
+            </div>
+            <div class="rb-label">Configurações</div>
+          </div>
+        </div>
+        <!-- Ajuda -->
+        <div id="rbHelp" class="rb-panel hidden">
+          <div class="rb-group">
+            <div class="rb-row">
+              <button id="miAbout"   class="rb-btn"><span class="ico">ℹ️</span><span>Como funciona</span></button>
+              <button id="miLicense" class="rb-btn"><span class="ico">🔒</span><span>Licença</span></button>
+            </div>
+            <div class="rb-label">Sobre</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Modal: Licença & Direitos (software proprietário M2PB) -->
+  <div id="licenseModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
+      <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">🔒 <span>Licença &amp; Direitos</span></h3>
+      <div class="space-y-3 text-sm text-steel-600 leading-relaxed">
+        <p><span>ConstructCount é um software proprietário da M2PB. © 2026 M2PB — Todos os direitos reservados.</span></p>
+        <p><span>A comercialização deste aplicativo — incluindo a venda de assinaturas e licenças de uso — é direito exclusivo da M2PB. Nenhuma outra pessoa física ou jurídica está autorizada a vender, revender, sublicenciar ou distribuir assinaturas ou licenças deste app sem autorização expressa e por escrito da M2PB.</span></p>
+        <p><span>É vedada a cópia, modificação, engenharia reversa ou redistribuição sem permissão. Para adquirir uma assinatura oficial, contate a M2PB.</span></p>
+      </div>
+      <div class="flex items-center justify-between mt-5">
+        <a href="https://m2pb.com" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-steel-600 hover:text-steel-800">m2pb.com</a>
+        <button id="licClose" class="px-3 py-1.5 rounded bg-steel-600 text-white font-medium hover:bg-steel-700">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Configurações do motor -->
+  <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
+      <h3 class="text-lg font-semibold mb-4">Configurações do motor local</h3>
+      <div class="grid grid-cols-2 gap-4 text-sm">
+        <label class="col-span-2">Pasta dos projetos (Jobs)
+          <input id="cfgRoot" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" />
+        </label>
+        <label>DPI (qualidade × velocidade)
+          <input id="cfgDpi" type="number" min="100" max="400" step="10" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" />
+        </label>
+        <label>Tamanho de exibição (px)
+          <input id="cfgDispMax" type="number" min="1200" max="6000" step="100" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" />
+        </label>
+        <label>Escopo das folhas
+          <select id="cfgScope" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5">
+            <option value="all">Todas as páginas</option>
+            <option value="marks">Só as folhas com marcas</option>
+          </select>
+        </label>
+        <div></div>
+        <label>Folha do Window Schedule (A700)
+          <input id="cfgSchedWin" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" placeholder="auto ou nº" />
+        </label>
+        <label>Folha do Storefront (A701)
+          <input id="cfgSchedStore" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" placeholder="auto ou nº" />
+        </label>
+      </div>
+      <p class="text-xs text-steel-500 mt-3">Mudanças valem para o próximo "Reprocessar" de um projeto.</p>
+      <div class="flex justify-end gap-2 mt-5">
+        <button id="cfgCancel" class="px-3 py-1.5 rounded border border-steel-300 hover:bg-steel-50">Cancelar</button>
+        <button id="cfgSave" class="px-3 py-1.5 rounded bg-steel-600 text-white font-medium hover:bg-steel-700">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Projetos salvos (explorador estilo Windows Explorer) -->
+  <div id="jobsModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-5xl h-[80vh] flex flex-col">
+      <div class="flex items-center gap-3 px-5 py-3 border-b border-steel-100">
+        <h3 class="text-lg font-semibold">📁 Projetos salvos</h3>
+        <input id="jobsSearch" class="ml-2 flex-1 max-w-xs rounded border border-steel-200 px-3 py-1.5 text-sm" placeholder="Buscar projeto…" />
+        <div class="ml-auto flex items-center gap-1">
+          <button id="jobsViewGrid" class="px-2 py-1 rounded text-sm bg-steel-100" title="Ícones">▦</button>
+          <button id="jobsViewList" class="px-2 py-1 rounded text-sm hover:bg-steel-100" title="Lista">☰</button>
+          <button id="jobsRefresh" class="px-2 py-1 rounded text-sm hover:bg-steel-100" title="Atualizar">↻</button>
+          <button id="jobsClose" class="px-2 py-1 text-steel-500 hover:text-steel-800 text-xl leading-none">&times;</button>
+        </div>
+      </div>
+      <div id="jobsBody" class="flex-1 overflow-y-auto p-4 bg-steel-50"></div>
+      <div id="jobsStatus" class="px-5 py-2 border-t border-steel-100 text-xs text-steel-500"></div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN GRID ===== -->
+  <main class="max-w-4xl mx-auto px-6 py-8 grid grid-cols-1 gap-6">
+
+    <!-- ========== COLUNA ESQUERDA ========== -->
+    <section class="space-y-6">
+
+      <!-- Upload -->
+      <div class="bg-white rounded-xl shadow-sm ring-1 ring-steel-100 p-6">
+        <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+          <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">1</span>
+          Upload da Planta (PDF)
+        </h2>
+        <p class="text-sm text-steel-500 mb-4">Envie a planta arquitetônica. A IA fará a extração das esquadrias.</p>
+
+        <label id="dropzone" for="pdfInput"
+          class="block border-2 border-dashed border-steel-300 rounded-lg p-8 text-center cursor-pointer hover:border-steel-500 hover:bg-steel-50 transition">
+          <svg viewBox="0 0 24 24" class="w-10 h-10 mx-auto text-steel-400 mb-2" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
+          </svg>
+          <span id="dropText" class="text-steel-600 font-medium">Clique ou arraste o PDF aqui</span>
+          <p id="webUploadHint" class="text-xs text-steel-400 mt-1">Apenas arquivos .pdf</p>
+        </label>
+        <input id="pdfInput" type="file" accept="application/pdf" class="hidden" />
+
+        <!-- Modo desktop (pywebview): motor Python local, sem servidor -->
+        <button id="btnDesktopPick"
+          class="hidden mt-3 w-full rounded-lg bg-steel-600 text-white font-medium py-2.5 hover:bg-steel-700 transition">
+          Selecionar projeto (PDF) — motor local
+        </button>
+
+        <!-- Loader -->
+        <div id="loader" class="hidden mt-4 flex items-center gap-3 text-steel-700 bg-steel-50 rounded-lg p-3">
+          <span class="w-5 h-5 border-2 border-steel-300 border-t-steel-600 rounded-full animate-spin"></span>
+          <span class="font-medium">Analisando com IA<span id="dots">...</span></span>
+        </div>
+        <p id="uploadMsg" class="hidden text-xs mt-3"></p>
+
+        <!-- Importar takeoff já pronto (do agente) -->
+        <div class="mt-4 pt-4 border-t border-steel-100">
+          <p class="text-sm text-steel-500 mb-2">Já tem o takeoff pronto? Importe direto (gera preço e documentos sem reprocessar):</p>
+          <label for="takeoffInput"
+            class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-steel-300 text-steel-700 font-medium hover:bg-steel-50 cursor-pointer transition">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+            Importar Takeoff (Excel / JSON)
+          </label>
+          <input id="takeoffInput" type="file" accept=".xlsx,.xls,.json,application/json" class="hidden" />
+        </div>
+      </div>
+
+      <!-- Dados do Projeto -->
+      <div id="projectCard" class="bg-white rounded-xl shadow-sm ring-1 ring-steel-100 p-6 hidden">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">2</span>
+          Dados do Projeto
+        </h2>
+        <div class="grid grid-cols-2 gap-4">
+          <label class="text-sm">
+            <span class="text-steel-600 font-medium">Nome do projeto</span>
+            <input id="projName" type="text"
+              class="mt-1 w-full rounded-lg border border-steel-200 px-3 py-2 focus:ring-2 focus:ring-steel-400 focus:border-steel-400 outline-none" />
+          </label>
+          <label class="text-sm">
+            <span class="text-steel-600 font-medium">Cliente</span>
+            <input id="projClient" type="text"
+              class="mt-1 w-full rounded-lg border border-steel-200 px-3 py-2 focus:ring-2 focus:ring-steel-400 focus:border-steel-400 outline-none" />
+          </label>
+          <label class="text-sm">
+            <span class="text-steel-600 font-medium">E-mail</span>
+            <input id="projEmail" type="email" placeholder="cliente@email.com"
+              class="mt-1 w-full rounded-lg border border-steel-200 px-3 py-2 focus:ring-2 focus:ring-steel-400 focus:border-steel-400 outline-none" />
+          </label>
+          <label class="text-sm">
+            <span class="text-steel-600 font-medium">Telefone</span>
+            <input id="projPhone" type="text" placeholder="(00) 00000-0000"
+              class="mt-1 w-full rounded-lg border border-steel-200 px-3 py-2 focus:ring-2 focus:ring-steel-400 focus:border-steel-400 outline-none" />
+          </label>
+        </div>
+      </div>
+
+      <!-- Tabela / Editor -->
+      <div id="tableCard" class="bg-white rounded-xl shadow-sm ring-1 ring-steel-100 p-6 hidden">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <h2 class="text-lg font-semibold flex items-center gap-2">
+            <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">3</span>
+            Itens Extraídos &amp; Editor
+          </h2>
+          <button id="unitToggle"
+            class="text-sm px-3 py-1.5 rounded-lg bg-steel-600 text-white font-medium hover:bg-steel-700 transition">
+            Converter para ft²
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-steel-500 border-b border-steel-200">
+                <th class="py-2 pr-2 font-semibold">ID</th>
+                <th class="py-2 pr-2 font-semibold">Tipo</th>
+                <th class="py-2 pr-2 font-semibold">Larg.</th>
+                <th class="py-2 pr-2 font-semibold">Alt.</th>
+                <th class="py-2 pr-2 font-semibold" title="Medida original como no projeto">Orig.</th>
+                <th class="py-2 pr-2 font-semibold">Qtd</th>
+                <th class="py-2 pr-2 font-semibold">Área un.</th>
+                <th class="py-2 pr-2 font-semibold">Total</th>
+                <th class="py-2 font-semibold"></th>
+              </tr>
+            </thead>
+            <tbody id="itemsBody"></tbody>
+          </table>
+        </div>
+
+        <div class="flex items-center justify-between mt-3 flex-wrap gap-2">
+          <button id="btnAddItem"
+            class="text-sm px-3 py-1.5 rounded-lg border border-steel-300 text-steel-700 font-medium hover:bg-steel-50 transition flex items-center gap-1">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Adicionar item
+          </button>
+          <p class="text-xs text-steel-400">Edite ID, Tipo, Largura (mm), Altura (mm) e Qtd &mdash; a área recalcula sozinha.
+            Unidade: <span id="unitLabel" class="font-semibold text-steel-600">m²</span></p>
+        </div>
+
+        <div class="mt-3 text-right text-sm font-semibold text-steel-700">
+          Área total do projeto: <span id="grandTotal">0</span> <span class="unit-suffix">m²</span>
+        </div>
+      </div>
+
+      <!-- Custos -->
+      <div id="costCard" class="bg-white rounded-xl shadow-sm ring-1 ring-steel-100 p-6 hidden">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <h2 class="text-lg font-semibold flex items-center gap-2">
+            <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">4</span>
+            Módulo de Custos
+          </h2>
+          <label class="text-sm flex items-center gap-2">
+            <span class="text-steel-500">Moeda</span>
+            <select id="currencySelect"
+              class="rounded-lg border border-steel-200 px-2 py-1.5 focus:ring-2 focus:ring-steel-400 outline-none">
+              <option value="BRL">R$ BRL</option>
+              <option value="USD">$ USD</option>
+              <option value="EUR">€ EUR</option>
+              <option value="GBP">£ GBP</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <label class="text-sm">
+            <span class="text-steel-600 font-medium">Custo fornecedor (<span id="costPerM2Label">R$</span>/m²)</span>
+            <input id="costPerM2" type="number" min="0" step="10" value="900"
+              class="mt-1 w-full rounded-lg border border-steel-200 px-3 py-2 focus:ring-2 focus:ring-steel-400 focus:border-steel-400 outline-none" />
+          </label>
+          <label class="text-sm">
+            <span class="text-steel-600 font-medium">Frete (%)</span>
+            <input id="costFreight" type="number" min="0" step="1" value="8"
+              class="mt-1 w-full rounded-lg border border-steel-200 px-3 py-2 focus:ring-2 focus:ring-steel-400 focus:border-steel-400 outline-none" />
+          </label>
+          <label class="text-sm">
+            <span class="text-steel-600 font-medium">Margem desejada (%)</span>
+            <input id="costMargin" type="number" min="0" step="1" value="35"
+              class="mt-1 w-full rounded-lg border border-steel-200 px-3 py-2 focus:ring-2 focus:ring-steel-400 focus:border-steel-400 outline-none" />
+          </label>
+          <label class="text-sm">
+            <span class="text-steel-600 font-medium">Área total (m²)</span>
+            <input id="costArea" type="text" readonly
+              class="mt-1 w-full rounded-lg border border-steel-200 bg-steel-50 px-3 py-2 text-steel-700" />
+          </label>
+        </div>
+
+        <div class="mt-5 grid grid-cols-3 gap-3 text-center">
+          <div class="rounded-lg bg-steel-50 ring-1 ring-steel-100 p-3">
+            <p class="text-xs text-steel-500">Custo total</p>
+            <p id="outCost" class="text-lg font-bold text-steel-800">R$ 0</p>
+          </div>
+          <div class="rounded-lg bg-steel-600 text-white p-3">
+            <p class="text-xs text-steel-100">Preço cliente</p>
+            <p id="outPrice" class="text-lg font-bold">R$ 0</p>
+          </div>
+          <div class="rounded-lg bg-emerald-50 ring-1 ring-emerald-200 p-3">
+            <p class="text-xs text-emerald-600">Lucro</p>
+            <p id="outProfit" class="text-lg font-bold text-emerald-700">R$ 0</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== COLUNA DIREITA ========== -->
+    <section class="space-y-6">
+
+      <!-- Pré-visualização SVG -->
+      <div id="previewCard" class="bg-white rounded-xl shadow-sm ring-1 ring-steel-100 p-6 hidden">
+        <div class="flex items-center justify-between mb-1 flex-wrap gap-3">
+          <h2 class="text-lg font-semibold flex items-center gap-2">
+            <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">5</span>
+            Pré-visualização Técnica
+          </h2>
+          <select id="previewSelect"
+            class="text-sm rounded-lg border border-steel-200 px-2 py-1.5 focus:ring-2 focus:ring-steel-400 outline-none"></select>
+        </div>
+        <p class="text-sm text-steel-500 mb-3">Desenho gerado automaticamente do item <span id="previewId" class="font-semibold">W01</span>.</p>
+        <!-- mão da esquadria: lado da dobradiça + para onde abre -->
+        <div class="flex items-center gap-4 mb-3 text-sm flex-wrap">
+          <label class="flex items-center gap-1">Dobradiça:
+            <select id="prevSide" class="rounded-lg border border-steel-200 px-2 py-1 outline-none focus:ring-2 focus:ring-steel-400">
+              <option value="">— a definir</option>
+              <option value="L">Esquerda</option>
+              <option value="R">Direita</option>
+            </select>
+          </label>
+          <label class="flex items-center gap-1">Abre para:
+            <select id="prevSwing" class="rounded-lg border border-steel-200 px-2 py-1 outline-none focus:ring-2 focus:ring-steel-400">
+              <option value="">— a definir</option>
+              <option value="in">Dentro</option>
+              <option value="out">Fora</option>
+            </select>
+          </label>
+        </div>
+        <div class="rounded-lg bg-steel-50 ring-1 ring-steel-100 p-4 flex justify-center">
+          <div id="svgHolder" class="w-full max-w-md"></div>
+        </div>
+      </div>
+
+      <!-- Quadro Resumo (legenda colorida + quantidades) -->
+      <div id="summaryCard" class="bg-white rounded-xl shadow-sm ring-1 ring-steel-100 p-6 hidden">
+        <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+          <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">6</span>
+          Quadro Resumo
+        </h2>
+        <p class="text-sm text-steel-500 mb-3">Marca colorida e única por tipo (cor + forma) com a quantidade por projeto.</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-steel-500 border-b border-steel-200">
+                <th class="py-2 pr-2 font-semibold">Marca</th>
+                <th class="py-2 pr-2 font-semibold">ID</th>
+                <th class="py-2 pr-2 font-semibold">Tipo</th>
+                <th class="py-2 pr-2 font-semibold">Medida (mm / ft)</th>
+                <th class="py-2 pr-2 font-semibold text-right">Qtd</th>
+              </tr>
+            </thead>
+            <tbody id="summaryBody"></tbody>
+            <tfoot>
+              <tr class="border-t border-steel-200 font-semibold text-steel-700">
+                <td class="py-2" colspan="4">Total de unidades</td>
+                <td class="py-2 text-right" id="summaryTotal">0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <button id="btnSummaryPdf"
+          class="mt-4 text-sm px-3 py-1.5 rounded-lg bg-steel-600 text-white font-medium hover:bg-steel-700 transition flex items-center gap-1.5">
+          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+          Baixar Quadro Resumo (PDF)
+        </button>
+        <p id="summaryMsg" class="text-xs text-emerald-600 mt-2 hidden"></p>
+      </div>
+
+      <!-- Conferência Planta × Fachada -->
+      <div id="checkCard" class="bg-white rounded-xl shadow-sm ring-1 ring-steel-100 p-6 hidden">
+        <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+          <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">7</span>
+          Conferência (Planta × Fachada)
+        </h2>
+        <p class="text-sm text-steel-500 mb-3">Comparação das esquadrias entre a planta baixa e a fachada/elevação. Resolva as divergências antes de enviar ao fabricante.</p>
+        <ul id="checkList" class="text-sm space-y-1 list-disc pl-5"></ul>
+      </div>
+
+      <!-- Exportação -->
+      <div id="exportCard" class="bg-white rounded-xl shadow-sm ring-1 ring-steel-100 p-6 hidden">
+        <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+          <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">8</span>
+          Exportação
+        </h2>
+        <p class="text-sm text-steel-500 mb-4">Gere os documentos finais para cliente e fornecedor.</p>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <button id="btnQuote"
+            class="group rounded-lg border border-steel-200 p-5 text-left hover:border-steel-500 hover:shadow-md transition">
+            <div class="flex items-center gap-2 mb-1">
+              <svg viewBox="0 0 24 24" class="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" stroke-width="1.6">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/>
+              </svg>
+              <span class="font-semibold">Orçamento Cliente</span>
+            </div>
+            <p class="text-xs text-steel-500">PDF com itens, preços, total e condições de pagamento.</p>
+          </button>
+
+          <button id="btnSupplier"
+            class="group rounded-lg border border-steel-200 p-5 text-left hover:border-steel-500 hover:shadow-md transition">
+            <div class="flex items-center gap-2 mb-1">
+              <svg viewBox="0 0 24 24" class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" stroke-width="1.6">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/>
+              </svg>
+              <span class="font-semibold">Pedido Fornecedor</span>
+            </div>
+            <p class="text-xs text-steel-500">Excel (.xlsx) com medidas e especificações (sem preços).</p>
+          </button>
+        </div>
+        <button id="btnMarkedPlan"
+          class="mt-4 w-full rounded-lg border border-steel-200 p-4 text-left hover:border-steel-500 hover:shadow-md transition">
+          <div class="flex items-center gap-2 mb-1">
+            <svg viewBox="0 0 24 24" class="w-6 h-6 text-steel-600" fill="none" stroke="currentColor" stroke-width="1.6">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="9" r="1.6" fill="currentColor"/><path d="M13 8h5M13 12h5M6 16h12"/>
+            </svg>
+            <span class="font-semibold">Planta Marcada</span>
+          </div>
+          <p class="text-xs text-steel-500">PDF da planta com a marca colorida sobre cada janela + quadro resumo em cada folha (para conferir o levantamento da IA).</p>
+        </button>
+        <button id="btnProposal"
+          class="mt-3 w-full rounded-lg border border-steel-200 p-4 text-left hover:border-steel-500 hover:shadow-md transition">
+          <div class="flex items-center gap-2 mb-1">
+            <svg viewBox="0 0 24 24" class="w-6 h-6 text-steel-700" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M6 2h9l5 5v15a0 0 0 01 0 0H6a2 2 0 01-2-2V4a2 2 0 012-2z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/>
+            </svg>
+            <span class="font-semibold">Proposta Cliente</span>
+          </div>
+          <p class="text-xs text-steel-500">PDF de proposta (capa, posições com desenho + specs, pricing, contato) — sem marca do fornecedor.</p>
+        </button>
+        <p id="exportMsg" class="text-xs text-emerald-600 mt-3 hidden"></p>
+      </div>
+
+      <!-- Placeholder inicial -->
+      <div id="emptyState" class="bg-white rounded-xl shadow-sm ring-1 ring-steel-100 p-10 text-center">
+        <svg viewBox="0 0 24 24" class="w-16 h-16 mx-auto text-steel-200 mb-3" fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="3" y="3" width="18" height="18" rx="1.5"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/>
+        </svg>
+        <p class="text-steel-400">Envie um PDF para começar.<br/>Os resultados e o desenho técnico aparecerão aqui.</p>
+        <!-- atalhos do motor local (aparecem só no app de desktop) -->
+        <div id="homeShortcuts" class="hidden mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+          <button id="homeOpenPdf" class="px-5 py-3 rounded-lg bg-steel-600 text-white font-medium hover:bg-steel-700">📂 Novo projeto (PDF)</button>
+          <button id="homeOpenJobs" class="px-5 py-3 rounded-lg border border-steel-300 text-steel-700 font-medium hover:bg-steel-50">🗂️ Projetos salvos</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="max-w-4xl mx-auto px-6 py-6 text-center text-xs text-steel-400">
+    &copy; 2026 ConstructCount &middot; <span>Todos os direitos reservados</span> &middot;
+    <span>Desenvolvido por</span>
+    <a href="https://m2pb.com" target="_blank" rel="noopener noreferrer"
+       class="font-semibold text-steel-500 hover:text-steel-700 transition">M2PB</a>
+    &middot;
+    <button id="footLicense" class="hover:text-steel-700 hover:underline underline-offset-2">Licença</button>
+  </footer>
+
+  <!-- Módulos JS (ordem importa: dependências primeiro) -->
+  <!-- Tela de anotação CV-assistida (planta + marcadores) -->
+  <div id="annotator" class="hidden fixed inset-0 z-50 bg-black/85 flex flex-col">
+    <div class="bg-steel-800 text-white px-4 py-2 flex items-center gap-3 text-sm flex-wrap">
+      <span class="font-semibold">Revisar planta — confirme/adicione as marcas</span>
+      <span id="annPage" class="text-steel-200"></span>
+      <button id="annAdd" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500">+ Adicionar marca</button>
+      <label class="flex items-center gap-1">Rótulo:
+        <input id="annLabel" class="text-steel-900 px-2 py-0.5 rounded w-24" placeholder="ex.: F1" />
+      </label>
+      <button id="annZoomOut" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500">−</button>
+      <button id="annZoomIn" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500">+</button>
+      <label class="flex items-center gap-1" title="Quantos pavimentos esta planta representa (ex.: 3º ao 9º = 7). Multiplica as contagens.">Pavimentos×
+        <input id="annMult" type="number" min="1" step="1" value="1" class="text-steel-900 px-2 py-0.5 rounded w-16" />
+      </label>
+      <span id="annCounts" class="ml-auto text-steel-100"></span>
+      <button id="annDone" class="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 font-semibold">Concluir</button>
+      <button id="annCancel" class="px-2 py-1 rounded bg-rose-600 hover:bg-rose-500">Cancelar</button>
+    </div>
+    <canvas id="annCanvas" class="flex-1 w-full bg-steel-900" style="cursor:grab"></canvas>
+    <p class="bg-steel-800 text-steel-300 text-xs px-4 py-1">Clique numa marca p/ confirmar/rejeitar · "Adicionar marca" + clique p/ incluir · duplo-clique p/ editar rótulo · roda do mouse = zoom · arraste = mover</p>
+  </div>
+
+  <!-- ===== WORKSPACE de takeoff (estilo PlanSwift) — pasta do projeto, páginas e marcas editáveis ===== -->
+  <div id="workspace" class="hidden fixed inset-0 z-50 bg-steel-900 flex flex-col">
+    <!-- barra de progresso do preparo -->
+    <div id="wsPrep" class="hidden absolute inset-0 z-10 bg-steel-900/95 flex flex-col items-center justify-center text-white gap-3">
+      <span class="w-8 h-8 border-4 border-steel-600 border-t-white rounded-full animate-spin"></span>
+      <p id="wsPrepMsg" class="font-medium">Preparando projeto…</p>
+      <div class="w-80 h-2 bg-steel-700 rounded-full overflow-hidden"><div id="wsPrepBar" class="h-full bg-emerald-500 w-0 transition-all"></div></div>
+      <p id="wsPrepSub" class="text-steel-300 text-xs"></p>
+    </div>
+
+    <!-- topo (enxuto): título + status + consolidar/fechar -->
+    <div class="bg-steel-800 text-white px-4 py-2 flex items-center gap-3 text-sm shrink-0">
+      <span class="font-semibold" id="wsTitle">Takeoff</span>
+      <span id="wsPageTitle" class="text-steel-200"></span>
+      <label class="flex items-center gap-1" title="Seção/grupo onde as novas marcas entram">📁
+        <select id="wsSection" class="text-steel-900 rounded px-2 py-0.5 text-sm"></select>
+      </label>
+      <button id="wsSecNew" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500" title="Nova seção">＋</button>
+      <button id="wsSecRename" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500" title="Renomear seção">✎</button>
+      <button id="wsSecDel" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500" title="Excluir seção">🗑️</button>
+      <span id="wsSaved" class="text-steel-300 text-xs"></span>
+      <span class="ml-auto"></span>
+      <button id="wsScopeBtn" class="px-2 py-1 rounded bg-steel-700 hover:bg-steel-600 text-xs flex items-center gap-1"
+              title="Modo de reconhecimento do projeto — clique para mudar">🧭 <span>Escopo</span>: <b id="wsScopeLbl">Tudo</b></button>
+      <button id="wsConsolidate" class="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 font-semibold">Consolidar → Tabela</button>
+      <button id="wsClose" class="px-2 py-1 rounded bg-rose-600 hover:bg-rose-500">Fechar</button>
+    </div>
+
+    <div class="flex-1 flex min-h-0">
+      <!-- barra de ícones do painel esquerdo (quando recolhido) -->
+      <div id="wsLeftBar" class="hidden w-9 shrink-0 bg-steel-800 text-steel-300 border-r border-steel-700 flex-col items-center py-2 gap-3">
+        <button id="wsLeftExpand" class="hover:text-white" title="Expandir painel">▶</button>
+        <button class="wsLeftIco w-8 h-8 rounded text-lg hover:bg-steel-700 hover:text-white" data-tip="Páginas">📄</button>
+        <button class="wsLeftIco w-8 h-8 rounded text-lg hover:bg-steel-700 hover:text-white" data-tip="Marcas desta folha">🏷️</button>
+      </div>
+
+      <!-- esquerda: páginas + itens -->
+      <aside id="wsLeft" class="w-60 shrink-0 bg-steel-800 text-steel-100 flex flex-col border-r border-steel-700 min-h-0">
+        <div class="px-2 py-1 flex justify-end border-b border-steel-700/50">
+          <button id="wsLeftCollapse" class="text-steel-400 hover:text-white text-xs px-1" title="Recolher painel (vira barra de ícones)">◀ recolher</button>
+        </div>
+        <div class="px-3 py-2 flex items-center gap-2 border-b border-steel-700 cursor-pointer" data-collapse>
+          <span class="text-xs font-semibold uppercase tracking-wide text-steel-400 flex-1">Páginas</span>
+          <button id="wsDelPages" class="hidden text-xs px-2 py-0.5 rounded bg-rose-700 hover:bg-rose-600" title="Apaga as folhas selecionadas (clique / Ctrl / Shift)">🗑 Apagar (0)</button>
+          <span class="ws-chev text-steel-400">▼</span>
+        </div>
+        <!-- toolbar de ações das páginas (estilo PlanSwift) -->
+        <div class="flex items-center flex-wrap gap-0.5 px-2 py-1 border-b border-steel-700 bg-steel-900/40 text-base">
+          <button id="pgRecognize" class="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold mr-1" title="Reconhecer marcas: nas folhas SELECIONADAS (se houver seleção) ou em todas">🔎 <span>Reconhecer</span></button>
+          <button id="pgOpenJobs" class="pgTool" data-tip="Projetos salvos">📂</button>
+          <button id="pgNew" class="pgTool" data-tip="Abrir novo projeto (PDF)">➕</button>
+          <button id="pgRefresh" class="pgTool" data-tip="Recarregar folha">↻</button>
+          <button id="pgSort" class="pgTool" data-tip="Ordenar (nº / marcas)">↕️</button>
+          <button id="pgHires" class="pgTool" data-tip="Mais nitidez">🔍</button>
+          <button id="pgAuto" class="pgTool" data-tip="Auto Count">✨</button>
+          <button id="pgFolder" class="pgTool" data-tip="Abrir pasta do projeto">🗂️</button>
+          <button id="pgRestore" class="pgTool" data-tip="Restaurar marcas desta folha (desfaz o último Reconhecer)">↩️</button>
+          <button id="pgLegend" class="pgTool" data-tip="Mostrar/ocultar a legenda das marcas">🏷️</button>
+          <button id="pgDel" class="pgTool" data-tip="Apagar folhas marcadas">🗑️</button>
+        </div>
+        <div class="px-3 py-0.5 text-[10px] text-steel-500 select-none">Clique = só abre · Ctrl/Shift+clique = selecionar (várias) · selecionadas: 🔎 Reconhecer ou 🗑 Apagar</div>
+        <div id="wsPages" class="overflow-y-auto flex-1 min-h-0 text-sm"></div>
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse><span>Marcas desta folha</span><span class="ws-chev">▼</span></div>
+        <div id="wsItems" class="overflow-y-auto text-sm" style="max-height:38%"></div>
+      </aside>
+
+      <!-- centro: canvas -->
+      <div class="flex-1 min-w-0">
+        <canvas id="wsCanvas" class="w-full h-full bg-steel-900" style="cursor:grab"></canvas>
+      </div>
+
+      <!-- DIREITA: painel de ferramentas (estilo menu) -->
+      <aside id="wsRight" class="w-56 shrink-0 bg-steel-800 text-steel-100 border-l border-steel-700 flex flex-col overflow-y-auto">
+        <div class="px-2 py-1 flex border-b border-steel-700/50">
+          <button id="wsRightCollapse" class="text-steel-400 hover:text-white text-xs px-1" title="Recolher painel (vira barra de ícones)">recolher ▶</button>
+        </div>
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-b border-steel-700 cursor-pointer flex items-center justify-between" data-collapse><span>Ferramentas</span><span class="ws-chev">▼</span></div>
+        <div class="p-3 space-y-2">
+          <button id="wsCount" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600" title="Modo contar: clique na planta para adicionar 1 marca">⊕ Contar</button>
+          <button id="wsAuto" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600" title="Auto Count: clique numa marca de amostra e ele acha todas as iguais na folha">⊛ Auto Count</button>
+          <button id="wsDelete" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600" title="Apagar: clique numa marca para removê-la de vez">🗑 Apagar (1 a 1)</button>
+          <button id="wsDelSel" class="w-full text-left px-3 py-2 rounded bg-rose-700 hover:bg-rose-600 text-sm" title="Apaga TODAS as marcas do código selecionado na lista (clique num código em 'Marcas desta folha')">🗑 Apagar selecionadas</button>
+          <button id="wsClearRej" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Remove todas as marcas rejeitadas (cinza) desta folha">Limpar rejeitadas</button>
+        </div>
+
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse><span>Auto Count</span><span class="ws-chev">▼</span></div>
+        <div class="p-3 space-y-2">
+          <label class="block text-xs text-steel-300" title="Maior = só idênticos; menor = pega mais parecidos">Sensibilidade
+            <div class="flex items-center gap-2 mt-1">
+              <input id="wsThresh" type="range" min="50" max="95" step="1" value="80" class="flex-1" />
+              <span id="wsThreshVal" class="text-steel-200 w-8 text-right">0.80</span>
+            </div>
+          </label>
+          <label class="block text-xs text-steel-300">Rótulo
+            <input id="wsLabel" class="mt-1 w-full text-steel-900 px-2 py-1 rounded" placeholder="ex.: 211A" />
+          </label>
+        </div>
+
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse><span>Janela selecionada</span><span class="ws-chev">▼</span></div>
+        <div class="p-3 space-y-2">
+          <p id="wsSelCode" class="text-xs text-steel-300">Clique num código na lista à esquerda.</p>
+          <label class="block text-xs text-steel-300">Largura
+            <div class="flex gap-1 mt-1">
+              <input id="wsDimW" class="flex-1 text-steel-900 px-2 py-1 rounded text-sm" placeholder="4'-8 1/2&quot;" disabled />
+              <button id="wsDimWmeas" class="px-2 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="usar a última medida do desenho" disabled>↙med</button>
+            </div>
+          </label>
+          <label class="block text-xs text-steel-300">Altura
+            <div class="flex gap-1 mt-1">
+              <input id="wsDimH" class="flex-1 text-steel-900 px-2 py-1 rounded text-sm" placeholder="5'-0&quot;" disabled />
+              <button id="wsDimHmeas" class="px-2 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="usar a última medida do desenho" disabled>↙med</button>
+            </div>
+          </label>
+          <button id="wsDimSave" class="w-full px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-sm font-medium" disabled>Salvar medida da janela</button>
+        </div>
+
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse><span>Escala / Medir (desenho)</span><span class="ws-chev">▼</span></div>
+        <div class="p-3 space-y-2">
+          <button id="wsCalib" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Trace uma linha sobre uma medida conhecida do desenho e informe o valor real">📏 Calibrar escala</button>
+          <button id="wsMeasure" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Trace uma linha e veja a medida real (precisa calibrar a escala antes). Pode adicionar várias.">📐 Medir (várias)</button>
+          <button id="wsDelMeas" class="w-full text-left px-3 py-2 rounded bg-rose-700 hover:bg-rose-600 text-xs" title="Apaga a medida selecionada (clique numa medida; ou tecla Delete)" disabled>🗑 Apagar medida selecionada</button>
+          <button id="wsClearMeas" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="Remove todas as medidas desta folha">Limpar todas as medidas</button>
+          <p id="wsScaleInfo" class="text-xs text-steel-400">Escala: não calibrada.</p>
+        </div>
+
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse><span>Medidas (schedule)</span><span class="ws-chev">▼</span></div>
+        <div class="p-3 space-y-2">
+          <button id="wsSchedPage" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Marca esta folha como fonte de medidas (ex.: A700/A701)">📐 Usar esta folha p/ medidas</button>
+          <button id="wsReadSched" class="w-full text-left px-3 py-2 rounded bg-amber-600 hover:bg-amber-500 text-sm font-medium" title="Lê as dimensões só das folhas marcadas e atualiza as medidas">↻ Reler medidas</button>
+          <p id="wsSchedInfo" class="text-xs text-steel-400"></p>
+        </div>
+
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse><span>Folha</span><span class="ws-chev">▼</span></div>
+        <div class="p-3 space-y-2">
+          <label class="block text-xs text-steel-300" title="Quantos pavimentos esta folha representa">Pavimentos×
+            <input id="wsMult" type="number" min="1" step="1" value="1" class="mt-1 w-full text-steel-900 px-2 py-1 rounded" />
+          </label>
+          <div class="flex items-center gap-2">
+            <button id="wsZoomOut" class="flex-1 px-2 py-2 rounded bg-steel-700 hover:bg-steel-600">−</button>
+            <button id="wsZoomIn" class="flex-1 px-2 py-2 rounded bg-steel-700 hover:bg-steel-600">+</button>
+            <button id="wsFit" class="flex-1 px-2 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm">Ajustar</button>
+          </div>
+          <button id="wsHires" class="w-full px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Re-renderiza esta folha em alta resolução (mais nítido no zoom). Mantém marcas e medidas.">🔍 Mais nitidez (esta folha)</button>
+        </div>
+      </aside>
+
+      <!-- barra de FERRAMENTAS do painel direito (quando recolhido) -->
+      <div id="wsRightBar" class="hidden w-10 shrink-0 bg-steel-800 text-steel-300 border-l border-steel-700 flex-col items-center py-2 gap-1">
+        <button id="wsRightExpand" class="w-8 h-8 rounded hover:bg-steel-700 hover:text-white" title="Expandir painel">◀</button>
+        <div class="border-t border-steel-600 w-6 my-1"></div>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsCount" data-tip="Contar">⊕</button>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsAuto" data-tip="Auto Count">⊛</button>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsDelete" data-tip="Apagar (1 a 1)">🗑️</button>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsCalib" data-tip="Calibrar escala">📏</button>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsMeasure" data-tip="Medir">📐</button>
+        <div class="border-t border-steel-600 w-6 my-1"></div>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsZoomIn" data-tip="Zoom +">＋</button>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsZoomOut" data-tip="Zoom −">－</button>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsFit" data-tip="Ajustar à tela">⤢</button>
+      </div>
+    </div>
+
+    <!-- RODAPÉ: barra de status (estilo PlanSwift) -->
+    <div class="bg-steel-900 border-t border-steel-700 text-steel-200 text-xs px-3 py-1 flex items-center gap-4 shrink-0 select-none">
+      <span id="stScale" title="Escala calibrada desta folha">Escala: —</span>
+      <span class="text-steel-600">|</span>
+      <span id="stCoord" class="tabular-nums">x: —  y: —</span>
+      <span class="text-steel-600">|</span>
+      <button id="stSnap" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Snap: gruda o clique no centro da marca mais próxima">Snap</button>
+      <button id="stOrtho" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Ortho: trava a medida em horizontal/vertical">Ortho</button>
+      <span id="stMode" class="text-steel-400">Record: Point To Point</span>
+      <span class="ml-auto text-steel-400 truncate" id="stPath" title="Folha / projeto"></span>
+    </div>
+  </div>
+
+  <script src="js/i18n.js?v=200"></script>
+  <script src="js/license.js?v=202"></script>
+  <script src="js/calculator.js?v=200"></script>
+  <script src="js/svg-engine.js?v=200"></script>
+  <script src="js/export.js?v=200"></script>
+  <script src="js/plan-marker.js?v=200"></script>
+  <script src="js/import-takeoff.js?v=200"></script>
+  <script src="js/proposal.js?v=200"></script>
+  <script src="js/main.js?v=200"></script>
+  <script src="js/annotator.js?v=200"></script>
+  <script src="js/workspace.js?v=201"></script>
+  <script src="js/desktop.js?v=200"></script>
+  <script src="js/menu.js?v=200"></script>
+  <script src="js/cards.js?v=200"></script>
+</body>
+</html>
