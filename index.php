@@ -60,11 +60,12 @@ layout_top(t('app_name'));
   main p,main li,main label,main td,main th{font-size:17px}         /* texto geral do conteúdo */
   .btn{font-size:17px}.btn.lg{font-size:18px}                       /* botões */
   .vhero-badge{font-size:15px}.vhero-by{font-size:15px}             /* itens pequenos, consistentes */
-  /* MENU (topo) maior */
-  .nav .brand-name{font-size:20px}
-  .nav .brand-logo{height:46px}
-  .nav .lg{font-size:15px;padding:5px 9px}
-  .nav .btn{font-size:16px;padding:10px 18px}
+  /* MENU (topo) DOBRADO */
+  .nav .brand-name{font-size:38px}
+  .nav .brand-logo{height:76px}
+  .nav .lg{font-size:28px;padding:8px 12px}
+  .nav .btn{font-size:28px;padding:14px 26px}
+  .nav{padding-top:18px;padding-bottom:18px}
 </style>
 <video class="bgfix-vid" autoplay muted loop playsinline preload="auto" poster="assets/hero.png">
   <source src="assets/video/hero-office-ny.mp4" type="video/mp4">
