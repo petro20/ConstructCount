@@ -51,6 +51,15 @@ layout_top(t('app_name'));
   /* rodapé destacado sobre o vídeo (crédito do desenvolvedor bem visível) */
   footer{position:relative;z-index:2;text-align:center;background:rgba(12,10,6,.78);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid rgba(53,44,29,.7);border-radius:12px;color:#dccfb2;margin-top:30px;font-size:13.5px}
   footer a{color:#e3b653;font-weight:700}
+  /* ===== PADRÃO ÚNICO DE TAMANHO DE TEXTO (escala consistente e legível) ===== */
+  body{font-size:17px}                                              /* base do site (era 15px) */
+  .vhero-sub{font-size:clamp(19px,2.1vw,23px);text-shadow:0 2px 14px rgba(0,0,0,.7)}  /* subtítulo */
+  .sec-title{font-size:clamp(27px,3.3vw,34px)}                      /* títulos de seção */
+  .feat h3,.step h3,.plan h3{font-size:23px}                        /* títulos de cards/planos */
+  .feat p,.step p,.plist,.plist li{font-size:18px;line-height:1.6}  /* corpo dos cards */
+  main p,main li,main label,main td,main th{font-size:17px}         /* texto geral do conteúdo */
+  .btn{font-size:17px}.btn.lg{font-size:18px}                       /* botões */
+  .vhero-badge{font-size:15px}.vhero-by{font-size:15px}             /* itens pequenos, consistentes */
 </style>
 <video class="bgfix-vid" autoplay muted loop playsinline preload="auto" poster="assets/hero.png">
   <source src="assets/video/hero-office-ny.mp4" type="video/mp4">
