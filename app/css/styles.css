@@ -184,6 +184,117 @@ button:focus-visible {
 .rb-lang.active { background: #c4881a; color: #1b1a16; border-color: #c4881a; box-shadow: 0 2px 6px rgba(52,50,44,.25); }
 
 /* =========================================================================
+   VITRINE "ConstructCount" (aba rbAbout) — design premium
+   ========================================================================= */
+.cc-wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px 64px; }
+
+/* --- herói escuro com brilho --- */
+.cc-hero {
+  position: relative; overflow: hidden;
+  margin: 28px 0 40px; padding: 56px 32px 60px;
+  border-radius: 24px; text-align: center;
+  background:
+    radial-gradient(1200px 380px at 50% -120px, rgba(217,160,42,.28), transparent 70%),
+    linear-gradient(180deg, #211f1a 0%, #16140f 100%);
+  box-shadow: 0 24px 60px rgba(20,18,12,.35);
+  color: #fff;
+}
+.cc-hero::after {            /* brilho que pulsa devagar */
+  content: ""; position: absolute; inset: -40% 30% auto 30%; height: 360px;
+  background: radial-gradient(closest-side, rgba(217,160,42,.22), transparent);
+  filter: blur(14px); animation: ccGlow 6s ease-in-out infinite; pointer-events: none;
+}
+@keyframes ccGlow { 0%,100% { opacity: .55; transform: translateY(0); } 50% { opacity: 1; transform: translateY(10px); } }
+.cc-hero > * { position: relative; z-index: 1; }
+.cc-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+  color: #e3b653; background: rgba(217,160,42,.12); border: 1px solid rgba(217,160,42,.35);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 18px;
+}
+.cc-title { font-size: 44px; line-height: 1.05; font-weight: 800; letter-spacing: -.02em; }
+.cc-title .grad {
+  background: linear-gradient(100deg, #f5d27a, #d9a02a 55%, #c4881a);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.cc-sub { margin: 16px auto 0; max-width: 620px; font-size: 17px; line-height: 1.6; color: #cfcabd; }
+.cc-cta { margin-top: 28px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.cc-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 22px; border-radius: 12px; font-weight: 700; font-size: 14px;
+  cursor: pointer; transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
+}
+.cc-btn-primary { color: #1b1a16; background: linear-gradient(135deg, #f5d27a, #d9a02a); box-shadow: 0 8px 22px rgba(217,160,42,.4); border: 0; }
+.cc-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(217,160,42,.55); }
+.cc-btn-ghost { color: #efe9da; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.18); }
+.cc-btn-ghost:hover { background: rgba(255,255,255,.12); transform: translateY(-2px); }
+
+/* --- faixa de destaques --- */
+.cc-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 48px; }
+.cc-stat { background: #fff; border: 1px solid #e7e4dc; border-radius: 16px; padding: 18px 16px; text-align: center; }
+.cc-stat .ico { font-size: 22px; }
+.cc-stat .big { font-size: 17px; font-weight: 800; color: #2a2822; margin-top: 6px; }
+.cc-stat .lbl { font-size: 12px; color: #8b887f; margin-top: 2px; }
+
+/* --- seção / título --- */
+.cc-h2 { font-size: 22px; font-weight: 800; color: #2a2822; margin: 0 0 6px; }
+.cc-lead { color: #8b887f; margin: 0 0 22px; }
+
+/* --- grade de recursos --- */
+.cc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 52px; }
+.cc-card {
+  position: relative; background: #fff; border: 1px solid #e7e4dc; border-radius: 18px;
+  padding: 22px; overflow: hidden;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.cc-card::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: var(--cc-accent, #d9a02a); opacity: 0; transition: opacity .18s ease;
+}
+.cc-card:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(36,52,75,.14); border-color: #dcd8cf; }
+.cc-card:hover::before { opacity: 1; }
+.cc-ico {
+  width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: #fff; margin-bottom: 14px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.16); transition: transform .18s ease;
+}
+.cc-card:hover .cc-ico { transform: scale(1.08) rotate(-3deg); }
+.cc-card h3 { font-size: 15px; font-weight: 700; color: #2a2822; margin: 0 0 5px; }
+.cc-card p { font-size: 13.5px; line-height: 1.5; color: #79766d; margin: 0; }
+
+/* --- fluxo em 3 passos --- */
+.cc-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 52px; }
+.cc-step { position: relative; background: #fff; border: 1px solid #e7e4dc; border-radius: 18px; padding: 24px; }
+.cc-step .n {
+  width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; color: #fff; font-size: 16px; margin-bottom: 12px;
+  background: linear-gradient(135deg, #d9a02a, #a06b12); box-shadow: 0 6px 16px rgba(217,160,42,.35);
+}
+.cc-step h4 { font-size: 15px; font-weight: 700; color: #2a2822; margin: 0 0 5px; }
+.cc-step p { font-size: 13px; line-height: 1.5; color: #79766d; margin: 0; }
+
+/* --- CTA final --- */
+.cc-final {
+  text-align: center; padding: 44px 28px; border-radius: 22px; color: #fff;
+  background: linear-gradient(120deg, #2a2822 0%, #16140f 100%);
+  box-shadow: 0 20px 48px rgba(20,18,12,.3);
+}
+.cc-final h3 { font-size: 24px; font-weight: 800; margin: 0 0 6px; }
+.cc-final p { color: #cfcabd; margin: 0 0 22px; }
+
+/* reveal com escalonamento */
+.cc-reveal { opacity: 0; transform: translateY(14px); animation: ccUp .5s ease forwards; }
+@keyframes ccUp { to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 880px) {
+  .cc-stats, .cc-grid, .cc-flow { grid-template-columns: 1fr 1fr; }
+  .cc-title { font-size: 34px; }
+}
+@media (max-width: 560px) {
+  .cc-stats, .cc-grid, .cc-flow { grid-template-columns: 1fr; }
+}
+
+/* =========================================================================
    CARDS recolhíveis + visual renovado (seções 1..8)
    ========================================================================= */
 .app-card {

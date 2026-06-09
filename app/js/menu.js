@@ -78,9 +78,13 @@
     const flic = $('#footLicense'); if (flic) flic.addEventListener('click', openLic);
     const lc = $('#licClose'); if (lc) lc.addEventListener('click', () => $('#licenseModal').classList.add('hidden'));
     const lm = $('#licenseModal'); if (lm) lm.addEventListener('click', (e) => { if (e.target === lm) lm.classList.add('hidden'); });
-    // CTA "Novo projeto" dentro da página Ajuda → abre o seletor de PDF
-    const hs = $('#howStart'); if (hs) hs.addEventListener('click', () => {
-      const mo = $('#miOpen'); if (mo) mo.click();
+    // CTAs "Novo projeto" (página Ajuda + vitrine ConstructCount) → abrem o seletor de PDF
+    ['#howStart', '#ccStart', '#ccStart2'].forEach(sel => {
+      const b = $(sel); if (b) b.addEventListener('click', () => { const mo = $('#miOpen'); if (mo) mo.click(); });
+    });
+    // "Como funciona" na vitrine → navega para a aba Ajuda
+    const ch = $('#ccHelp'); if (ch) ch.addEventListener('click', () => {
+      const t = document.querySelector('.rb-tab[data-tab="rbHelp"]'); if (t) t.click();
     });
   }
 
