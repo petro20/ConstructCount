@@ -123,10 +123,12 @@ button:focus-visible {
   border-bottom: 1px solid #cfccc4;
 }
 .rb-brand {
-  background: linear-gradient(#57534b, #34322c); color: #fff;
-  padding: 6px 16px; font-weight: 700; letter-spacing: .02em;
-  border-radius: 7px 7px 0 0; box-shadow: 0 -1px 0 rgba(255,255,255,.15) inset;
+  background: #fff; color: #1b1a16;
+  padding: 6px 16px; font-weight: 800; letter-spacing: .02em;
+  border: 1px solid #cfccc4; border-bottom: 0;
+  border-radius: 7px 7px 0 0; cursor: pointer; position: relative; top: 1px;
 }
+.rb-brand:hover { background: #f4f3ef; }
 .rb-tab {
   padding: 6px 14px; font-weight: 600; color: #34322c;
   border: 1px solid transparent; border-bottom: 0;
