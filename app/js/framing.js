@@ -17,8 +17,9 @@
   var FR = F.framing = {
     built: false,
     wallTypes: [
-      { id: 'wt1', name: 'Ext. 2x6 Wood',      material: 'wood',  studSize: '2x6',         spacing: 16, height: 9, plates: 3, sheathSides: 1 },
-      { id: 'wt2', name: 'Int. 3-5/8" Metal',  material: 'metal', studSize: '3-5/8" 20ga', spacing: 16, height: 9, plates: 2, sheathSides: 2 },
+      // wood: plates=3 (1 soleira + 2 topo), blocking 1 linha;  metal: track=2 (sup+inf), bridging 1 linha
+      { id: 'wt1', name: 'Ext. 2x6 Wood',      material: 'wood',  studSize: '2x6',         spacing: 16, height: 9, plates: 3, bracingRows: 1, sheathSides: 1 },
+      { id: 'wt2', name: 'Int. 3-5/8" Metal',  material: 'metal', studSize: '3-5/8" 20ga', spacing: 16, height: 9, plates: 2, bracingRows: 1, sheathSides: 2 },
     ],
     segments: [],   // { id, wtId, len(ft), qty }
     openings: [],   // { id, wtId, width(ft), qty }
@@ -39,7 +40,10 @@
   */
   F.framingCompute = function () {
     var studs = {};    // por bitola → qtd
-    var plates = {};   // por bitola → LF
+    var track = {};    // METAL: guias (sup+inf) por bitola → LF
+    var plates = {};   // WOOD: plates (soleira+topo) por bitola → LF
+    var bridgingLF = 0;   // METAL: travamento horizontal (LF)
+    var blockingLF = 0;   // WOOD: blocking horizontal (LF)
     var sheath = {};   // por material → sf
     var headersLF = 0, openExtraStuds = {};
     var totalLF = 0;
@@ -51,7 +55,10 @@
       totalLF += L * qty;
       var nStuds = (Math.ceil((L * 12) / (wt.spacing || 16)) + 1) * qty;
       studs[wt.studSize] = (studs[wt.studSize] || 0) + nStuds;
-      plates[wt.studSize] = (plates[wt.studSize] || 0) + L * (wt.plates || 2) * qty;
+      var horizLF = L * (wt.plates || 2) * qty;          // linhas horizontais (track/plates)
+      var brLF = L * (wt.bracingRows || 0) * qty;        // travamento (bridging/blocking)
+      if (wt.material === 'metal') { track[wt.studSize] = (track[wt.studSize] || 0) + horizLF; bridgingLF += brLF; }
+      else { plates[wt.studSize] = (plates[wt.studSize] || 0) + horizLF; blockingLF += brLF; }
       sheath[wt.material] = (sheath[wt.material] || 0) + L * (wt.height || 9) * (wt.sheathSides || 0) * qty;
     });
 
@@ -62,19 +69,20 @@
       var size = wt ? wt.studSize : (tr('(geral)'));
       openExtraStuds[size] = (openExtraStuds[size] || 0) + 4 * qty;  // 2 king + 2 jack
     });
-    // soma king/jack aos studs
     Object.keys(openExtraStuds).forEach(function (k) { studs[k] = (studs[k] || 0) + openExtraStuds[k]; });
 
-    var sheets = 0, sheathSf = 0;
-    Object.keys(sheath).forEach(function (m) { sheathSf += sheath[m]; });
-    sheets = Math.ceil(sheathSf / 32);   // chapa 4x8 = 32 sf
+    var sheathSf = 0; Object.keys(sheath).forEach(function (m) { sheathSf += sheath[m]; });
+    var sheets = Math.ceil(sheathSf / 32);   // chapa 4x8 = 32 sf
 
     var totalStuds = 0; Object.keys(studs).forEach(function (k) { totalStuds += studs[k]; });
+    var totalTrackLF = 0; Object.keys(track).forEach(function (k) { totalTrackLF += track[k]; });
     var totalPlateLF = 0; Object.keys(plates).forEach(function (k) { totalPlateLF += plates[k]; });
 
     return {
-      studs: studs, plates: plates, sheath: sheath,
-      totalStuds: totalStuds, totalPlateLF: totalPlateLF,
+      studs: studs, track: track, plates: plates, sheath: sheath,
+      bridgingLF: bridgingLF, blockingLF: blockingLF,
+      totalStuds: totalStuds, totalTrackLF: totalTrackLF, totalPlateLF: totalPlateLF,
+      totalHorizLF: totalTrackLF + totalPlateLF,
       headersLF: headersLF, sheathSf: sheathSf, sheets: sheets, totalLF: totalLF
     };
   };
@@ -83,7 +91,7 @@
   function money(n) { try { return (F.money ? F.money(n) : ('$ ' + (Number(n) || 0).toFixed(2))); } catch (e) { return '$ ' + (Number(n) || 0).toFixed(2); } }
   function priceTotal(m) {
     var p = FR.prices;
-    return (m.totalStuds * num(p.stud)) + (m.totalPlateLF * num(p.plateLF)) + (m.sheets * num(p.sheet)) + (m.headersLF * num(p.headerLF));
+    return (m.totalStuds * num(p.stud)) + (m.totalHorizLF * num(p.plateLF)) + (m.sheets * num(p.sheet)) + (m.headersLF * num(p.headerLF));
   }
 
   // ---- UI --------------------------------------------------------------------
@@ -142,7 +150,7 @@
     // listeners base
     sc.querySelector('#frBack').addEventListener('click', closeFraming);
     sc.querySelector('#frAddWT').addEventListener('click', function () {
-      FR.wallTypes.push({ id: uid('wt'), name: tr('Nova parede'), material: 'metal', studSize: '3-5/8" 20ga', spacing: 16, height: 9, plates: 2, sheathSides: 1 });
+      FR.wallTypes.push({ id: uid('wt'), name: tr('Nova parede'), material: 'metal', studSize: '3-5/8" 20ga', spacing: 16, height: 9, plates: 2, bracingRows: 1, sheathSides: 1 });
       renderWTs();
     });
     sc.querySelector('#frAddSeg').addEventListener('click', function () {
@@ -177,7 +185,8 @@
         + '  <label class="text-steel-500">' + tr('Bitola') + '<input class="frWTSize mt-0.5 w-full rounded border border-steel-200 px-1 py-1" value="' + esc(wt.studSize) + '"></label>'
         + '  <label class="text-steel-500">' + tr('Espaç. (in)') + '<select class="frWTSpace mt-0.5 w-full rounded border border-steel-200 px-1 py-1"><option' + (wt.spacing === 12 ? ' selected' : '') + '>12</option><option' + (wt.spacing === 16 ? ' selected' : '') + '>16</option><option' + (wt.spacing === 19.2 ? ' selected' : '') + '>19.2</option><option' + (wt.spacing === 24 ? ' selected' : '') + '>24</option></select></label>'
         + '  <label class="text-steel-500">' + tr('Altura (ft)') + '<input class="frWTH mt-0.5 w-full rounded border border-steel-200 px-1 py-1" type="number" min="1" step="0.5" value="' + wt.height + '"></label>'
-        + '  <label class="text-steel-500">' + tr('Plates (nº)') + '<input class="frWTPlates mt-0.5 w-full rounded border border-steel-200 px-1 py-1" type="number" min="1" max="4" step="1" value="' + wt.plates + '"></label>'
+        + '  <label class="text-steel-500">' + (wt.material === 'wood' ? tr('Plates (nº)') : tr('Track (nº)')) + '<input class="frWTPlates mt-0.5 w-full rounded border border-steel-200 px-1 py-1" type="number" min="1" max="4" step="1" value="' + wt.plates + '"></label>'
+        + '  <label class="text-steel-500">' + (wt.material === 'wood' ? tr('Blocking (linhas)') : tr('Bridging (linhas)')) + '<input class="frWTBrace mt-0.5 w-full rounded border border-steel-200 px-1 py-1" type="number" min="0" max="6" step="1" value="' + (wt.bracingRows || 0) + '"></label>'
         + '  <label class="text-steel-500">' + tr('Lados chapa') + '<select class="frWTSheath mt-0.5 w-full rounded border border-steel-200 px-1 py-1"><option value="0"' + (wt.sheathSides === 0 ? ' selected' : '') + '>0</option><option value="1"' + (wt.sheathSides === 1 ? ' selected' : '') + '>1</option><option value="2"' + (wt.sheathSides === 2 ? ' selected' : '') + '>2</option></select></label>'
         + '</div></div>';
     }).join('') || ('<div class="text-steel-400 text-sm">' + tr('Nenhum tipo. Clique em + Novo.') + '</div>');
@@ -186,11 +195,12 @@
       var id = row.getAttribute('data-wt'), wt = wtById(id); if (!wt) return;
       var on = function (cls, ev, fn) { var el = row.querySelector(cls); if (el) el.addEventListener(ev, fn); };
       on('.frWTName', 'input', function (e) { wt.name = e.target.value; refreshSelects(); });
-      on('.frWTMat', 'change', function (e) { wt.material = e.target.value; renderMaterials(); });
+      on('.frWTMat', 'change', function (e) { wt.material = e.target.value; wt.plates = (wt.material === 'wood' ? 3 : 2); renderWTs(); renderMaterials(); });
       on('.frWTSize', 'input', function (e) { wt.studSize = e.target.value; renderMaterials(); });
       on('.frWTSpace', 'change', function (e) { wt.spacing = num(e.target.value, 16); renderMaterials(); });
       on('.frWTH', 'input', function (e) { wt.height = num(e.target.value, 9); renderMaterials(); });
       on('.frWTPlates', 'input', function (e) { wt.plates = num(e.target.value, 2); renderMaterials(); });
+      on('.frWTBrace', 'input', function (e) { wt.bracingRows = num(e.target.value, 0); renderMaterials(); });
       on('.frWTSheath', 'change', function (e) { wt.sheathSides = num(e.target.value, 0); renderMaterials(); });
       on('.frWTDel', 'click', function () { FR.wallTypes = FR.wallTypes.filter(function (w) { return w.id !== id; }); renderWTs(); refreshSelects(); renderMaterials(); });
     });
@@ -247,12 +257,21 @@
       var ks = Object.keys(obj); if (!ks.length) return '<div class="text-steel-400">—</div>';
       return ks.map(function (k) { return '<div class="flex justify-between"><span class="text-steel-600">' + esc(k) + '</span><span class="font-semibold text-steel-800">' + fmt(obj[k]) + '</span></div>'; }).join('');
     }
-    box.innerHTML =
-      '<div class="rounded-lg bg-steel-50 p-3"><div class="text-xs font-semibold text-steel-500 uppercase tracking-wide mb-1.5">' + tr('Montantes') + ' (' + m.totalStuds + ')</div>' + rows(m.studs, function (v) { return v + ' un'; }) + '</div>'
-      + '<div class="rounded-lg bg-steel-50 p-3"><div class="text-xs font-semibold text-steel-500 uppercase tracking-wide mb-1.5">' + tr('Guias / Plates') + ' (' + m.totalPlateLF.toFixed(1) + ' LF)</div>' + rows(m.plates, function (v) { return v.toFixed(1) + ' LF'; }) + '</div>'
-      + '<div class="rounded-lg bg-steel-50 p-3"><div class="text-xs font-semibold text-steel-500 uppercase tracking-wide mb-1.5">' + tr('Chapas') + '</div><div class="flex justify-between"><span class="text-steel-600">' + tr('Área') + '</span><span class="font-semibold text-steel-800">' + m.sheathSf.toFixed(0) + ' sf</span></div><div class="flex justify-between"><span class="text-steel-600">' + tr('Folhas 4x8') + '</span><span class="font-semibold text-steel-800">' + m.sheets + '</span></div></div>'
-      + '<div class="rounded-lg bg-steel-50 p-3"><div class="text-xs font-semibold text-steel-500 uppercase tracking-wide mb-1.5">' + tr('Vergas (headers)') + '</div><div class="flex justify-between"><span class="text-steel-600">' + tr('Comprimento') + '</span><span class="font-semibold text-steel-800">' + m.headersLF.toFixed(1) + ' LF</span></div></div>'
-      + '<div class="text-xs text-steel-400">' + tr('Paredes: total') + ' ' + m.totalLF.toFixed(1) + ' LF</div>';
+    function card(title, inner) { return '<div class="rounded-lg bg-steel-50 p-3"><div class="text-xs font-semibold text-steel-500 uppercase tracking-wide mb-1.5">' + title + '</div>' + inner + '</div>'; }
+    function lineLF(label, v) { return '<div class="flex justify-between"><span class="text-steel-600">' + label + '</span><span class="font-semibold text-steel-800">' + v.toFixed(1) + ' LF</span></div>'; }
+    var html = card(tr('Montantes') + ' (' + m.totalStuds + ')', rows(m.studs, function (v) { return v + ' un'; }));
+    if (Object.keys(m.track).length) html += card(tr('Track / Guias (metal)') + ' (' + m.totalTrackLF.toFixed(1) + ' LF)', rows(m.track, function (v) { return v.toFixed(1) + ' LF'; }));
+    if (Object.keys(m.plates).length) html += card(tr('Plates (madeira)') + ' (' + m.totalPlateLF.toFixed(1) + ' LF)', rows(m.plates, function (v) { return v.toFixed(1) + ' LF'; }));
+    if (m.bridgingLF > 0 || m.blockingLF > 0) {
+      var br = '';
+      if (m.bridgingLF > 0) br += lineLF(tr('Bridging (metal)'), m.bridgingLF);
+      if (m.blockingLF > 0) br += lineLF(tr('Blocking (madeira)'), m.blockingLF);
+      html += card(tr('Travamento'), br);
+    }
+    html += card(tr('Chapas'), '<div class="flex justify-between"><span class="text-steel-600">' + tr('Área') + '</span><span class="font-semibold text-steel-800">' + m.sheathSf.toFixed(0) + ' sf</span></div><div class="flex justify-between"><span class="text-steel-600">' + tr('Folhas 4x8') + '</span><span class="font-semibold text-steel-800">' + m.sheets + '</span></div>');
+    html += card(tr('Vergas (headers)'), lineLF(tr('Comprimento'), m.headersLF));
+    html += '<div class="text-xs text-steel-400">' + tr('Paredes: total') + ' ' + m.totalLF.toFixed(1) + ' LF</div>';
+    box.innerHTML = html;
     var tot = document.getElementById('frTotal'); if (tot) tot.textContent = money(priceTotal(m));
   }
 
