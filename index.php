@@ -30,10 +30,18 @@ layout_top(t('app_name'));
   .vhero{min-height:0;padding-top:108px;padding-bottom:56px}   /* altura guiada pelo conteúdo (sem vão de 100vh) → cards sobem, hero cheio estilo Dite */
   .sec{margin:36px 0}                                          /* respiro entre seções mais próximo do Dite */
   .vhero-inner{max-width:1040px}                               /* container mais largo (Dite) → título respira */
-  .vhero-h1{font-size:clamp(40px,7.8vw,90px);line-height:1.0;letter-spacing:-.03em}   /* título BEM maior/dominante */
+  .vhero-h1{font-size:clamp(40px,7.8vw,90px);line-height:1.0;letter-spacing:-.03em;background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:#f1d488;color:#f1d488;animation:none;text-shadow:0 3px 22px rgba(0,0,0,.6)}   /* título BEM maior + SEM máscara/shine: cor sólida e limpa */
   .vhero-sub{font-size:clamp(18px,2.4vw,24px);max-width:720px} /* subtítulo maior na proporção */
   .vhero-inner .hero-logo{display:block;height:auto;width:min(200px,52%);margin:0 auto 16px}
   .feat,.card,.plan{background:rgba(24,20,12,.72);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
+  /* TEXTO DOS CARDS maior (estava pequeno) */
+  .feat{padding:24px}
+  .feat-ic{font-size:32px}
+  .feat h3{font-size:20px}
+  .feat p{font-size:16px;line-height:1.55}
+  .step h3{font-size:19px}
+  .step p{font-size:15.5px;line-height:1.5}
+  .plist{font-size:15.5px}
   .sec-title{text-shadow:0 2px 16px rgba(0,0,0,.6)}
   /* rodapé destacado sobre o vídeo (crédito do desenvolvedor bem visível) */
   footer{position:relative;z-index:2;text-align:center;background:rgba(12,10,6,.78);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid rgba(53,44,29,.7);border-radius:12px;color:#dccfb2;margin-top:30px;font-size:13.5px}
