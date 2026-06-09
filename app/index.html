@@ -81,7 +81,6 @@
         <button class="rb-brand rb-tab" data-tab="rbAbout" title="O que o ConstructCount faz">ConstructCount</button>
         <button class="rb-tab active" data-tab="rbHome">Início</button>
         <button class="rb-tab" data-tab="rbDocs">Documentos</button>
-        <button class="rb-tab" data-tab="rbView">Exibir</button>
         <button class="rb-tab" data-tab="rbCfg">Configurações</button>
         <button class="rb-tab" data-tab="rbHelp">Ajuda</button>
         <span id="menuProjName" class="ml-auto self-center text-steel-400 text-xs pr-3"></span>
@@ -185,8 +184,15 @@
             <div class="rb-label">Plantas</div>
           </div>
         </div>
-        <!-- Exibir -->
-        <div id="rbView" class="rb-panel hidden">
+        <!-- Configurações (inclui o que era a aba Exibir: Medida + Idioma) -->
+        <div id="rbCfg" class="rb-panel hidden">
+          <div class="rb-group">
+            <div class="rb-row">
+              <button id="miSettings" class="rb-btn"><span class="ico">⚙️</span><span>Motor local</span></button>
+              <button id="miReportBrand" class="rb-btn"><span class="ico">🎨</span><span>Marca / Relatórios</span></button>
+            </div>
+            <div class="rb-label">Geral</div>
+          </div>
           <div class="rb-group">
             <div class="rb-row">
               <button id="miUnit" class="rb-btn"><span class="ico">↔️</span><span>Unidade m²/ft²</span></button>
@@ -196,16 +202,6 @@
           <div class="rb-group">
             <div class="rb-row" id="rbLangRow"></div>
             <div class="rb-label">Idioma</div>
-          </div>
-        </div>
-        <!-- Configurações -->
-        <div id="rbCfg" class="rb-panel hidden">
-          <div class="rb-group">
-            <div class="rb-row">
-              <button id="miSettings" class="rb-btn"><span class="ico">⚙️</span><span>Motor local</span></button>
-              <button id="miReportBrand" class="rb-btn"><span class="ico">🎨</span><span>Marca / Relatórios</span></button>
-            </div>
-            <div class="rb-label">Configurações</div>
           </div>
         </div>
         <!-- Ajuda (página cheia — guia completo, estilo ConstructCount) -->
@@ -282,7 +278,7 @@
               <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🔀</div><div class="font-semibold text-steel-800">Split</div><div class="text-steel-500 text-sm mt-1">Duas folhas ao mesmo tempo, no menu PÁGINAS — compare planta e schedule.</div></div>
               <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">📐</div><div class="font-semibold text-steel-800">Ortho / Snap</div><div class="text-steel-500 text-sm mt-1">Medições retas e encaixe nos pontos, para marcações precisas.</div></div>
               <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🪟</div><div class="font-semibold text-steel-800">Janela selecionada</div><div class="text-steel-500 text-sm mt-1">Painel à direita mostra e edita o tipo e a medida da marca atual.</div></div>
-              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🌐</div><div class="font-semibold text-steel-800">Idioma e unidade</div><div class="text-steel-500 text-sm mt-1">Alterne PT · EN · ES e m² / ft² na aba Exibir — vale também nos documentos.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🌐</div><div class="font-semibold text-steel-800">Idioma e unidade</div><div class="text-steel-500 text-sm mt-1">Alterne PT · EN · ES e m² / ft² na aba Configurações — vale também nos documentos.</div></div>
             </div>
 
             <!-- FAQ -->
