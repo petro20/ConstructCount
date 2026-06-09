@@ -40,6 +40,8 @@ layout_top(t('app_name'));
   </div>
   <a href="#features" class="vhero-scroll" aria-hidden="true">▾</a>
 </section>
+<audio id="bgm" loop preload="auto"><source src="assets/audio/hero-music.mp3" type="audio/mpeg"></audio>
+<button id="musicBtn" class="music-btn" type="button" title="Música ligada/desligada" aria-label="Música">🎵</button>
 
 <section class="sec reveal" id="features">
   <h2 class="sec-title"><?= h(t('feat_title')) ?></h2>
@@ -120,6 +122,30 @@ layout_top(t('app_name'));
     document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
   } else {
     document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
+  }
+
+  // ---- música ambiente: liga por padrão; navegador exige 1º gesto p/ tocar com som ----
+  var bgm = document.getElementById('bgm'), mbtn = document.getElementById('musicBtn');
+  if (bgm && mbtn) {
+    bgm.volume = 0.35;
+    var want = localStorage.getItem('cc_music') !== 'off';   // padrão: ligada
+    function icon() {
+      var playing = want && !bgm.paused;
+      mbtn.textContent = playing ? '🔊' : (want ? '🎵' : '🔇');
+      mbtn.classList.toggle('playing', playing);
+    }
+    function tryPlay() { if (want) bgm.play().then(icon).catch(function () {}); }
+    ['pointerdown', 'keydown', 'scroll', 'touchstart'].forEach(function (ev) {
+      window.addEventListener(ev, function once() { tryPlay(); window.removeEventListener(ev, once); }, { passive: true });
+    });
+    mbtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      want = !want; localStorage.setItem('cc_music', want ? 'on' : 'off');
+      if (want) bgm.play().catch(function () {}); else bgm.pause();
+      icon();
+    });
+    bgm.addEventListener('play', icon); bgm.addEventListener('pause', icon);
+    icon();
   }
 })();
 </script>
