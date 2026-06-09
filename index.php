@@ -20,6 +20,7 @@ layout_top(t('app_name'));
 ?>
 <style>
   /* landing: vídeo FIXO no fundo + menu transparente por cima (conteúdo rola sobre o vídeo) */
+  html,body{overflow-x:hidden;max-width:100%}      /* mata a barra horizontal do hero full-bleed (100vw) */
   .nav{position:absolute;top:0;left:0;right:0;z-index:30;background:transparent;border-bottom:0}
   main{position:relative;z-index:1}
   .vhero{min-height:100vh}
