@@ -376,27 +376,64 @@
     renderSummary();
   }
   /** tabela de resumo da marcação (rodapé): Marca · Tipo · Medida · Qtd (com pavimentos e Twin) */
+  function sumEsc(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+  function sumTypeOptions(sel) {
+    let h = '<option value="">—</option>';
+    [...new Set((F.WINDOW_TYPES || []).map(t => t.cat))].forEach(cat => {
+      h += '<optgroup label="' + cat + '">';
+      (F.WINDOW_TYPES || []).filter(t => t.cat === cat).forEach(t => {
+        const lbl = F.typeLabel ? F.typeLabel(t.name) : t.name;
+        h += '<option value="' + t.name + '"' + (t.name === sel ? ' selected' : '') + '>' + lbl + '</option>';
+      });
+      h += '</optgroup>';
+    });
+    return h;
+  }
+  async function saveSummary(code, patch) {
+    if (!S.prov || !S.prov.setWindowDim) { markSaved(F.tr('Disponível no app de desktop.')); return; }
+    const wmm = patch.w != null ? F.parseToMm(patch.w) : null;
+    const hmm = patch.h != null ? F.parseToMm(patch.h) : null;
+    const ty = patch.type != null ? (patch.type || null) : null;
+    let r; try { r = await S.prov.setWindowDim(code, wmm || null, hmm || null, ty, null); } catch (e) { markSaved(F.tr('Falha ao salvar')); return; }
+    if (r && r.rec) { S.sched = S.sched || {}; S.sched[code] = Object.assign({}, S.sched[code], r.rec); }
+    renderItems();
+    markSaved(F.tr('Resumo: {c} atualizado', { c: code }));
+  }
   function renderSummary() {
     const panel = document.querySelector('#wsSummary');
     if (!panel || panel.classList.contains('hidden')) return;
     const body = document.querySelector('#wsSummaryBody'); if (!body) return;
+    if (!body._wired) {
+      body._wired = true;
+      body.addEventListener('change', (e) => {
+        const el = e.target, code = el.getAttribute && el.getAttribute('data-code'); if (!code) return;
+        if (el.classList.contains('sumType')) saveSummary(code, { type: el.value });
+        else if (el.classList.contains('sumW') || el.classList.contains('sumH')) {
+          const w = body.querySelector('.sumW[data-code="' + code + '"]'), h = body.querySelector('.sumH[data-code="' + code + '"]');
+          saveSummary(code, { w: w ? w.value : '', h: h ? h.value : '' });
+        }
+      });
+    }
     const counts = {};
     (S.marks || []).forEach(m => { if (m.confirmed) { const k = m.label || ''; counts[k] = (counts[k] || 0) + 1; } });
     const codes = Object.keys(counts).sort((a, b) => (a || '~').localeCompare(b || '~', undefined, { numeric: true }));
     const meta = (S.pages || []).find(p => p.page === S.page) || {};
     const pmult = +meta.mult || 1;
     const fol = document.querySelector('#wsSummaryFolha');
-    if (fol) fol.textContent = (meta.sheet || ('folha ' + S.page)) + (pmult > 1 ? ' · pavimentos×' + pmult : '');
+    if (fol) fol.textContent = (meta.sheet || ('folha ' + S.page)) + (pmult > 1 ? ' · pavimentos×' + pmult : '') + ' · ✏️ editável';
+    const inCls = 'bg-steel-900 text-steel-100 rounded px-1 py-0.5 text-xs border border-steel-600';
     let rows = '', tot = 0;
     codes.forEach(k => {
       const r = (S.sched || {})[k] || {};
-      const ty = (F.typeLabel ? F.typeLabel(r.type || '') : (r.type || '')) || '—';
-      const dim = (r.w_raw && r.h_raw) ? (r.w_raw + ' × ' + r.h_raw) : (r.w_mm && r.h_mm ? (r.w_mm + '×' + r.h_mm + 'mm') : '—');
       const tw = r.type === 'Twin Window' ? 2 : 1;
       const q = counts[k] * pmult * tw; tot += q;
       const calc = '' + counts[k] + (pmult > 1 ? '×' + pmult + 'pav' : '') + (tw > 1 ? '×2tw' : '');
       const qtd = (calc !== '' + counts[k]) ? (calc + ' = <b>' + q + '</b>') : ('<b>' + q + '</b>');
-      rows += '<tr class="border-t border-steel-700/60"><td class="px-3 py-1.5 font-semibold">' + (k || '—') + '</td><td class="px-3 py-1.5 text-steel-300">' + ty + '</td><td class="px-3 py-1.5 text-steel-300">' + dim + '</td><td class="px-3 py-1.5 text-right">' + qtd + '</td></tr>';
+      rows += '<tr class="border-t border-steel-700/60">'
+        + '<td class="px-3 py-1 font-semibold">' + (k || '—') + '</td>'
+        + '<td class="px-3 py-1"><select class="sumType ' + inCls + '" data-code="' + sumEsc(k) + '">' + sumTypeOptions(r.type || '') + '</select></td>'
+        + '<td class="px-3 py-1 whitespace-nowrap"><input class="sumW w-20 ' + inCls + '" data-code="' + sumEsc(k) + '" value="' + sumEsc(r.w_raw || '') + '" placeholder="larg"> × <input class="sumH w-20 ' + inCls + '" data-code="' + sumEsc(k) + '" value="' + sumEsc(r.h_raw || '') + '" placeholder="alt"></td>'
+        + '<td class="px-3 py-1 text-right">' + qtd + '</td></tr>';
     });
     if (!codes.length) rows = '<tr><td colspan="4" class="px-3 py-3 text-steel-500">Nenhuma marca confirmada nesta folha.</td></tr>';
     else rows += '<tr class="border-t-2 border-amber-600/60"><td colspan="3" class="px-3 py-1.5 font-semibold text-right">Total desta folha</td><td class="px-3 py-1.5 text-right font-bold text-amber-300">' + tot + '</td></tr>';
