@@ -705,9 +705,14 @@
         <div id="wsItems" class="overflow-y-auto text-sm" style="max-height:38%"></div>
       </aside>
 
-      <!-- centro: canvas -->
-      <div class="flex-1 min-w-0">
-        <canvas id="wsCanvas" class="w-full h-full bg-steel-900" style="cursor:grab"></canvas>
+      <!-- centro: canvas COM header de folha (mesmo padrão do painel B) -->
+      <div class="flex-1 min-w-0 flex flex-col">
+        <div class="flex items-center gap-2 px-2 py-1 bg-steel-800 border-b border-steel-700 text-xs text-steel-200 shrink-0">
+          <span>Folha:</span>
+          <select id="wsPaneASheet" class="text-steel-900 rounded px-1 py-0.5"></select>
+          <span id="wsPaneAInfo" class="text-steel-400"></span>
+        </div>
+        <canvas id="wsCanvas" class="flex-1 w-full min-h-0 bg-steel-900" style="cursor:grab"></canvas>
       </div>
 
       <!-- 2º painel (split): folha de referência lado a lado — IRMÃO do canvas (não embrulha) -->
@@ -843,7 +848,7 @@
   <script src="js/proposal.js?v=200"></script>
   <script src="js/main.js?v=200"></script>
   <script src="js/annotator.js?v=200"></script>
-  <script src="js/workspace.js?v=219"></script>
+  <script src="js/workspace.js?v=220"></script>
   <script src="js/desktop.js?v=213"></script>
   <script src="js/menu.js?v=213"></script>
   <script src="js/cards.js?v=200"></script>

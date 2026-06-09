@@ -323,7 +323,17 @@
     updateScaleInfo();
     updateFooter();
     updateSelWindow();
+    syncPaneAPicker();        // header de folha do painel A (seletor + nº de marcas)
     if (S.prov && S.prov.prewarmAutoCount) { try { S.prov.prewarmAutoCount(page); } catch (e) {} }   // aquece o Auto Count em 2º plano
+  }
+  /** header do painel A: popula o seletor de folha, liga o change e mostra nº de marcas */
+  function syncPaneAPicker() {
+    const sel = document.querySelector('#wsPaneASheet'); if (!sel) return;
+    if (!sel._filled) { sel.innerHTML = (S.pages || []).map(p => '<option value="' + p.page + '">' + (p.sheet || ('Folha ' + p.page)) + '</option>').join(''); sel._filled = true; }
+    if (!sel._wired) { sel._wired = true; sel.addEventListener('change', () => loadPage(+sel.value)); }
+    sel.value = S.page;
+    const inf = document.querySelector('#wsPaneAInfo');
+    if (inf) inf.textContent = '· ' + (S.marks || []).filter(m => m.confirmed !== false).length + ' marcas';
   }
 
   // ----------------------------------------------------------------- itens (painel esquerdo)
