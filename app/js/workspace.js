@@ -1042,6 +1042,33 @@
     markSaved(F.tr('✨ IA: +{n} paredes na camada ativa — revise: desligue o Linear, clique na linha e Del p/ apagar as erradas', { n: added }));
   }
 
+  // 🧠 IA (Claude): lê o detalhe de TIPO DE PAREDE desta folha → cria as assemblies
+  async function readWallTypesAI() {
+    if (!S.img || !(S.img.naturalWidth || S.img.width)) { alert(F.tr('Abra uma folha primeiro.')); return; }
+    if (S.busy) return;
+    S.busy = true; markSaved(F.tr('🧠 IA: lendo os tipos de parede desta folha…'));
+    let b64;
+    try {
+      const c = document.createElement('canvas');
+      c.width = S.img.naturalWidth || S.img.width; c.height = S.img.naturalHeight || S.img.height;
+      c.getContext('2d').drawImage(S.img, 0, 0);
+      b64 = c.toDataURL('image/png').split(',')[1];
+    } catch (e) { S.busy = false; markSaved(F.tr('Falha ao preparar a imagem')); return; }
+    const lic = F.licenseInfo ? F.licenseInfo() : { key: '', device: '' };
+    let r;
+    try {
+      const resp = await fetch('api/read_assembly.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_base64: b64, license_key: lic.key, device: lic.device }) });
+      r = await resp.json();
+    } catch (e) { S.busy = false; markSaved(F.tr('Falha ao contatar a IA')); return; }
+    S.busy = false;
+    if (r && r.error) { alert(F.tr('IA: ') + r.error); return; }
+    const walls = (r && r.walls) || [];
+    if (!walls.length) { markSaved(F.tr('IA: nenhum tipo de parede encontrado nesta folha')); return; }
+    const n = F.framingAddWallTypes ? F.framingAddWallTypes(walls) : 0;
+    markSaved(F.tr('🧠 IA: {n} tipo(s) de parede lido(s)', { n: n }));
+    alert(F.tr('A IA leu {n} tipo(s) de parede e criou as assemblies. Abra o 🏗️ Framing e escolha a assembly de cada camada.', { n: n }));
+  }
+
   function updateSchedUI() {
     const on = S.schedulePages.indexOf(S.page) >= 0;
     const btn = $('#wsSchedPage');
@@ -1496,6 +1523,7 @@
     $('#wsCount').addEventListener('click', () => setMode('count'));
     { const wl = $('#wsLinear'); if (wl) wl.addEventListener('click', () => setMode('linear')); }
     { const dwb = $('#wsDetectWalls'); if (dwb) dwb.addEventListener('click', detectWallsAI); }
+    { const rwb = $('#wsReadWalls'); if (rwb) rwb.addEventListener('click', readWallTypesAI); }
     $('#wsAuto').addEventListener('click', () => setMode('auto'));
     $('#wsDelete').addEventListener('click', () => setMode('del'));
     const wcal = $('#wsCalib'); if (wcal) wcal.addEventListener('click', () => setMode('calib'));

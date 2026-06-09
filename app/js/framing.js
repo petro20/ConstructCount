@@ -91,6 +91,30 @@
     return (FR.wallTypes[0] || {}).id;
   }
 
+  // IA leu o detalhe de tipo de parede → cria as assemblies (wall types)
+  F.framingAddWallTypes = function (walls) {
+    var added = 0;
+    (walls || []).forEach(function (w) {
+      var mat = (w.material === 'wood') ? 'wood' : 'metal';   // 'both' → metal (nota no nome)
+      var plates = (parseInt(w.bottom_plates, 10) || 1) + (parseInt(w.top_plates, 10) || 2);
+      FR.wallTypes.push({
+        id: uid('wt'),
+        name: (w.name || 'Tipo IA') + (w.material === 'both' ? ' (wood/metal)' : ''),
+        material: mat,
+        studSize: w.stud_size || (mat === 'wood' ? '2x4' : '3-5/8" 20ga'),
+        spacing: parseFloat(w.spacing_in) || 16,
+        height: 9,
+        plates: plates,
+        bracingRows: 1,
+        sheathSides: (w.sheathing_sides != null ? parseInt(w.sheathing_sides, 10) : 2),
+        color: COLORS[FR.wallTypes.length % COLORS.length],
+        ai: true, sheathing: w.sheathing || '', insulation: w.insulation || ''
+      });
+      added++;
+    });
+    return added;
+  };
+
   F.toggleFramingTakeoff = function (lines, layers) {
     var ws = document.getElementById('workspace') || document.body;
     var ov = document.getElementById('frTakeoff');
