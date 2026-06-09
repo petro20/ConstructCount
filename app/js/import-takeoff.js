@@ -17,6 +17,7 @@ window.ConstructCount = window.ConstructCount || {};
     if (/storefront|curtain|vitrine/.test(s)) return 'Storefront';
     if (/swing door|patio|terrace|balcony|entry|porta/.test(s)) return 'Single Door';
     if (/sliding/.test(s)) return 'Sliding Door';
+    if (/twin|gemin/.test(s)) return 'Twin Window';
     if (/casement/.test(s)) return 'Casement Window';
     if (/awning|hopper|bascul/.test(s)) return 'Awning Window';
     if (/fixed|fixa/.test(s)) return 'Fixed Window';

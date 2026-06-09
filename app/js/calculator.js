@@ -43,6 +43,7 @@ window.ConstructCount = window.ConstructCount || {};
     { name: 'Awning Window',    open: 'awning',          cat: 'Janela' },   // basculante / maxim-ar
     { name: 'Double Hung',      open: 'hung',            cat: 'Janela' },   // guilhotina
     { name: 'Picture / Fixed',  open: 'fixed',           cat: 'Janela' },   // vidro fixo
+    { name: 'Twin Window',      open: 'twin',            cat: 'Janela' },   // geminada (2 unidades mulled lado a lado)
     // ---- Portas ----
     { name: 'Single Swing Door',  open: 'door',            cat: 'Porta' },   // abrir 1 folha
     { name: 'Double Swing Door',  open: 'double-door',     cat: 'Porta' },   // abrir 2 folhas
