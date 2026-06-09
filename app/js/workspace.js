@@ -21,6 +21,7 @@
     dirty: false, saveTimer: null, onConsolidate: null, labelIdx: {}, schedulePages: [], toDelete: null,
     sections: ['Geral'], activeSection: 'Geral', legend: true, legendRect: null, draggingLegend: null,
     legendHandle: null, resizingLegend: null, legendByPage: {},   // posição/escala da legenda POR FOLHA
+    layers: [], activeLayer: null,   // CAMADAS (trades) — cada objeto {id,name,color,visible,locked}
   };
   let cv, ctx, bound = false;
   const $ = (s) => document.querySelector(s);
@@ -35,6 +36,9 @@
     S.schedulePages = (opts.schedulePages || []).slice();
     S.sections = (opts.sections && opts.sections.length) ? opts.sections.slice() : ['Geral'];
     S.activeSection = opts.activeSection || S.sections[0];
+    S.layers = (opts.layers && opts.layers.length) ? opts.layers.map(l => ({ ...l }))
+      : [{ id: 'default', name: 'Janelas e Portas', color: '#d9a02a', visible: true, locked: false }];
+    S.activeLayer = opts.activeLayer || S.layers[0].id;
     S.sched = opts.schedule || {};        // {CÓDIGO: {w_mm,h_mm,w_raw,h_raw,type,model}}
     S.scope = opts.scope || 'all';        // modo de reconhecimento do projeto
     S.toDelete = new Set();
@@ -46,6 +50,7 @@
     bindOnce();
     applyCursor();
     renderSections();
+    renderLayers();
     renderPagesList();
     const first = S.pages.find(p => p.n_hex > 0) || S.pages[0];
     if (first) loadPage(first.page);
@@ -134,6 +139,11 @@
   }
   const colorOf = (label) => F.markColor(idxOf(label));
 
+  // ----------------------------------------------------------------- camadas (trades)
+  function layerById(id) { return S.layers.find(l => l.id === (id || 'default')) || null; }
+  function layerVisible(id) { const l = layerById(id); return l ? l.visible !== false : true; }
+  function activeLayerObj() { return layerById(S.activeLayer) || S.layers[0] || null; }
+
   // ----------------------------------------------------------------- seções (grupos)
   function renderSections() {
     const sel = $('#wsSection'); if (!sel) return;
@@ -143,6 +153,75 @@
       if (s === S.activeSection) o.selected = true;
       sel.appendChild(o);
     });
+  }
+
+  // --- painel de CAMADAS (cada trade = uma camada sobre a planta) ---
+  const _LAYER_PAL = ['#d9a02a', '#3b82f6', '#22c55e', '#ef4444', '#a855f7', '#06b6d4', '#f59e0b', '#ec4899', '#84cc16', '#14b8a6'];
+  function layerCount(lid) {
+    const n = S.marks.filter(m => m.confirmed && (m.layer || 'default') === lid).length;
+    return n ? String(n) : '';
+  }
+  function renderLayers() {
+    const box = $('#wsLayersList'); if (!box) return;
+    box.innerHTML = '';
+    S.layers.forEach(l => {
+      const active = (l.id === S.activeLayer);
+      const row = document.createElement('div');
+      row.className = 'flex items-center gap-1.5 px-1.5 py-1 rounded cursor-pointer ' + (active ? 'bg-steel-700 ring-1 ring-amber-400' : 'hover:bg-steel-700/50');
+      const dot = document.createElement('span');
+      dot.className = 'inline-block w-3 h-3 rounded-full flex-shrink-0';
+      dot.style.background = l.color || '#888'; dot.title = F.tr('Mudar cor');
+      dot.addEventListener('click', (e) => { e.stopPropagation(); cycleLayerColor(l); });
+      const nm = document.createElement('span');
+      nm.className = 'flex-1 text-sm truncate ' + (active ? 'font-semibold text-white' : 'text-steel-100');
+      nm.textContent = (l.locked ? '🔒 ' : '') + (l.name || 'Camada');
+      const cnt = document.createElement('span');
+      cnt.className = 'text-[11px] text-steel-400 tabular-nums'; cnt.textContent = layerCount(l.id);
+      const eye = document.createElement('button');
+      eye.className = 'text-sm leading-none px-0.5' + (l.visible !== false ? '' : ' opacity-40');
+      eye.textContent = l.visible !== false ? '👁️' : '🚫'; eye.title = F.tr('Mostrar/ocultar');
+      eye.addEventListener('click', (e) => { e.stopPropagation(); toggleLayerVisible(l); });
+      const ren = document.createElement('button');
+      ren.className = 'text-xs px-0.5 text-steel-400 hover:text-white'; ren.textContent = '✎'; ren.title = F.tr('Renomear');
+      ren.addEventListener('click', (e) => { e.stopPropagation(); renameLayer(l); });
+      const del = document.createElement('button');
+      del.className = 'text-xs px-0.5 text-steel-400 hover:text-rose-400'; del.textContent = '🗑️'; del.title = F.tr('Excluir');
+      del.addEventListener('click', (e) => { e.stopPropagation(); deleteLayerUI(l); });
+      row.addEventListener('click', () => setActiveLayerUI(l));
+      row.append(dot, nm, cnt, eye, ren, del);
+      box.appendChild(row);
+    });
+  }
+  async function setActiveLayerUI(l) {
+    S.activeLayer = l.id; renderLayers();
+    if (S.prov.setActiveLayer) { try { await S.prov.setActiveLayer(l.id); } catch (e) {} }
+    markSaved(F.tr('Camada ativa: {s}', { s: l.name }));
+  }
+  async function toggleLayerVisible(l) {
+    l.visible = !(l.visible !== false); renderLayers(); draw();
+    if (S.prov.updateLayer) { try { await S.prov.updateLayer(l.id, { visible: l.visible }); } catch (e) {} }
+  }
+  function cycleLayerColor(l) {
+    l.color = _LAYER_PAL[(_LAYER_PAL.indexOf(l.color) + 1) % _LAYER_PAL.length];
+    renderLayers(); draw();
+    if (S.prov.updateLayer) { try { S.prov.updateLayer(l.id, { color: l.color }); } catch (e) {} }
+  }
+  async function addLayerUI() {
+    const name = prompt(F.tr('Nome da nova camada (ex.: Drywall, Framing…):'), '');
+    if (!name || !name.trim() || !S.prov.addLayer) return;
+    try { const r = await S.prov.addLayer(name.trim()); if (r && r.layers) { S.layers = r.layers; S.activeLayer = r.active; renderLayers(); markSaved(F.tr('Camada criada: {s}', { s: name.trim() })); } } catch (e) {}
+  }
+  async function renameLayer(l) {
+    const nn = prompt(F.tr('Novo nome da camada "{s}":', { s: l.name }), l.name);
+    if (!nn || !nn.trim()) return;
+    l.name = nn.trim(); renderLayers();
+    if (S.prov.updateLayer) { try { await S.prov.updateLayer(l.id, { name: l.name }); } catch (e) {} }
+  }
+  async function deleteLayerUI(l) {
+    if (S.layers.length <= 1) { alert(F.tr('Não dá para apagar a última camada.')); return; }
+    if (!confirm(F.tr('Excluir a camada "{s}"? As marcas dela vão para a primeira camada.', { s: l.name }))) return;
+    if (!S.prov.deleteLayer) return;
+    try { const r = await S.prov.deleteLayer(l.id); if (r && r.layers) { S.layers = r.layers; S.activeLayer = r.active; renderLayers(); await loadPage(S.page); markSaved(F.tr('Camada excluída')); } } catch (e) {}
   }
 
   // ----------------------------------------------------------------- páginas
@@ -227,6 +306,7 @@
       x: m.x, y: m.y, w: m.w || 24, h: m.h || 24,
       label: (m.label || '').toString().trim().toUpperCase(),
       confirmed: m.confirmed !== false, cv: !!m.cv, section: m.section || 'Geral',
+      layer: m.layer || 'default',
     }));
     S.measures = Array.isArray(data.measures) ? data.measures : [];   // medidas salvas
     clearSel(); updateMeasSel();
@@ -235,6 +315,7 @@
     S.img.onload = () => { buildSnapData(); resize(); fit(); draw(); };
     S.img.src = data.image_b64 || '';
     renderItems();
+    renderLayers();           // contagem por camada da folha
     syncPageBadge();          // badge reflete as marcas salvas desta folha
     updateSchedUI();          // estado do botão "folha de medidas"
     updateScaleInfo();
@@ -338,6 +419,7 @@
     if (S.img && S.img.width) ctx.drawImage(S.img, S.ox, S.oy, S.img.width * S.scale, S.img.height * S.scale);
     const ksel = S.selMarks;
     S.marks.forEach(m => {
+      if (!layerVisible(m.layer)) return;     // camada oculta → não desenha
       const x = m.x * S.scale + S.ox, y = m.y * S.scale + S.oy, w = m.w * S.scale, h = m.h * S.scale;
       ctx.lineWidth = 2;
       ctx.strokeStyle = m.confirmed ? colorOf(m.label) : 'rgba(150,150,150,.5)';
@@ -534,7 +616,7 @@
     if (meta) { meta.n_hex = curPageCount(); renderPagesList(); }
   }
 
-  function changed() { S.dirty = true; markSaved(F.tr('Editando…')); syncPageBadge(); renderItems(); draw(); scheduleSave(); }
+  function changed() { S.dirty = true; markSaved(F.tr('Editando…')); syncPageBadge(); renderItems(); renderLayers(); draw(); scheduleSave(); }
 
   // -------- escala / régua --------
   function mmToFtIn(mm) {
@@ -771,7 +853,7 @@
       const lab = target || code || label;
       const cx = mt.x + mt.w / 2, cy = mt.y + mt.h / 2;
       const dup = S.marks.some(m => Math.abs((m.x + m.w / 2) - cx) < mt.w * 0.6 && Math.abs((m.y + m.h / 2) - cy) < mt.h * 0.6);
-      if (!dup) { S.marks.push({ x: mt.x, y: mt.y, w: mt.w, h: mt.h, label: lab, confirmed: true, cv: false, auto: true, section: S.activeSection }); added++; }
+      if (!dup) { S.marks.push({ x: mt.x, y: mt.y, w: mt.w, h: mt.h, label: lab, confirmed: true, cv: false, auto: true, section: S.activeSection, layer: S.activeLayer }); added++; }
     });
     if (added) { S.dirty = true; scheduleSave(); }
     renderItems(); draw();
@@ -788,7 +870,7 @@
   async function flushSave() {
     if (S.saveTimer) { clearTimeout(S.saveTimer); S.saveTimer = null; }
     if (!S.dirty || S.page == null) return;
-    const payload = S.marks.map(m => ({ x: m.x, y: m.y, w: m.w, h: m.h, label: m.label, confirmed: m.confirmed, cv: m.cv, section: m.section || S.activeSection }));
+    const payload = S.marks.map(m => ({ x: m.x, y: m.y, w: m.w, h: m.h, label: m.label, confirmed: m.confirmed, cv: m.cv, section: m.section || S.activeSection, layer: m.layer || S.activeLayer }));
     const mult = curMult();
     const meta = S.pages.find(p => p.page === S.page); if (meta) meta.mult = mult;
     S.dirty = false;
@@ -872,6 +954,8 @@
       if (!S.prov.deleteSection) return;
       try { const r = await S.prov.deleteSection(cur); if (r && r.sections) { S.sections = r.sections; S.activeSection = r.active; renderSections(); await loadPage(S.page); markSaved(F.tr('Seção excluída')); } } catch (e) {}
     });
+    // camadas (trades)
+    pg('#wsLayerAdd', addLayerUI);
 
     const rc = $('#wsRightCollapse'); if (rc) rc.addEventListener('click', () => panelToggle('right', true));
     const re = $('#wsRightExpand'); if (re) re.addEventListener('click', () => panelToggle('right', false));
@@ -1008,7 +1092,7 @@
         if (m) { m.confirmed = !m.confirmed; }
         else {
           const [ix, iy] = toImg(e.offsetX, e.offsetY); const sz = 24;
-          S.marks.push({ x: ix - sz / 2, y: iy - sz / 2, w: sz, h: sz, label: ($('#wsLabel').value || '').trim().toUpperCase(), confirmed: true, cv: false, section: S.activeSection });
+          S.marks.push({ x: ix - sz / 2, y: iy - sz / 2, w: sz, h: sz, label: ($('#wsLabel').value || '').trim().toUpperCase(), confirmed: true, cv: false, section: S.activeSection, layer: S.activeLayer });
         }
         changed();
       } else if (m) { m.confirmed = !m.confirmed; changed(); }

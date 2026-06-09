@@ -217,11 +217,16 @@
       setActiveSection: (name) => api.set_active_section(slug, name),
       renameSection: (o, n) => api.rename_section(slug, o, n),
       deleteSection: (name) => api.delete_section(slug, name),
+      addLayer: (name, color) => api.add_layer(slug, name, color || null),
+      setActiveLayer: (lid) => api.set_active_layer(slug, lid),
+      updateLayer: (lid, patch) => api.update_layer(slug, lid, (patch && patch.name) ?? null, (patch && patch.color) ?? null, (patch && patch.visible) ?? null, (patch && patch.locked) ?? null),
+      deleteLayer: (lid) => api.delete_layer(slug, lid),
     };
     F.openWorkspace({
       slug, name: job.name, pages: job.pages, schedule: job.schedule, prov,
       schedulePages: job.schedule_pages || [],
       sections: job.sections, activeSection: job.active_section,
+      layers: job.layers, activeLayer: job.active_layer,
       scope: job.scope || 'all',
       onConsolidate: (res) => {
         if (res && res.items && res.items.length) {
