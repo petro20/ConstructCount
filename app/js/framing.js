@@ -76,6 +76,90 @@
   }
 
   /* =======================================================================
+     TAKEOFF NO WORKSPACE — Assembly ligada aos traços do Linear (por camada/trade)
+     Painel lateral dentro do workspace. NÃO usa tela separada.
+     ===================================================================== */
+  FR.layerAssembly = FR.layerAssembly || {};   // { layerId: wtId } — qual assembly aplica em cada camada
+  function ftFromMm(mm) { return num(mm) / 304.8; }
+  function autoAssembly(name) {
+    var n = (name || '').toLowerCase(), wt;
+    for (var i = 0; i < FR.wallTypes.length; i++) {
+      wt = FR.wallTypes[i];
+      if (/metal/.test(n) && wt.material === 'metal') return wt.id;
+      if (/(wood|madeira|carpentry)/.test(n) && wt.material === 'wood') return wt.id;
+    }
+    return (FR.wallTypes[0] || {}).id;
+  }
+
+  F.toggleFramingTakeoff = function (lines, layers) {
+    var ws = document.getElementById('workspace') || document.body;
+    var ov = document.getElementById('frTakeoff');
+    if (ov && ov.style.display !== 'none') { ov.style.display = 'none'; return; }
+    if (!ov) {
+      ov = document.createElement('div'); ov.id = 'frTakeoff';
+      ov.style.cssText = 'position:absolute;top:0;right:0;bottom:24px;width:372px;z-index:46;background:#fff;border-left:1px solid #d9d7d1;box-shadow:-10px 0 30px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden';
+      ws.appendChild(ov);
+    }
+    ov.style.display = 'flex';
+    renderFramingTakeoff(ov, lines || [], layers || []);
+  };
+
+  function renderFramingTakeoff(ov, lines, layers) {
+    var byLayer = {};
+    lines.forEach(function (ln) { (byLayer[ln.layer] = byLayer[ln.layer] || []).push(ln); });
+    var nameOf = function (id) { var l = (layers || []).filter(function (x) { return x.id === id; })[0]; return l ? l.name : (id || 'default'); };
+    var colorOf = function (id) { var l = (layers || []).filter(function (x) { return x.id === id; })[0]; return (l && l.color) || '#999'; };
+
+    FR.segments = []; var lids = Object.keys(byLayer), lfBy = {};
+    lids.forEach(function (lid) {
+      if (!FR.layerAssembly[lid]) FR.layerAssembly[lid] = autoAssembly(nameOf(lid));
+      var lf = 0;
+      byLayer[lid].forEach(function (ln) { var ft = ftFromMm(ln.mm); lf += ft; FR.segments.push({ id: uid('s'), wtId: FR.layerAssembly[lid], len: ft, qty: 1 }); });
+      lfBy[lid] = lf;
+    });
+    var m = F.framingCompute();
+    var lf = function (v) { return v.toFixed(1) + ' LF'; };
+    var asmOpt = function (sel) { return FR.wallTypes.map(function (wt) { return '<option value="' + wt.id + '"' + (wt.id === sel ? ' selected' : '') + '>' + esc(wt.name) + '</option>'; }).join(''); };
+
+    var layerHTML = lids.length ? lids.map(function (lid) {
+      return '<div class="ft-lay" data-lid="' + lid + '"><span class="ft-dot" style="background:' + colorOf(lid) + '"></span>'
+        + '<span class="ft-lname">' + esc(nameOf(lid)) + '</span><span class="ft-lf">' + lfBy[lid].toFixed(1) + ' LF</span>'
+        + '<select class="ft-asm">' + asmOpt(FR.layerAssembly[lid]) + '</select></div>';
+    }).join('') : ('<div class="ft-empty">' + tr('Nenhum traço Linear ainda. Use 📐 Linear na camada do trade.') + '</div>');
+
+    function card(h, inner) { return '<div class="ft-card"><div class="ft-h">' + h + '</div>' + inner + '</div>'; }
+    function rowsObj(obj, unit, isLf) { var ks = Object.keys(obj); if (!ks.length) return '<div class="ft-part"><span>—</span></div>'; return ks.map(function (k) { return '<div class="ft-part"><span>' + esc(k) + '</span><b>' + (isLf ? obj[k].toFixed(1) : obj[k]) + ' ' + unit + '</b></div>'; }).join(''); }
+    var partsHTML = card(tr('Montantes (studs)'), rowsObj(m.studs, 'EA', false));
+    if (Object.keys(m.track).length) partsHTML += card(tr('Track / Guias'), rowsObj(m.track, 'LF', true));
+    if (Object.keys(m.plates).length) partsHTML += card(tr('Plates'), rowsObj(m.plates, 'LF', true));
+    if (m.bridgingLF > 0 || m.blockingLF > 0) partsHTML += card(tr('Travamento'), (m.bridgingLF > 0 ? '<div class="ft-part"><span>Bridging</span><b>' + lf(m.bridgingLF) + '</b></div>' : '') + (m.blockingLF > 0 ? '<div class="ft-part"><span>Blocking</span><b>' + lf(m.blockingLF) + '</b></div>' : ''));
+    partsHTML += card(tr('Chapas (sheathing)'), '<div class="ft-part"><span>' + tr('Área') + '</span><b>' + m.sheathSf.toFixed(0) + ' SF</b></div><div class="ft-part"><span>' + tr('Folhas 4x8') + '</span><b>' + m.sheets + ' EA</b></div>');
+    partsHTML += card(tr('Vergas (headers)'), '<div class="ft-part"><span>' + tr('Comprimento') + '</span><b>' + lf(m.headersLF) + '</b></div>');
+
+    ov.innerHTML =
+      '<div class="ft-top"><span>🏗️ ' + tr('Takeoff de Framing') + '</span><button id="ftClose" class="ft-x">✕</button></div>'
+      + '<div class="ft-body">'
+      + '<div class="ft-sec">' + tr('Por camada (trade) → assembly') + '</div>' + layerHTML
+      + '<div class="ft-sec" style="margin-top:14px">' + tr('Parts (material + mão de obra)') + '</div>' + partsHTML
+      + card(tr('Preço (USD)'),
+        '<div class="ft-pr"><label>' + tr('Montante') + '<input id="ftPrStud" type="number" min="0" step="0.01" value="' + (FR.prices.stud || '') + '"></label>'
+        + '<label>' + tr('Guia/plate LF') + '<input id="ftPrPlate" type="number" min="0" step="0.01" value="' + (FR.prices.plateLF || '') + '"></label>'
+        + '<label>' + tr('Chapa') + '<input id="ftPrSheet" type="number" min="0" step="0.01" value="' + (FR.prices.sheet || '') + '"></label>'
+        + '<label>' + tr('Verga LF') + '<input id="ftPrHeader" type="number" min="0" step="0.01" value="' + (FR.prices.headerLF || '') + '"></label></div>')
+      + '<div class="ft-total"><span>' + tr('Total estimado') + '</span><b id="ftTotal">' + money(priceTotal(m)) + '</b></div>'
+      + '</div>';
+
+    ov.querySelector('#ftClose').addEventListener('click', function () { ov.style.display = 'none'; });
+    ov.querySelectorAll('.ft-lay').forEach(function (row) {
+      var lid = row.getAttribute('data-lid');
+      row.querySelector('.ft-asm').addEventListener('change', function (e) { FR.layerAssembly[lid] = e.target.value; renderFramingTakeoff(ov, lines, layers); });
+    });
+    [['ftPrStud', 'stud'], ['ftPrPlate', 'plateLF'], ['ftPrSheet', 'sheet'], ['ftPrHeader', 'headerLF']].forEach(function (pr) {
+      var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('input', function () { FR.prices[pr[1]] = num(inp.value); var mm = F.framingCompute(); var t = ov.querySelector('#ftTotal'); if (t) t.textContent = money(priceTotal(mm)); });
+    });
+  }
+
+  /* =======================================================================
      CANVAS (Fase 2) — abre PDF/imagem, pan/zoom, calibra, traça parede
      ===================================================================== */
   var CV = {

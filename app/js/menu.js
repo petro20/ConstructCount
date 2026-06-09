@@ -90,7 +90,7 @@
     // ----- Pacote (plano / assinatura) -----
     const psub = $('#pkgSubscribe'); if (psub) psub.addEventListener('click', () => { window.open('https://constructcount.com/assinar', '_blank'); });
     const pact = $('#pkgActivate'); if (pact) pact.addEventListener('click', () => { if (F.openLicenseGate) F.openLicenseGate(); else openLic(); });
-    const pfr = $('#pkgOpenFraming'); if (pfr) pfr.addEventListener('click', () => { if (F.openFraming) F.openFraming(); });
+    const pfr = $('#pkgOpenFraming'); if (pfr) pfr.addEventListener('click', () => { const mo = $('#miOpen'); if (mo) mo.click(); });  // Framing vive no workspace: abre projeto → camada + Linear + 🏗️ Framing
   }
 
   // ----------------------------------------------------------------- aba Pacote: status da assinatura
