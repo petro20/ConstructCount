@@ -402,7 +402,17 @@
     else rows += '<tr class="border-t-2 border-amber-600/60"><td colspan="3" class="px-3 py-1.5 font-semibold text-right">Total desta folha</td><td class="px-3 py-1.5 text-right font-bold text-amber-300">' + tot + '</td></tr>';
     body.innerHTML = rows;
   }
-  F._toggleSummary = function () { const p = document.querySelector('#wsSummary'); if (p) { p.classList.toggle('hidden'); renderSummary(); } };
+  function positionSummary() {
+    const p = document.querySelector('#wsSummary'); if (!p) return;
+    const vis = (el) => el && !el.classList.contains('hidden') && el.offsetWidth > 0;
+    const lw = vis(document.querySelector('#wsLeft')) ? document.querySelector('#wsLeft').offsetWidth
+      : (vis(document.querySelector('#wsLeftBar')) ? document.querySelector('#wsLeftBar').offsetWidth : 0);
+    const rw = vis(document.querySelector('#wsRight')) ? document.querySelector('#wsRight').offsetWidth
+      : (vis(document.querySelector('#wsRightBar')) ? document.querySelector('#wsRightBar').offsetWidth : 0);
+    p.style.left = lw + 'px'; p.style.right = rw + 'px';   // fica ENTRE as barras laterais
+  }
+  F._toggleSummary = function () { const p = document.querySelector('#wsSummary'); if (p) { positionSummary(); p.classList.toggle('hidden'); renderSummary(); } };
+  window.addEventListener('resize', () => { const p = document.querySelector('#wsSummary'); if (p && !p.classList.contains('hidden')) positionSummary(); });
 
   /** Clicar num item da lista → realça TODAS as marcas iguais e enquadra todas juntas. */
   function selectItem(label) {
