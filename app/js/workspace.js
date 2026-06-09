@@ -192,6 +192,7 @@
       row.append(dot, nm, cnt, eye, ren, del);
       box.appendChild(row);
     });
+    if (typeof updateSmartPanel === 'function') updateSmartPanel();
   }
   async function setActiveLayerUI(l) {
     S.activeLayer = l.id; renderLayers();
@@ -361,6 +362,7 @@
       el.appendChild(row);
     });
     if (!Object.keys(c).length) el.innerHTML = '<div class="px-3 py-2 text-xs text-steel-500">' + F.tr('Nenhuma marca confirmada nesta folha.') + '</div>';
+    updateSmartPanel();
   }
 
   /** Clicar num item da lista → realça TODAS as marcas iguais e enquadra todas juntas. */
@@ -369,6 +371,7 @@
     if (S.highlight) {
       const ms = S.marks.filter(m => m.confirmed && (m.label || '(sem rótulo)') === label);
       if (ms.length) frameMarks(ms);
+      smartFocus('janela');                       // painel inteligente: abre "Janela selecionada"
     }
     renderItems(); draw(); updateSelWindow();
   }
@@ -650,6 +653,7 @@
   function updateScaleInfo() {
     const txt = S.mmPerPx ? F.tr('1px = {v} mm', { v: S.mmPerPx.toFixed(2) }) : F.tr('não calibrada');
     const el = $('#wsScaleInfo'); if (el) el.textContent = F.tr('Escala: {t}', { t: txt }) + (S.measures.length ? F.tr(' · {n} medida(s)', { n: S.measures.length }) : '');
+    if (typeof updateSmartPanel === 'function') updateSmartPanel();
     const st = $('#stScale'); if (st) st.textContent = F.tr('Escala: {t}', { t: txt });
   }
   function updateFooter() {
@@ -905,6 +909,79 @@
     });
   }
 
+  // ---------- PAINEL INTELIGENTE (sequência lógica de uso + adaptativo) ----------
+  const ACC_ORDER = ['folha', 'escala', 'camadas', 'ferramentas', 'autocount', 'janela', 'medidas'];
+  const ACC_STEP = { folha: 1, escala: 2, camadas: 3, ferramentas: 4, autocount: 5, janela: 6, medidas: 7 };
+  function accHdr(name) { return document.querySelector('#wsRight [data-acc="' + name + '"]'); }
+  function accSet(name, open) {
+    const hdr = accHdr(name); if (!hdr) return;
+    const body = hdr.nextElementSibling; if (!body) return;
+    body.classList.toggle('hidden', !open);
+    const chev = hdr.querySelector('.ws-chev'); if (chev) chev.textContent = open ? '▼' : '▶';
+  }
+  /** abre o painel certo p/ o contexto e recolhe os concorrentes de "trabalho" */
+  function smartFocus(name) {
+    if (S.smart === false) return;
+    accSet(name, true);
+    ['janela', 'autocount', 'escala', 'ferramentas'].forEach(n => { if (n !== name) accSet(n, false); });
+  }
+  /** monta a ordem lógica + nº do passo + badge em cada título (uma vez) */
+  function buildSmartPanel() {
+    const aside = document.querySelector('#wsRight'); if (!aside || aside._smartBuilt) return;
+    aside._smartBuilt = true; if (S.smart === undefined) S.smart = true;
+    const ns = document.createElement('div');                  // linha de "próximo passo"
+    ns.id = 'wsNextStep';
+    ns.className = 'px-3 py-1.5 text-[11px] text-steel-300 bg-steel-900/50 border-b border-steel-700';
+    aside.insertBefore(ns, aside.children[1] || null);
+    ACC_ORDER.forEach(name => {
+      const hdr = accHdr(name); if (!hdr) return;
+      const body = hdr.nextElementSibling;
+      if (!hdr._smart) {
+        hdr._smart = true;
+        const titleSpan = hdr.querySelector(':scope > span');
+        const chev = hdr.querySelector('.ws-chev');
+        const step = document.createElement('span');
+        step.className = 'inline-flex items-center justify-center w-4 h-4 rounded-full bg-steel-600 text-steel-200 text-[9px] font-bold mr-1.5 normal-case';
+        step.textContent = ACC_STEP[name];
+        if (titleSpan) titleSpan.insertBefore(step, titleSpan.firstChild);
+        const right = document.createElement('span');
+        right.className = 'flex items-center gap-2';
+        const bdg = document.createElement('span'); bdg.id = 'wsBadge-' + name; bdg.className = 'text-[10px] normal-case font-normal';
+        right.appendChild(bdg); if (chev) right.appendChild(chev);
+        hdr.appendChild(right);
+      }
+      aside.appendChild(hdr); if (body) aside.appendChild(body);
+    });
+    updateSmartPanel();
+  }
+  function setBadge(name, text, cls) {
+    const el = document.getElementById('wsBadge-' + name); if (!el) return;
+    el.textContent = text || '';
+    el.className = 'text-[10px] normal-case font-normal ' + (cls || 'text-steel-400');
+  }
+  function updateSmartPanel() {
+    if (!document.getElementById('wsBadge-folha')) return;
+    const marks = (S.marks || []).filter(m => m.confirmed);
+    const meta = (S.pages || []).find(p => p.page === S.page);
+    const sheet = meta && meta.sheet ? meta.sheet : '';
+    setBadge('folha', (sheet ? sheet + ' · ' : '') + marks.length + ' marcas', 'text-steel-300');
+    setBadge('escala', S.mmPerPx ? 'calibrada' : 'não calibrada', S.mmPerPx ? 'text-emerald-400' : 'text-amber-400');
+    const lay = (S.layers || []).find(l => l.id === S.activeLayer);
+    setBadge('camadas', lay ? lay.name : '', 'text-steel-300');
+    setBadge('janela', S.highlight || '—', S.highlight ? 'text-cyan-300' : 'text-steel-500');
+    const codes = {}; marks.forEach(m => { if (m.label) codes[m.label] = true; });
+    let sem = 0; Object.keys(codes).forEach(c => { const r = S.sched && S.sched[c]; if (!r || (!r.w_mm && !r.h_mm)) sem++; });
+    setBadge('medidas', sem ? (sem + ' sem medida') : (Object.keys(codes).length ? 'ok' : ''), sem ? 'text-rose-400' : 'text-emerald-400');
+    const ns = document.getElementById('wsNextStep'); if (!ns) return;
+    let msg = '';
+    if (!marks.length) msg = '👉 Conte ou reconheça as marcas desta folha.';
+    else if (sem) msg = '⚠ ' + sem + ' código(s) sem medida — abra 7 · Medidas.';
+    else if (!S.mmPerPx) msg = '📐 Dica: calibre a escala p/ áreas corretas.';
+    else msg = '✓ Folha completa.';
+    ns.textContent = msg;
+  }
+  F._updateSmartPanel = updateSmartPanel;
+
   function toolActive() { return S.countMode || S.autoMode || S.delMode || S.calibMode || S.measMode; }
   function applyCursor() { if (cv) cv.style.cursor = 'none'; }   // cruz de tela cheia é sempre o cursor
   function syncBarActive() {
@@ -928,6 +1005,7 @@
   function bindOnce() {
     if (bound) return; bound = true;
     setupCollapsibles();
+    buildSmartPanel();
     const lc = $('#wsLeftCollapse'); if (lc) lc.addEventListener('click', () => panelToggle('left', true));
     const le = $('#wsLeftExpand'); if (le) le.addEventListener('click', () => panelToggle('left', false));
     document.querySelectorAll('.wsLeftIco').forEach(b => b.addEventListener('click', () => panelToggle('left', false)));
@@ -1164,6 +1242,11 @@
       const wd = $('#wsDelete'); if (wd) wd.classList.toggle('ws-tool-active-del', S.delMode);
       applyCursor(); syncBarActive();
       if (ruler && S.measMode && !S.mmPerPx) markSaved(F.tr('Calibre a escala primeiro (📏).'));
+      // painel inteligente: abre o painel do modo ativo
+      if (S.autoMode) smartFocus('autocount');
+      else if (S.calibMode || S.measMode) smartFocus('escala');
+      else if (S.countMode || S.delMode) smartFocus('ferramentas');
+      if (typeof updateSmartPanel === 'function') updateSmartPanel();
       draw();
     }
     $('#wsCount').addEventListener('click', () => setMode('count'));
