@@ -32,9 +32,9 @@ layout_top(t('app_name'));
   .vhero-inner{max-width:1040px}                               /* container mais largo (Dite) → título respira */
   .vhero-h1{font-size:clamp(40px,7.8vw,90px);line-height:1.0;letter-spacing:-.03em;background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:#f1d488;color:#f1d488;animation:none;text-shadow:0 3px 22px rgba(0,0,0,.6)}   /* título BEM maior + SEM máscara/shine: cor sólida e limpa */
   .vhero-sub{font-size:clamp(18px,2.4vw,24px);max-width:720px;text-shadow:0 2px 14px rgba(0,0,0,.7)} /* subtítulo maior + sombra p/ legibilidade */
-  .vhero-stats{gap:50px;margin-top:42px}
-  .vstat b{font-size:clamp(38px,5vw,54px);text-shadow:0 2px 16px rgba(0,0,0,.75)}   /* numeros (10x/3/+) BEM maiores */
-  .vstat span{font-size:16.5px;color:#ece2ca;text-shadow:0 1px 12px rgba(0,0,0,.75)} /* rotulos maiores e mais claros */
+  .vhero-stats{gap:48px;margin-top:46px}
+  .vstat b{font-size:clamp(56px,7.4vw,96px);text-shadow:0 3px 20px rgba(0,0,0,.8)}     /* numeros (10x/3/+) DOBRADOS */
+  .vstat span{font-size:clamp(18px,2.2vw,26px);color:#f0e7d1;text-shadow:0 2px 14px rgba(0,0,0,.8)} /* rotulos dobrados */
   .vhero-inner .hero-logo{display:block;height:auto;width:min(200px,52%);margin:0 auto 16px}
   .feat,.card,.plan{background:rgba(24,20,12,.72);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
   /* TEXTO DOS CARDS maior (estava pequeno) */
