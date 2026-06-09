@@ -203,9 +203,9 @@
                 <h2 class="pkg-name">Janelas <span class="grad">e Portas</span></h2>
                 <p class="pkg-desc">Levante esquadrias direto da planta — leitura por IA, contagem, medidas e documentos prontos.</p>
                 <div class="pkg-price">
-                  <span class="cur">R$</span><span id="pkgPrice" class="val">—</span><span class="per">/mês</span>
+                  <span class="cur">US$</span><span id="pkgPrice" class="val">—</span><span class="per">/mês</span>
                 </div>
-                <div id="pkgPriceNote" class="pkg-pricenote">Cobrança mensal · cancele quando quiser</div>
+                <div id="pkgPriceNote" class="pkg-pricenote">Cobrança mensal em dólar (USD) · cancele quando quiser</div>
                 <div class="pkg-cta">
                   <button id="pkgSubscribe" class="cc-btn cc-btn-primary"><span>💳</span><span>Assinar agora</span></button>
                   <button id="pkgActivate" class="cc-btn cc-btn-dark"><span>🔑</span><span>Já tenho uma chave</span></button>
@@ -635,8 +635,8 @@
             <span class="text-steel-500">Moeda</span>
             <select id="currencySelect"
               class="rounded-lg border border-steel-200 px-2 py-1.5 focus:ring-2 focus:ring-steel-400 outline-none">
-              <option value="BRL">R$ BRL</option>
               <option value="USD">$ USD</option>
+              <option value="BRL">R$ BRL</option>
               <option value="EUR">€ EUR</option>
               <option value="GBP">£ GBP</option>
             </select>
@@ -645,7 +645,7 @@
 
         <div class="grid grid-cols-2 gap-4">
           <label class="text-sm">
-            <span class="text-steel-600 font-medium">Custo fornecedor (<span id="costPerM2Label">R$</span>/m²)</span>
+            <span class="text-steel-600 font-medium">Custo fornecedor (<span id="costPerM2Label">$</span>/m²)</span>
             <input id="costPerM2" type="number" min="0" step="10" value="900"
               class="mt-1 w-full rounded-lg border border-steel-200 px-3 py-2 focus:ring-2 focus:ring-steel-400 focus:border-steel-400 outline-none" />
           </label>
@@ -669,15 +669,15 @@
         <div class="mt-5 grid grid-cols-3 gap-3 text-center">
           <div class="rounded-lg bg-steel-50 ring-1 ring-steel-100 p-3">
             <p class="text-xs text-steel-500">Custo total</p>
-            <p id="outCost" class="text-lg font-bold text-steel-800">R$ 0</p>
+            <p id="outCost" class="text-lg font-bold text-steel-800">$ 0</p>
           </div>
           <div class="rounded-lg bg-steel-600 text-white p-3">
             <p class="text-xs text-steel-100">Preço cliente</p>
-            <p id="outPrice" class="text-lg font-bold">R$ 0</p>
+            <p id="outPrice" class="text-lg font-bold">$ 0</p>
           </div>
           <div class="rounded-lg bg-emerald-50 ring-1 ring-emerald-200 p-3">
             <p class="text-xs text-emerald-600">Lucro</p>
-            <p id="outProfit" class="text-lg font-bold text-emerald-700">R$ 0</p>
+            <p id="outProfit" class="text-lg font-bold text-emerald-700">$ 0</p>
           </div>
         </div>
       </div>
@@ -1086,7 +1086,7 @@
 
   <script src="js/i18n.js?v=215"></script>
   <script src="js/license.js?v=203"></script>
-  <script src="js/calculator.js?v=215"></script>
+  <script src="js/calculator.js?v=216"></script>
   <script src="js/svg-engine.js?v=200"></script>
   <script src="js/export.js?v=215"></script>
   <script src="js/plan-marker.js?v=200"></script>

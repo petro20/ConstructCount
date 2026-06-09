@@ -131,7 +131,7 @@ window.ConstructCount = window.ConstructCount || {};
   F.state = {
     items: [],
     unit: 'm2',              // 'm2' | 'ft2'
-    currency: 'BRL',         // 'BRL' | 'USD' | 'EUR' | 'GBP'
+    currency: 'USD',         // padrão DÓLAR ('USD' | 'BRL' | 'EUR' | 'GBP')
     project: { name: 'Projeto Residencial', client: 'Cliente Exemplo', email: '', phone: '' },
     costs: {},
     previewIdx: 0            // qual item está na pré-visualização
@@ -146,11 +146,11 @@ window.ConstructCount = window.ConstructCount || {};
   };
 
   /** Símbolo da moeda atual (ex.: 'R$', '$') */
-  F.currencySymbol = () => (F.CURRENCIES[F.state.currency] || F.CURRENCIES.BRL).symbol;
+  F.currencySymbol = () => (F.CURRENCIES[F.state.currency] || F.CURRENCIES.USD).symbol;
 
   /** Formata um número como moeda na moeda escolhida */
   F.money = (n) => {
-    const c = F.CURRENCIES[F.state.currency] || F.CURRENCIES.BRL;
+    const c = F.CURRENCIES[F.state.currency] || F.CURRENCIES.USD;
     try {
       return new Intl.NumberFormat(c.locale, { style: 'currency', currency: F.state.currency })
         .format(Number(n) || 0);
