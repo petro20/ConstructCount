@@ -18,6 +18,7 @@
     calibMode: false, measMode: false, mmPerPx: null, clickA: null, measures: [],
     snap: false, ortho: false, hover: null, snapData: null, lastMeas: null, dragMeas: null, selSet: null, curX: null, curY: null,
     marquee: null, maybeMarquee: false, marqStart: null, marqMods: null, marqCrossing: false, selMarks: null,
+    autoDragStart: null, autoSample: null, autoRegion: null,   // área de busca do Auto Count (arraste)
     dirty: false, saveTimer: null, onConsolidate: null, labelIdx: {}, schedulePages: [], toDelete: null,
     sections: ['Geral'], activeSection: 'Geral', legend: true, legendRect: null, draggingLegend: null,
     legendHandle: null, resizingLegend: null, legendByPage: {},   // posição/escala da legenda POR FOLHA
@@ -42,7 +43,7 @@
     S.sched = opts.schedule || {};        // {CÓDIGO: {w_mm,h_mm,w_raw,h_raw,type,model}}
     S.scope = opts.scope || 'all';        // modo de reconhecimento do projeto
     S.toDelete = new Set();
-    try { const lm = JSON.parse(localStorage.getItem('fenestra_legend_' + S.slug) || '{}'); S.legendByPage = (lm && typeof lm === 'object') ? lm : {}; } catch (e) { S.legendByPage = {}; }
+    try { const lm = JSON.parse(localStorage.getItem('fenestra_legend2_' + S.slug) || '{}'); S.legendByPage = (lm && typeof lm === 'object') ? lm : {}; } catch (e) { S.legendByPage = {}; }
     renderScope();
     $('#wsTitle').textContent = opts.name || 'Takeoff';
     $('#wsPrep').classList.add('hidden');
@@ -499,6 +500,13 @@
       ctx.setLineDash(del ? [6, 3] : []);
       ctx.strokeRect(r.x0, r.y0, r.x1 - r.x0, r.y1 - r.y0); ctx.setLineDash([]);
     }
+    if (S.autoRegion) {                        // ÁREA de busca do Auto Count (arraste)
+      const a = S.autoRegion;
+      ctx.fillStyle = 'rgba(59,130,246,.12)';
+      ctx.fillRect(a.x0, a.y0, a.x1 - a.x0, a.y1 - a.y0);
+      ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+      ctx.strokeRect(a.x0, a.y0, a.x1 - a.x0, a.y1 - a.y0); ctx.setLineDash([]);
+    }
     drawLegend();                              // quadro de legenda das marcas (canto livre)
     // CRUZ DE TELA CHEIA (estilo CAD/PlanSwift) — cursor padrão sempre
     if (S.curX != null) {
@@ -519,7 +527,7 @@
     const cur = S.legendByPage[S.page] || { pos: null, scale: 1 };
     S.legendByPage[S.page] = Object.assign(cur, patch);
   }
-  function legSave() { try { localStorage.setItem('fenestra_legend_' + S.slug, JSON.stringify(S.legendByPage)); } catch (e) {} }
+  function legSave() { try { localStorage.setItem('fenestra_legend2_' + S.slug, JSON.stringify(S.legendByPage)); } catch (e) {} }
 
   /** TABELA de LEGENDA (Marca · Tipo · Qtd) das marcas confirmadas desta folha,
    *  ordenada por código. Posição/escala são POR FOLHA (arraste/alça). Coords de TELA. */
@@ -532,7 +540,7 @@
     const typeOf = k => { const r = S.sched && S.sched[k]; return (r && r.type) ? (F.typeLabel ? F.typeLabel(r.type) : r.type) : ''; };
     ctx.save();
     const st = legState() || {};
-    const z = st.scale || 1;                   // fator de redimensionamento desta folha
+    const z = (S.scale || 1) * (st.scale || 1);   // escala = ZOOM da view × ajuste do usuário (a legenda acompanha o desenho)
     const px = (n) => Math.round(n);
     const fTitle = '700 ' + px(13 * z) + 'px Inter, sans-serif';
     const fHead = '700 ' + px(11 * z) + 'px Inter, sans-serif';
@@ -556,12 +564,17 @@
     const titleW = ctx.measureText(F.tr('Legenda')).width;
     const boxW = Math.ceil(Math.max(xQty + qtyW + pad, pad + titleW + pad));
     const boxH = Math.ceil(titleH + headH + labels.length * rowH + pad);
-    const M = 12;
-    // padrão = canto superior direito; se você arrastar/redimensionar, fica salvo
+    const sc = S.scale || 1;
+    const Mi = 10;                              // margem em px de IMAGEM
+    const iw = (S.img && S.img.width) || 0, ih = (S.img && S.img.height) || 0;
+    const boxWi = boxW / sc, boxHi = boxH / sc;   // tamanho da caixa em coords de IMAGEM
+    // posição ANCORADA ao desenho (coords de IMAGEM). Padrão = canto sup. dir. da folha.
     // POR FOLHA (cada página pode ter a legenda num lugar/tamanho diferente).
-    let pos = { x: cv.width - boxW - M, y: M };
-    if (st.pos) pos = { x: Math.max(2, Math.min(cv.width - boxW - 2, st.pos.x)), y: Math.max(2, Math.min(cv.height - boxH - 2, st.pos.y)) };
-    S.legendRect = { x: pos.x, y: pos.y, w: boxW, h: boxH };   // p/ arrastar
+    let ip = st.pos ? { x: st.pos.x, y: st.pos.y } : { x: Math.max(0, iw - boxWi - Mi), y: Mi };
+    ip.x = Math.max(0, Math.min(Math.max(0, iw - boxWi), ip.x));   // mantém dentro da folha
+    ip.y = Math.max(0, Math.min(Math.max(0, ih - boxHi), ip.y));
+    const pos = { x: ip.x * sc + S.ox, y: ip.y * sc + S.oy };      // IMAGEM → TELA
+    S.legendRect = { x: pos.x, y: pos.y, w: boxW, h: boxH };   // coords de TELA (p/ arrastar/hit)
     // fundo + borda
     ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.fillRect(pos.x, pos.y, boxW, boxH);
     ctx.strokeStyle = 'rgba(17,24,39,.5)'; ctx.lineWidth = 1; ctx.strokeRect(pos.x + 0.5, pos.y + 0.5, boxW, boxH);
@@ -810,7 +823,7 @@
   const autoThresh = () => (parseInt($('#wsThresh') && $('#wsThresh').value, 10) || 80) / 100;
 
   /** Auto Count: usa a marca/ponto clicado como amostra e acha todas as iguais na folha. */
-  async function doAutoCount(sx, sy, sample) {
+  async function doAutoCount(sx, sy, sample, region) {
     if (S.busy || !S.prov || !S.prov.autoCount) { if (!S.prov || !S.prov.autoCount) alert(F.tr('Auto Count disponível no app de desktop.')); return; }
     let box, label;
     if (sample) {
@@ -827,7 +840,7 @@
     let res;
     try {
       res = fast
-        ? await S.prov.autoCountFind(S.page, box.x, box.y, box.w, box.h, autoThresh())
+        ? await S.prov.autoCountFind(S.page, box.x, box.y, box.w, box.h, autoThresh(), region || null)
         : await S.prov.autoCount(S.page, box.x, box.y, box.w, box.h, autoThresh());
     } catch (e) { S.busy = false; markSaved(F.tr('Falha no Auto Count')); return; }
     const matches = (res && res.matches) || [];
@@ -979,7 +992,7 @@
       if (S.legend && S.legendRect) {
         const h = S.legendHandle;
         if (h && e.offsetX >= h.x && e.offsetX <= h.x + h.w && e.offsetY >= h.y && e.offsetY <= h.y + h.h) {
-          legSet({ pos: { x: S.legendRect.x, y: S.legendRect.y } });   // fixa o canto sup. esq. desta folha
+          legSet({ pos: { x: (S.legendRect.x - S.ox) / (S.scale || 1), y: (S.legendRect.y - S.oy) / (S.scale || 1) } });   // fixa o canto (coords de IMAGEM)
           S.resizingLegend = { w0: S.legendRect.w, h0: S.legendRect.h, s0: (legState() && legState().scale) || 1 };
           S.lpress = true; e.preventDefault(); return;
         }
@@ -991,6 +1004,11 @@
       if (e.button === 2) { S.panning = true; }                                  // direito = mover (cursor segue cruz)
       else if (e.button === 0) {
         S.lpress = true;
+        if (S.autoMode) {                              // arraste = ÁREA de busca do Auto Count
+          S.autoDragStart = [e.offsetX, e.offsetY];
+          S.autoSample = hit(e.offsetX, e.offsetY);    // marca-amostra sob o início do arraste
+          S.autoRegion = null;
+        }
         // pode selecionar/arrastar/laço fora dos modos de clique (Medir ou neutro)
         const canSelect = !S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.clickA;
         if (canSelect) {
@@ -1013,8 +1031,9 @@
         legSet({ scale: Math.max(0.6, Math.min(3, r.s0 * (ratio > 0 ? ratio : 1))) });
         S.moved = true; draw(); return;
       }
-      if (S.draggingLegend) {                        // arrastando a legenda — desta folha
-        legSet({ pos: { x: e.offsetX - S.draggingLegend.dx, y: e.offsetY - S.draggingLegend.dy } });
+      if (S.draggingLegend) {                        // arrastando a legenda — desta folha (coords de IMAGEM)
+        const sx = e.offsetX - S.draggingLegend.dx, sy = e.offsetY - S.draggingLegend.dy;
+        legSet({ pos: { x: (sx - S.ox) / (S.scale || 1), y: (sy - S.oy) / (S.scale || 1) } });
         S.moved = true; draw(); return;
       }
       const toolMode = S.countMode || S.autoMode || S.delMode || S.calibMode || S.measMode;
@@ -1024,6 +1043,15 @@
         const mm = Math.hypot(S.dragMeas.m.b[0] - S.dragMeas.m.a[0], S.dragMeas.m.b[1] - S.dragMeas.m.a[1]) * (S.mmPerPx || 0);
         if (S.mmPerPx) S.dragMeas.m.mm = mm;
         S.moved = true; draw(); return;
+      }
+      if (S.autoDragStart) {                   // desenhando a ÁREA de busca do Auto Count
+        const adx = e.offsetX - S.autoDragStart[0], ady = e.offsetY - S.autoDragStart[1];
+        if (Math.abs(adx) + Math.abs(ady) > 3) {
+          S.moved = true;
+          S.autoRegion = { x0: Math.min(S.autoDragStart[0], e.offsetX), y0: Math.min(S.autoDragStart[1], e.offsetY), x1: Math.max(S.autoDragStart[0], e.offsetX), y1: Math.max(S.autoDragStart[1], e.offsetY) };
+          draw();
+        }
+        return;
       }
       if (S.maybeMarquee) {                    // laço de seleção (arraste esquerdo no modo Medir)
         const dx0 = e.offsetX - S.marqStart[0], dy0 = e.offsetY - S.marqStart[1];
@@ -1079,6 +1107,17 @@
         return;
       }
       S.maybeMarquee = false; S.marquee = null;
+      if (S.autoDragStart) {                          // soltou o arraste do Auto Count
+        const start = S.autoDragStart, reg = S.autoRegion, sample = S.autoSample;
+        S.autoDragStart = null; S.autoRegion = null; S.autoSample = null;
+        if (reg) {                                    // arrastou uma CAIXA → conta só dentro dela
+          const [ix0, iy0] = toImg(reg.x0, reg.y0), [ix1, iy1] = toImg(reg.x1, reg.y1);
+          const region = { x: Math.round(Math.min(ix0, ix1)), y: Math.round(Math.min(iy0, iy1)), w: Math.round(Math.abs(ix1 - ix0)), h: Math.round(Math.abs(iy1 - iy0)) };
+          doAutoCount(start[0], start[1], sample, region);
+          draw(); return;
+        }
+        // sem arraste (só clique) → segue o fluxo normal (folha toda) abaixo
+      }
       if (S.moved) return;                            // foi arraste, não clique
       if (!S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.clickA) {  // clicar numa medida = selecionar (Ctrl/Shift = múltiplas)
         const hm = hitMeasLine(e.offsetX, e.offsetY);
@@ -1116,6 +1155,7 @@
       S.calibMode = which === 'calib' && !S.calibMode;
       S.measMode = which === 'measure' && !S.measMode;
       S.clickA = null; S.hover = null; S.maybeMarquee = false; S.marquee = null;
+      S.autoDragStart = null; S.autoRegion = null; S.autoSample = null;
       const act = (id, on) => { const b = $(id); if (b) b.classList.toggle('ws-tool-active', on); };
       act('#wsCount', S.countMode);
       act('#wsAuto', S.autoMode);

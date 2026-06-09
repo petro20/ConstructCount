@@ -202,7 +202,7 @@
       status: () => api.job_status(slug),
       reload: () => api.load_job(slug),
       autoCount: (page, x, y, w, h, thresh) => api.auto_count(slug, page, x, y, w, h, thresh),
-      autoCountFind: (page, x, y, w, h, thresh) => api.auto_count_find(slug, page, x, y, w, h, thresh),
+      autoCountFind: (page, x, y, w, h, thresh, region) => api.auto_count_find(slug, page, x, y, w, h, thresh, region || null),
       readCodes: (page, boxes) => api.read_marks_codes(slug, page, boxes),
       prewarmAutoCount: (page) => api.prewarm_autocount(slug, page),
       setSchedulePage: (page, on) => api.set_schedule_page(slug, page, on),
