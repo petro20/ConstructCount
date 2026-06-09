@@ -983,7 +983,11 @@
     const marks = (S.marks || []).filter(m => m.confirmed);
     const meta = (S.pages || []).find(p => p.page === S.page);
     const sheet = meta && meta.sheet ? meta.sheet : '';
-    setBadge('folha', (sheet ? sheet + ' · ' : '') + marks.length + ' marcas', 'text-steel-300');
+    const pmult = (meta && +meta.mult) || 1;       // pavimentos× desta folha
+    const cntTxt = pmult > 1
+      ? (marks.length + '×' + pmult + ' pav = ' + (marks.length * pmult))
+      : (marks.length + ' marcas');
+    setBadge('folha', (sheet ? sheet + ' · ' : '') + cntTxt, 'text-steel-300');
     setBadge('escala', S.mmPerPx ? 'calibrada' : 'não calibrada', S.mmPerPx ? 'text-emerald-400' : 'text-amber-400');
     const lay = (S.layers || []).find(l => l.id === S.activeLayer);
     setBadge('camadas', lay ? lay.name : '', 'text-steel-300');
