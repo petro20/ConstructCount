@@ -26,24 +26,24 @@ layout_top(t('app_name'));
   .vhero-by a{color:#e3b653;font-weight:700;text-decoration:none}
   .vhero-by a:hover{text-decoration:underline}
   .nav{position:absolute;top:0;left:0;right:0;max-width:1160px;margin:0 auto;z-index:30;background:transparent;border-bottom:0;padding-left:28px;padding-right:28px}
-  main{position:relative}                          /* sem z-index: o vídeo fixo cai pro fundo (z-10) e NÃO cobre o rodapé */
+  main{position:relative;max-width:1100px}         /* área de conteúdo mais larga (Dite) → cards maiores. Sem z-index: vídeo fixo vai pro fundo */
   .vhero{min-height:0;padding-top:108px;padding-bottom:56px}   /* altura guiada pelo conteúdo (sem vão de 100vh) → cards sobem, hero cheio estilo Dite */
-  .sec{margin:36px 0}                                          /* respiro entre seções mais próximo do Dite */
+  .sec{margin:48px 0}                                          /* mais respiro entre seções (Dite) */
   .vhero-inner{max-width:1040px}                               /* container mais largo (Dite) → título respira */
   .vhero-h1{font-size:clamp(40px,7.8vw,90px);line-height:1.0;letter-spacing:-.03em;background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:#f1d488;color:#f1d488;animation:none;text-shadow:0 3px 22px rgba(0,0,0,.6)}   /* título BEM maior + SEM máscara/shine: cor sólida e limpa */
   .vhero-sub{font-size:clamp(18px,2.4vw,24px);max-width:720px} /* subtítulo maior na proporção */
   .vhero-inner .hero-logo{display:block;height:auto;width:min(200px,52%);margin:0 auto 16px}
   .feat,.card,.plan{background:rgba(24,20,12,.72);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
   /* TEXTO DOS CARDS maior (estava pequeno) */
-  .feat{padding:24px}
-  .bgfix-overlay{background:linear-gradient(180deg,rgba(8,7,4,.76) 0%,rgba(8,7,4,.88) 100%)}   /* fundo bem mais escuro/limpo (estilo Dite) */
-  .feat-ic{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:13px;background:rgba(227,182,83,.14);border:1px solid rgba(227,182,83,.32);font-size:24px;margin-bottom:14px}   /* ícone em quadradinho (estilo Dite) */
-  .feat h3{font-size:20px}
-  .feat p{font-size:16px;line-height:1.55}
+  .feat{padding:30px 26px}                                     /* CARDS maiores (mais presença) */
+  .feat-ic{font-size:36px;margin-bottom:14px}                  /* ícone maior */
+  .feat h3{font-size:22px;margin:.3em 0 .2em}                  /* título do card maior */
+  .feat p{font-size:17px;line-height:1.6}                      /* descrição do card maior/legível */
+  .features{gap:22px}                                          /* mais espaço entre os cards */
   .step h3{font-size:19px}
   .step p{font-size:15.5px;line-height:1.5}
   .plist{font-size:15.5px}
-  .sec-title{text-shadow:0 2px 16px rgba(0,0,0,.6)}
+  .sec-title{text-shadow:0 2px 16px rgba(0,0,0,.6);font-size:28px}   /* títulos de seção maiores */
   /* rodapé destacado sobre o vídeo (crédito do desenvolvedor bem visível) */
   footer{position:relative;z-index:2;text-align:center;background:rgba(12,10,6,.78);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid rgba(53,44,29,.7);border-radius:12px;color:#dccfb2;margin-top:30px;font-size:13.5px}
   footer a{color:#e3b653;font-weight:700}
