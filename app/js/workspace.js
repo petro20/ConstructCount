@@ -1000,6 +1000,27 @@
     markSaved(F.tr('{n} linha(s) selecionada(s) · Del p/ apagar', { n: S.lineSel.size }));
   }
 
+  // ✨ IA (CV local): detecta as paredes da folha e cria os traços Linear na camada ativa
+  async function detectWallsAI() {
+    if (!S.prov || !S.prov.detectWalls) { alert(F.tr('Detecção de paredes disponível no app de desktop.')); return; }
+    if (S.busy) return;
+    if (!S.mmPerPx && !confirm(F.tr('Escala não calibrada — os comprimentos sairão zerados. Detectar mesmo assim?'))) return;
+    S.busy = true; markSaved(F.tr('✨ IA: detectando paredes…'));
+    let r;
+    try { r = await S.prov.detectWalls(S.page); } catch (e) { S.busy = false; markSaved(F.tr('Falha na detecção de paredes')); return; }
+    S.busy = false;
+    const walls = (r && r.walls) || [];
+    if (!walls.length) { markSaved(F.tr('IA: nenhuma parede detectada nesta folha')); return; }
+    let added = 0;
+    walls.forEach(w => {
+      const px = Math.hypot(w[2] - w[0], w[3] - w[1]);
+      S.lines.push({ path: [[w[0], w[1]], [w[2], w[3]]], mm: S.mmPerPx ? px * S.mmPerPx : 0, layer: S.activeLayer, page: S.page, ai: true });
+      added++;
+    });
+    draw();
+    markSaved(F.tr('✨ IA: +{n} paredes na camada ativa — revise: desligue o Linear, clique na linha e Del p/ apagar as erradas', { n: added }));
+  }
+
   function updateSchedUI() {
     const on = S.schedulePages.indexOf(S.page) >= 0;
     const btn = $('#wsSchedPage');
@@ -1449,6 +1470,7 @@
     }
     $('#wsCount').addEventListener('click', () => setMode('count'));
     { const wl = $('#wsLinear'); if (wl) wl.addEventListener('click', () => setMode('linear')); }
+    { const dwb = $('#wsDetectWalls'); if (dwb) dwb.addEventListener('click', detectWallsAI); }
     $('#wsAuto').addEventListener('click', () => setMode('auto'));
     $('#wsDelete').addEventListener('click', () => setMode('del'));
     const wcal = $('#wsCalib'); if (wcal) wcal.addEventListener('click', () => setMode('calib'));
