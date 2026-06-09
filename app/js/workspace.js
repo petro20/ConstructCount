@@ -447,6 +447,8 @@
     const rw = vis(document.querySelector('#wsRight')) ? document.querySelector('#wsRight').offsetWidth
       : (vis(document.querySelector('#wsRightBar')) ? document.querySelector('#wsRightBar').offsetWidth : 0);
     p.style.left = lw + 'px'; p.style.right = rw + 'px';   // fica ENTRE as barras laterais
+    const sb = document.querySelector('#wsStatusBar');
+    p.style.bottom = (sb ? sb.offsetHeight : 24) + 'px';   // ACIMA da barra de status (não cobre)
   }
   F._toggleSummary = function () { const p = document.querySelector('#wsSummary'); if (p) { positionSummary(); p.classList.toggle('hidden'); renderSummary(); } };
   window.addEventListener('resize', () => { const p = document.querySelector('#wsSummary'); if (p && !p.classList.contains('hidden')) positionSummary(); });
