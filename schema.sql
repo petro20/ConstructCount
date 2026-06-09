@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS licenses (
   user_id       INT          DEFAULT NULL,
   license_key   VARCHAR(64)  NOT NULL UNIQUE,
   plan          VARCHAR(40)  NOT NULL DEFAULT 'mensal',
+  modules       VARCHAR(255) DEFAULT NULL,   -- pacotes/trades (CSV: windows_doors,drywall_paint). NULL = deriva do plano
   status        ENUM('active','past_due','suspended','revoked') NOT NULL DEFAULT 'active',
   expires_at    DATETIME     DEFAULT NULL,
   max_devices   INT          NOT NULL DEFAULT 1,

@@ -69,7 +69,7 @@ function lic_status_only(string $key): array {
 /** Validação AO VIVO (chave + dispositivo) — chamada pelo app (api/validate.php). */
 function lic_validate(string $key, string $deviceRaw, ?string $label = null): array {
   $key = trim($key); $dev = lic_device_hash($deviceRaw);
-  $out = ['valid' => false, 'reason' => '', 'plan' => null, 'expires_at' => null, 'token' => null, 'grace_days' => lic_grace_days()];
+  $out = ['valid' => false, 'reason' => '', 'plan' => null, 'expires_at' => null, 'modules' => [], 'token' => null, 'grace_days' => lic_grace_days()];
   if ($key === '') { $out['reason'] = 'chave ausente'; return $out; }
   if ($dev === '') { $out['reason'] = 'dispositivo ausente'; return $out; }
   $st = db()->prepare('SELECT * FROM licenses WHERE license_key=? LIMIT 1');
@@ -90,8 +90,9 @@ function lic_validate(string $key, string $deviceRaw, ?string $label = null): ar
     db()->prepare('INSERT INTO license_devices (license_id,device_hash,device_label) VALUES (?,?,?)')->execute([$id, $dev, $label]);
   }
   $subExp = !empty($l['expires_at']) ? strtotime((string) $l['expires_at']) : (time() + 3650 * 86400);
-  $out['valid'] = true; $out['reason'] = 'ok'; $out['plan'] = $l['plan']; $out['expires_at'] = $l['expires_at'];
-  $out['token'] = lic_sign(['k' => $key, 'd' => $dev, 'plan' => $l['plan'], 'sub_exp' => $subExp, 'grace_exp' => time() + lic_grace_days() * 86400, 'iat' => time()]);
+  $mods = lic_packages($l);
+  $out['valid'] = true; $out['reason'] = 'ok'; $out['plan'] = $l['plan']; $out['expires_at'] = $l['expires_at']; $out['modules'] = $mods;
+  $out['token'] = lic_sign(['k' => $key, 'd' => $dev, 'plan' => $l['plan'], 'modules' => $mods, 'sub_exp' => $subExp, 'grace_exp' => time() + lic_grace_days() * 86400, 'iat' => time()]);
   lic_log($id, $dev, 'validate_ok', null);
   return $out;
 }
@@ -100,4 +101,46 @@ function lic_for_user(int $userId): array {
   $st = db()->prepare('SELECT l.*, (SELECT COUNT(*) FROM license_devices d WHERE d.license_id=l.id) dev FROM licenses l WHERE user_id=? ORDER BY created_at DESC');
   $st->execute([$userId]);
   return $st->fetchAll();
+}
+
+/* ===================== PACOTES (módulos/trades da licença) =================
+   Qual pacote a licença libera. Ordem: (1) coluna `modules` da licença, se
+   existir/estiver setada; (2) o pacote do PLANO via DITE_PLAN_CATALOG; (3)
+   default 'windows_doors' (o produto atual = Janelas e Portas). */
+function _pkg_defaults(): array {
+  return [
+    'windows_doors' => ['pt' => 'Janelas e Portas', 'en' => 'Windows & Doors', 'es' => 'Ventanas y Puertas'],
+    'framing'       => ['pt' => 'Framing (madeira+metal)', 'en' => 'Framing (wood+metal)', 'es' => 'Estructura (madera+metal)'],
+    'drywall_paint' => ['pt' => 'Drywall e Pintura', 'en' => 'Drywall & Paint', 'es' => 'Drywall y Pintura'],
+    'plumbing'      => ['pt' => 'Hidráulica', 'en' => 'Plumbing', 'es' => 'Plomería'],
+    'electrical'    => ['pt' => 'Elétrica', 'en' => 'Electrical', 'es' => 'Eléctrica'],
+    'concrete'      => ['pt' => 'Concreto', 'en' => 'Concrete', 'es' => 'Hormigón'],
+    'roof'          => ['pt' => 'Telhado', 'en' => 'Roof', 'es' => 'Techo'],
+    'ai'            => ['pt' => 'IA (add-on)', 'en' => 'AI (add-on)', 'es' => 'IA (add-on)'],
+  ];
+}
+
+function pkg_name(string $key, ?string $lang = null): string {
+  $lang = $lang ?: (function_exists('lang') ? lang() : 'en');
+  $map = (defined('PACKAGES') ? PACKAGES : []) + _pkg_defaults();   // config sobrepõe defaults
+  $pk = $map[$key] ?? null;
+  if (!$pk) return $key;
+  return $pk[$lang] ?? $pk['en'] ?? reset($pk);
+}
+
+/** Lista de chaves de pacote que a licença libera. */
+function lic_packages(array $l): array {
+  $m = trim((string) ($l['modules'] ?? ''));
+  if ($m !== '') return array_values(array_filter(array_map('trim', explode(',', $m))));
+  cfg_loaded();
+  $cat = defined('DITE_PLAN_CATALOG') ? DITE_PLAN_CATALOG : [];
+  $def = $cat[$l['plan'] ?? ''] ?? null;
+  if ($def && !empty($def['modules'])) return array_values((array) $def['modules']);
+  return ['windows_doors'];
+}
+
+/** Nome(s) de exibição dos pacotes da licença, no idioma. */
+function lic_packages_label(array $l, ?string $lang = null): string {
+  $names = array_map(fn($k) => pkg_name($k, $lang), lic_packages($l));
+  return implode(' + ', $names) ?: pkg_name('windows_doors', $lang);
 }

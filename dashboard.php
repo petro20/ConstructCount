@@ -21,10 +21,11 @@ layout_top(t('dashboard'));
     </div>
   <?php else: ?>
     <table>
-      <tr><th><?= h(t('key')) ?></th><th><?= h(t('plan')) ?></th><th><?= h(t('status')) ?></th><th><?= h(t('expires')) ?></th><th><?= h(t('devices')) ?></th><th></th></tr>
+      <tr><th><?= h(t('key')) ?></th><th><?= h(t('package')) ?></th><th><?= h(t('plan')) ?></th><th><?= h(t('status')) ?></th><th><?= h(t('expires')) ?></th><th><?= h(t('devices')) ?></th><th></th></tr>
       <?php foreach ($lics as $l): [$cls, $txt] = $badge($l); ?>
         <tr>
           <td class="key"><?= h($l['license_key']) ?></td>
+          <td><strong><?= h(lic_packages_label($l)) ?></strong></td>
           <td><?= h($l['plan']) ?></td>
           <td><span class="badge <?= $cls ?>"><?= h($txt) ?></span></td>
           <td><?= h(fmt_date($l['expires_at'])) ?></td>

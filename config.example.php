@@ -29,10 +29,17 @@ define('DITE_WEBHOOK_SECRET', 'whsec_xxx');       // assina o webhook (HMAC sha2
 // O portal envia o plano INLINE pro Dite a cada checkout (forma recomendada na
 // doc). Mudou preço/pacote aqui → vale no próximo checkout, sem criar plano no
 // painel do Dite nem usar plan_id. interval = "month" | "year".
+// 'modules' = quais PACOTES (trades) o plano libera. Hoje só Janelas e Portas.
 define('DITE_PLAN_CATALOG', [
-  'mensal' => ['name' => 'ConstructCount Monthly', 'amount' => 19.00,  'currency' => 'USD', 'interval' => 'month'],
-  'anual'  => ['name' => 'ConstructCount Annual',  'amount' => 190.00, 'currency' => 'USD', 'interval' => 'year'],
+  'mensal' => ['name' => 'ConstructCount Monthly', 'amount' => 19.00,  'currency' => 'USD', 'interval' => 'month', 'modules' => ['windows_doors']],
+  'anual'  => ['name' => 'ConstructCount Annual',  'amount' => 190.00, 'currency' => 'USD', 'interval' => 'year',  'modules' => ['windows_doors']],
 ]);
+
+// Catálogo de PACOTES (trades) p/ exibição. Nomes embutidos no license.php; este
+// override é opcional. Chaves: windows_doors, framing, drywall_paint, plumbing,
+// electrical, concrete, roof, ai. (Os módulos da licença podem virar coluna no
+// banco depois — ver schema.sql; por ora são derivados do plano.)
+// define('PACKAGES', [ 'windows_doors' => ['pt'=>'Janelas e Portas','en'=>'Windows & Doors','es'=>'Ventanas y Puertas'], ]);
 // (alternativa/legado: referenciar planos cadastrados no painel por id)
 // define('DITE_PLANS', ['mensal' => 1, 'anual' => 2]);
 

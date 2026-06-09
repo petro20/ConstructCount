@@ -24,4 +24,5 @@ catch (Throwable $e) { http_response_code(500); echo json_encode(['valid' => fal
 
 if (!$r['valid']) http_response_code(403);
 echo json_encode(['valid' => $r['valid'], 'reason' => $r['reason'], 'plan' => $r['plan'],
-                  'expires_at' => $r['expires_at'], 'grace_days' => $r['grace_days'], 'token' => $r['token']], JSON_UNESCAPED_UNICODE);
+                  'expires_at' => $r['expires_at'], 'modules' => $r['modules'] ?? [],
+                  'grace_days' => $r['grace_days'], 'token' => $r['token']], JSON_UNESCAPED_UNICODE);

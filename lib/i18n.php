@@ -17,6 +17,7 @@ $GLOBALS['I18N'] = [
   'subscribe'     => ['Assinar', 'Subscribe', 'Suscribirse'],
   'renew'         => ['Renovar', 'Renew', 'Renovar'],
   'plan'          => ['Plano', 'Plan', 'Plan'],
+  'package'       => ['Pacote', 'Package', 'Paquete'],
   'status'        => ['Status', 'Status', 'Estado'],
   'expires'       => ['Vencimento', 'Expires', 'Vence'],
   'devices'       => ['Dispositivos', 'Devices', 'Dispositivos'],
