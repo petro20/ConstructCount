@@ -145,28 +145,34 @@ layout_top(t('app_name'));
     document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
   }
 
-  // ---- música ambiente: liga por padrão; navegador exige 1º gesto p/ tocar com som ----
+  // ---- música ambiente: INICIA NO PRIMEIRO CLIQUE (navegador exige gesto p/ tocar com som) ----
   var bgm = document.getElementById('bgm'), mbtn = document.getElementById('musicBtn');
   if (bgm && mbtn) {
     bgm.volume = 0.28;
-    var want = localStorage.getItem('cc_music') !== 'off';   // padrão: ligada
-    function icon() {
+    var MKEY = 'cc_music2';                                 // chave nova: zera qualquer "desligado" de teste
+    var want = localStorage.getItem(MKEY) !== 'off';        // padrão: ligada
+    function micon() {
       var playing = want && !bgm.paused;
       mbtn.textContent = playing ? '🔊' : (want ? '🎵' : '🔇');
       mbtn.classList.toggle('playing', playing);
     }
-    function tryPlay() { if (want) bgm.play().then(icon).catch(function () {}); }
-    ['pointerdown', 'keydown', 'scroll', 'touchstart'].forEach(function (ev) {
-      window.addEventListener(ev, function once() { tryPlay(); window.removeEventListener(ev, once); }, { passive: true });
-    });
+    function onFirst() {
+      document.removeEventListener('click', onFirst, true);
+      document.removeEventListener('touchstart', onFirst, true);
+      document.removeEventListener('keydown', onFirst, true);
+      if (want) bgm.play().then(micon).catch(micon);
+    }
+    document.addEventListener('click', onFirst, true);      // 1º clique em qualquer lugar (fase de captura)
+    document.addEventListener('touchstart', onFirst, true);
+    document.addEventListener('keydown', onFirst, true);
     mbtn.addEventListener('click', function (e) {
       e.stopPropagation();
-      want = !want; localStorage.setItem('cc_music', want ? 'on' : 'off');
+      want = !want; localStorage.setItem(MKEY, want ? 'on' : 'off');
       if (want) bgm.play().catch(function () {}); else bgm.pause();
-      icon();
+      micon();
     });
-    bgm.addEventListener('play', icon); bgm.addEventListener('pause', icon);
-    icon();
+    bgm.addEventListener('play', micon); bgm.addEventListener('pause', micon);
+    micon();
   }
 })();
 </script>
