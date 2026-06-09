@@ -1,0 +1,10 @@
+# ConstructCount — política de cache da interface (auto-update)
+# HTML (index.html): SEMPRE revalida → mudanças de ?v= valem na próxima abertura.
+<FilesMatch "\.html$">
+  Header set Cache-Control "no-cache, must-revalidate, max-age=0"
+</FilesMatch>
+
+# JS/CSS: têm ?v= na URL (cache-busting), então podem ser cacheados por muito tempo.
+<FilesMatch "\.(js|css)$">
+  Header set Cache-Control "public, max-age=604800"
+</FilesMatch>
