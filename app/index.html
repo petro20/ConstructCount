@@ -170,139 +170,117 @@
             <div class="rb-label">Configurações</div>
           </div>
         </div>
-        <!-- Ajuda -->
+        <!-- Ajuda (página cheia — guia completo, estilo ConstructCount) -->
         <div id="rbHelp" class="rb-panel hidden">
-          <div class="rb-group">
-            <div class="rb-row">
-              <button id="miAbout"   class="rb-btn"><span class="ico">ℹ️</span><span>Como funciona</span></button>
+          <div class="max-w-5xl mx-auto px-6 py-10">
+            <!-- herói -->
+            <div class="text-center mb-12">
+              <div class="text-5xl mb-3">📐</div>
+              <h1 class="text-3xl sm:text-4xl font-bold text-steel-800">Do PDF ao orçamento em minutos</h1>
+              <p class="text-steel-500 mt-3 max-w-2xl mx-auto text-lg">O ConstructCount lê a planta arquitetônica, conta e dimensiona as esquadrias e entrega os documentos prontos. Veja o fluxo completo abaixo.</p>
             </div>
-            <div class="rb-label">Sobre</div>
+
+            <!-- PASSO A PASSO -->
+            <h2 class="text-xl font-bold text-steel-800 mb-5">Passo a passo</h2>
+            <div class="space-y-4 mb-14">
+              <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
+                <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">1</div>
+                <div>
+                  <div class="font-semibold text-steel-800">Abra o projeto (PDF)</div>
+                  <div class="text-steel-500 text-sm mt-1">Em <b>Início ▸ Novo projeto</b>, envie a planta em PDF. A IA lê as folhas e o <i>schedule</i> de esquadrias automaticamente — sem digitar tabela.</div>
+                  <div class="text-steel-400 text-xs mt-2">💡 PDF com texto → tabela na hora. PDF vetorizado/escaneado → abre o workspace pra você conferir e ajustar.</div>
+                </div>
+              </div>
+              <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
+                <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">2</div>
+                <div>
+                  <div class="font-semibold text-steel-800">Confira o takeoff no workspace</div>
+                  <div class="text-steel-500 text-sm mt-1">Navegue pelas folhas, veja as <b>marcas coloridas</b> sobre o desenho e a <b>legenda fixada</b> na planta. Use o <b>Split</b> pra ver duas folhas lado a lado (ex.: planta × schedule).</div>
+                </div>
+              </div>
+              <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
+                <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">3</div>
+                <div>
+                  <div class="font-semibold text-steel-800">Ajuste tipos e medidas</div>
+                  <div class="text-steel-500 text-sm mt-1">Na tabela <b>Resumo</b> (rodapé) você corrige o <b>tipo</b> (casement, correr, fixa, <b>Twin</b>…) e as <b>medidas</b> direto. <b>Twin</b> conta em dobro e <b>Pavimentos×</b> multiplica pelos andares iguais.</div>
+                </div>
+              </div>
+              <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
+                <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">4</div>
+                <div>
+                  <div class="font-semibold text-steel-800">Gere os documentos</div>
+                  <div class="text-steel-500 text-sm mt-1">Na aba <b>Documentos</b>: <b>Orçamento</b> e <b>Proposta</b> para o cliente, <b>Pedido</b> (Excel) para o fornecedor, e a <b>Planta Marcada</b> com legenda — tudo com a sua marca.</div>
+                </div>
+              </div>
+              <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
+                <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">5</div>
+                <div>
+                  <div class="font-semibold text-steel-800">Salve e reabra sem reprocessar</div>
+                  <div class="text-steel-500 text-sm mt-1">Tudo fica em <b>Projetos salvos</b>. Reabra na hora, reprocesse se mudar o PDF, ou exclua. Seus trabalhos ficam no seu computador.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- DOIS CAMINHOS -->
+            <h2 class="text-xl font-bold text-steel-800 mb-5">Dois tipos de PDF</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-14">
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
+                <div class="text-2xl mb-2">📝</div>
+                <div class="font-semibold text-steel-800">PDF com texto (vetorial)</div>
+                <div class="text-steel-500 text-sm mt-1">O motor lê o texto embutido e monta a tabela de esquadrias direto, com tipos e medidas do schedule.</div>
+              </div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
+                <div class="text-2xl mb-2">🖼️</div>
+                <div class="font-semibold text-steel-800">PDF escaneado (imagem)</div>
+                <div class="text-steel-500 text-sm mt-1">Quando o schedule é imagem, o OCR ajuda, mas convém conferir. Você completa tipo e medida no Resumo — rápido e seguro.</div>
+              </div>
+            </div>
+
+            <!-- ATALHOS DO WORKSPACE -->
+            <h2 class="text-xl font-bold text-steel-800 mb-5">No workspace</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-14">
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🏷️</div><div class="font-semibold text-steel-800">Legenda</div><div class="text-steel-500 text-sm mt-1">Liga/desliga a legenda fixada no desenho (acompanha zoom e movimento).</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">📊</div><div class="font-semibold text-steel-800">Resumo</div><div class="text-steel-500 text-sm mt-1">Tabela editável com a contagem geral — corrija tipo e medida sem sair da folha.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🔀</div><div class="font-semibold text-steel-800">Split</div><div class="text-steel-500 text-sm mt-1">Duas folhas ao mesmo tempo, no menu PÁGINAS — compare planta e schedule.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">📐</div><div class="font-semibold text-steel-800">Ortho / Snap</div><div class="text-steel-500 text-sm mt-1">Medições retas e encaixe nos pontos, para marcações precisas.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🪟</div><div class="font-semibold text-steel-800">Janela selecionada</div><div class="text-steel-500 text-sm mt-1">Painel à direita mostra e edita o tipo e a medida da marca atual.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🌐</div><div class="font-semibold text-steel-800">Idioma e unidade</div><div class="text-steel-500 text-sm mt-1">Alterne PT · EN · ES e m² / ft² na aba Exibir — vale também nos documentos.</div></div>
+            </div>
+
+            <!-- FAQ -->
+            <h2 class="text-xl font-bold text-steel-800 mb-5">Perguntas frequentes</h2>
+            <div class="space-y-3 mb-10">
+              <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
+                <summary class="font-semibold text-steel-800 cursor-pointer">Preciso converter o PDF antes?</summary>
+                <div class="text-steel-500 text-sm mt-2">Não. Envie o PDF original do projeto — o motor cuida da leitura.</div>
+              </details>
+              <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
+                <summary class="font-semibold text-steel-800 cursor-pointer">E se a IA errar uma medida ou tipo?</summary>
+                <div class="text-steel-500 text-sm mt-2">Você ajusta na tabela <b>Resumo</b> ou no painel da janela selecionada. A contagem e os documentos atualizam na hora.</div>
+              </details>
+              <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
+                <summary class="font-semibold text-steel-800 cursor-pointer">Meus projetos ficam salvos onde?</summary>
+                <div class="text-steel-500 text-sm mt-2">No seu computador, na pasta do ConstructCount. Reabra a qualquer momento em <b>Projetos salvos</b> — nada é reprocessado à toa.</div>
+              </details>
+              <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
+                <summary class="font-semibold text-steel-800 cursor-pointer">Já tenho o takeoff pronto. Posso usar?</summary>
+                <div class="text-steel-500 text-sm mt-2">Sim. Use <b>Importar Takeoff (Excel / JSON)</b> e o sistema gera preço e documentos sem reprocessar a planta.</div>
+              </details>
+            </div>
+
+            <!-- CTA -->
+            <div class="text-center bg-white border border-steel-200 rounded-xl p-8 shadow-sm">
+              <div class="font-semibold text-steel-800 text-lg">Pronto pra começar?</div>
+              <p class="text-steel-500 text-sm mt-1 mb-4">Abra uma planta e veja o takeoff aparecer.</p>
+              <button id="howStart" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white shadow-sm transition" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">
+                <span>📂</span><span>Novo projeto (PDF)</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </nav>
-
-  <!-- ===================================================================== -->
-  <!-- PÁGINA: Como funciona (guia visual, estilo ConstructCount)            -->
-  <!-- ===================================================================== -->
-  <div id="howPage" class="hidden fixed inset-0 z-40 bg-[#f4f4f2] overflow-y-auto">
-    <!-- barra superior fixa com voltar -->
-    <div class="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-steel-200">
-      <div class="max-w-5xl mx-auto px-6 py-3 flex items-center gap-3">
-        <button id="howBack" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold text-steel-700 hover:bg-steel-100 transition">
-          <span class="text-lg leading-none">←</span><span>Voltar</span>
-        </button>
-        <div class="font-bold text-steel-800">Como funciona</div>
-      </div>
-    </div>
-
-    <div class="max-w-5xl mx-auto px-6 py-10">
-      <!-- herói -->
-      <div class="text-center mb-12">
-        <div class="text-5xl mb-3">📐</div>
-        <h1 class="text-3xl sm:text-4xl font-bold text-steel-800">Do PDF ao orçamento em minutos</h1>
-        <p class="text-steel-500 mt-3 max-w-2xl mx-auto text-lg">O ConstructCount lê a planta arquitetônica, conta e dimensiona as esquadrias e entrega os documentos prontos. Veja o fluxo completo abaixo.</p>
-      </div>
-
-      <!-- PASSO A PASSO -->
-      <h2 class="text-xl font-bold text-steel-800 mb-5">Passo a passo</h2>
-      <div class="space-y-4 mb-14">
-        <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-          <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">1</div>
-          <div>
-            <div class="font-semibold text-steel-800">Abra o projeto (PDF)</div>
-            <div class="text-steel-500 text-sm mt-1">Em <b>Início ▸ Novo projeto</b>, envie a planta em PDF. A IA lê as folhas e o <i>schedule</i> de esquadrias automaticamente — sem digitar tabela.</div>
-            <div class="text-steel-400 text-xs mt-2">💡 PDF com texto → tabela na hora. PDF vetorizado/escaneado → abre o workspace pra você conferir e ajustar.</div>
-          </div>
-        </div>
-        <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-          <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">2</div>
-          <div>
-            <div class="font-semibold text-steel-800">Confira o takeoff no workspace</div>
-            <div class="text-steel-500 text-sm mt-1">Navegue pelas folhas, veja as <b>marcas coloridas</b> sobre o desenho e a <b>legenda fixada</b> na planta. Use o <b>Split</b> pra ver duas folhas lado a lado (ex.: planta × schedule).</div>
-          </div>
-        </div>
-        <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-          <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">3</div>
-          <div>
-            <div class="font-semibold text-steel-800">Ajuste tipos e medidas</div>
-            <div class="text-steel-500 text-sm mt-1">Na tabela <b>Resumo</b> (rodapé) você corrige o <b>tipo</b> (casement, correr, fixa, <b>Twin</b>…) e as <b>medidas</b> direto. <b>Twin</b> conta em dobro e <b>Pavimentos×</b> multiplica pelos andares iguais.</div>
-          </div>
-        </div>
-        <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-          <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">4</div>
-          <div>
-            <div class="font-semibold text-steel-800">Gere os documentos</div>
-            <div class="text-steel-500 text-sm mt-1">Na aba <b>Documentos</b>: <b>Orçamento</b> e <b>Proposta</b> para o cliente, <b>Pedido</b> (Excel) para o fornecedor, e a <b>Planta Marcada</b> com legenda — tudo com a sua marca.</div>
-          </div>
-        </div>
-        <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-          <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">5</div>
-          <div>
-            <div class="font-semibold text-steel-800">Salve e reabra sem reprocessar</div>
-            <div class="text-steel-500 text-sm mt-1">Tudo fica em <b>Projetos salvos</b>. Reabra na hora, reprocesse se mudar o PDF, ou exclua. Seus trabalhos ficam no seu computador.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- DOIS CAMINHOS -->
-      <h2 class="text-xl font-bold text-steel-800 mb-5">Dois tipos de PDF</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-14">
-        <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-          <div class="text-2xl mb-2">📝</div>
-          <div class="font-semibold text-steel-800">PDF com texto (vetorial)</div>
-          <div class="text-steel-500 text-sm mt-1">O motor lê o texto embutido e monta a tabela de esquadrias direto, com tipos e medidas do schedule.</div>
-        </div>
-        <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-          <div class="text-2xl mb-2">🖼️</div>
-          <div class="font-semibold text-steel-800">PDF escaneado (imagem)</div>
-          <div class="text-steel-500 text-sm mt-1">Quando o schedule é imagem, o OCR ajuda, mas convém conferir. Você completa tipo e medida no Resumo — rápido e seguro.</div>
-        </div>
-      </div>
-
-      <!-- ATALHOS DO WORKSPACE -->
-      <h2 class="text-xl font-bold text-steel-800 mb-5">No workspace</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-14">
-        <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🏷️</div><div class="font-semibold text-steel-800">Legenda</div><div class="text-steel-500 text-sm mt-1">Liga/desliga a legenda fixada no desenho (acompanha zoom e movimento).</div></div>
-        <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">📊</div><div class="font-semibold text-steel-800">Resumo</div><div class="text-steel-500 text-sm mt-1">Tabela editável com a contagem geral — corrija tipo e medida sem sair da folha.</div></div>
-        <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🔀</div><div class="font-semibold text-steel-800">Split</div><div class="text-steel-500 text-sm mt-1">Duas folhas ao mesmo tempo, no menu PÁGINAS — compare planta e schedule.</div></div>
-        <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">📐</div><div class="font-semibold text-steel-800">Ortho / Snap</div><div class="text-steel-500 text-sm mt-1">Medições retas e encaixe nos pontos, para marcações precisas.</div></div>
-        <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🪟</div><div class="font-semibold text-steel-800">Janela selecionada</div><div class="text-steel-500 text-sm mt-1">Painel à direita mostra e edita o tipo e a medida da marca atual.</div></div>
-        <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🌐</div><div class="font-semibold text-steel-800">Idioma e unidade</div><div class="text-steel-500 text-sm mt-1">Alterne PT · EN · ES e m² / ft² na aba Exibir — vale também nos documentos.</div></div>
-      </div>
-
-      <!-- FAQ -->
-      <h2 class="text-xl font-bold text-steel-800 mb-5">Perguntas frequentes</h2>
-      <div class="space-y-3 mb-10">
-        <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-          <summary class="font-semibold text-steel-800 cursor-pointer">Preciso converter o PDF antes?</summary>
-          <div class="text-steel-500 text-sm mt-2">Não. Envie o PDF original do projeto — o motor cuida da leitura.</div>
-        </details>
-        <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-          <summary class="font-semibold text-steel-800 cursor-pointer">E se a IA errar uma medida ou tipo?</summary>
-          <div class="text-steel-500 text-sm mt-2">Você ajusta na tabela <b>Resumo</b> ou no painel da janela selecionada. A contagem e os documentos atualizam na hora.</div>
-        </details>
-        <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-          <summary class="font-semibold text-steel-800 cursor-pointer">Meus projetos ficam salvos onde?</summary>
-          <div class="text-steel-500 text-sm mt-2">No seu computador, na pasta do ConstructCount. Reabra a qualquer momento em <b>Projetos salvos</b> — nada é reprocessado à toa.</div>
-        </details>
-        <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-          <summary class="font-semibold text-steel-800 cursor-pointer">Já tenho o takeoff pronto. Posso usar?</summary>
-          <div class="text-steel-500 text-sm mt-2">Sim. Use <b>Importar Takeoff (Excel / JSON)</b> e o sistema gera preço e documentos sem reprocessar a planta.</div>
-        </details>
-      </div>
-
-      <!-- CTA -->
-      <div class="text-center bg-white border border-steel-200 rounded-xl p-8 shadow-sm">
-        <div class="font-semibold text-steel-800 text-lg">Pronto pra começar?</div>
-        <p class="text-steel-500 text-sm mt-1 mb-4">Abra uma planta e veja o takeoff aparecer.</p>
-        <button id="howStart" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white shadow-sm transition" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">
-          <span>📂</span><span>Novo projeto (PDF)</span>
-        </button>
-      </div>
-    </div>
-  </div>
 
   <!-- Modal: Licença & Direitos (software proprietário M2PB) -->
   <div id="licenseModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
@@ -1013,7 +991,7 @@
   <script src="js/annotator.js?v=200"></script>
   <script src="js/workspace.js?v=226"></script>
   <script src="js/desktop.js?v=213"></script>
-  <script src="js/menu.js?v=229"></script>
+  <script src="js/menu.js?v=230"></script>
   <script src="js/cards.js?v=200"></script>
 </body>
 </html>

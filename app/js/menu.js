@@ -17,7 +17,7 @@
     tabs.forEach(tab => tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.toggle('active', t === tab));
       const target = tab.dataset.tab;
-      const isPage = (target === 'rbAbout');         // SÓ o ConstructCount vira página cheia (vitrine)
+      const isPage = (target === 'rbAbout' || target === 'rbHelp'); // ConstructCount e Ajuda = páginas cheias
       const panels = [...document.querySelectorAll('.rb-panel')];
       panels.forEach(p => { p.classList.toggle('hidden', p.id !== target); p.classList.remove('rb-page'); });
       const main = document.querySelector('main');
@@ -78,13 +78,8 @@
     const flic = $('#footLicense'); if (flic) flic.addEventListener('click', openLic);
     const lc = $('#licClose'); if (lc) lc.addEventListener('click', () => $('#licenseModal').classList.add('hidden'));
     const lm = $('#licenseModal'); if (lm) lm.addEventListener('click', (e) => { if (e.target === lm) lm.classList.add('hidden'); });
-    const about = $('#miAbout'); if (about) about.addEventListener('click', () => {
-      closeMenus();
-      const hp = $('#howPage'); if (hp) { hp.classList.remove('hidden'); hp.scrollTop = 0; }
-    });
-    const hb = $('#howBack'); if (hb) hb.addEventListener('click', () => { const hp = $('#howPage'); if (hp) hp.classList.add('hidden'); });
+    // CTA "Novo projeto" dentro da página Ajuda → abre o seletor de PDF
     const hs = $('#howStart'); if (hs) hs.addEventListener('click', () => {
-      const hp = $('#howPage'); if (hp) hp.classList.add('hidden');
       const mo = $('#miOpen'); if (mo) mo.click();
     });
   }
