@@ -53,7 +53,7 @@
   <!-- pdf-lib (sobreposição das marcas + legenda sobre o PDF da planta) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
-  <link rel="stylesheet" href="css/styles.css?v=105" />
+  <link rel="stylesheet" href="css/styles.css?v=106" />
 </head>
 
 <body class="bg-steel-50 text-steel-900 font-sans min-h-screen">
@@ -187,19 +187,21 @@
 
             <!-- HERÓI -->
             <section class="cc-hero cc-reveal">
-              <span class="cc-eyebrow">💎 Seu plano ConstructCount</span>
-              <h1 class="cc-title">Levante obras <span class="grad">sem limites</span></h1>
-              <p class="cc-sub">Uma assinatura, todos os recursos: leitura por IA, takeoff automático, documentos com a sua marca e atualizações contínuas.</p>
+              <span class="cc-eyebrow">📦 Pacotes ConstructCount</span>
+              <h1 class="cc-title">Um app, <span class="grad">vários ofícios</span></h1>
+              <p class="cc-sub">Cada pacote é um motor de levantamento por especialidade. Comece pelo de Janelas e Portas — os próximos já estão a caminho.</p>
               <!-- status da assinatura (preenchido por JS) -->
               <div id="pkgStatus" class="pkg-status"><span class="dot"></span><span id="pkgStatusText">Verificando assinatura…</span></div>
             </section>
 
-            <!-- PLANO -->
+            <!-- PACOTE ATIVO: JANELAS E PORTAS -->
+            <h2 class="cc-h2">Pacote disponível</h2>
+            <p class="cc-lead">Pronto para usar hoje.</p>
             <div class="pkg-plan cc-reveal">
               <div class="pkg-plan-main">
-                <div class="pkg-tag">Mais completo</div>
-                <h2 class="pkg-name">ConstructCount <span class="grad">Pro</span></h2>
-                <p class="pkg-desc">Tudo o que você precisa para orçar esquadrias direto da planta.</p>
+                <div class="pkg-tag pkg-tag--live">🟢 Disponível</div>
+                <h2 class="pkg-name">Janelas <span class="grad">e Portas</span></h2>
+                <p class="pkg-desc">Levante esquadrias direto da planta — leitura por IA, contagem, medidas e documentos prontos.</p>
                 <div class="pkg-price">
                   <span class="cur">R$</span><span id="pkgPrice" class="val">—</span><span class="per">/mês</span>
                 </div>
@@ -222,13 +224,16 @@
               </ul>
             </div>
 
-            <!-- BENEFÍCIOS -->
-            <h2 class="cc-h2" style="margin-top:46px">Por que assinar</h2>
-            <p class="cc-lead">O que você ganha com o ConstructCount Pro.</p>
+            <!-- PRÓXIMOS PACOTES (em breve) -->
+            <h2 class="cc-h2" style="margin-top:46px">Próximos pacotes</h2>
+            <p class="cc-lead">Mais ofícios chegando ao ConstructCount.</p>
             <div class="cc-grid">
-              <div class="cc-card cc-reveal" style="--cc-accent:#d9a02a"><div class="cc-ico" style="background:linear-gradient(135deg,#f5d27a,#a06b12)">⚡</div><h3>Mais rápido</h3><p>Orçamentos em minutos — não em horas de contagem manual.</p></div>
-              <div class="cc-card cc-reveal" style="--cc-accent:#10b981"><div class="cc-ico" style="background:linear-gradient(135deg,#34d399,#047857)">🎯</div><h3>Mais preciso</h3><p>Direto do schedule do projeto, com conferência fácil no Resumo.</p></div>
-              <div class="cc-card cc-reveal" style="--cc-accent:#6366f1"><div class="cc-ico" style="background:linear-gradient(135deg,#818cf8,#4338ca)">🔒</div><h3>Seus dados, seus</h3><p>Os projetos ficam no seu computador. Você no controle.</p></div>
+              <div class="cc-card pkg-soon cc-reveal" style="--cc-accent:#3b82f6"><span class="pkg-soontag">Em breve</span><div class="cc-ico" style="background:linear-gradient(135deg,#60a5fa,#1d4ed8)">🧱</div><h3>Drywall &amp; Forros</h3><p>Chapas, perfis, juntas e área por ambiente.</p></div>
+              <div class="cc-card pkg-soon cc-reveal" style="--cc-accent:#14b8a6"><span class="pkg-soontag">Em breve</span><div class="cc-ico" style="background:linear-gradient(135deg,#2dd4bf,#0f766e)">🟫</div><h3>Pisos &amp; Revestimentos</h3><p>Área, rodapés e perdas por cômodo.</p></div>
+              <div class="cc-card pkg-soon cc-reveal" style="--cc-accent:#f59e0b"><span class="pkg-soontag">Em breve</span><div class="cc-ico" style="background:linear-gradient(135deg,#fbbf24,#b45309)">💡</div><h3>Elétrica</h3><p>Pontos, circuitos, eletrodutos e quadros.</p></div>
+              <div class="cc-card pkg-soon cc-reveal" style="--cc-accent:#06b6d4"><span class="pkg-soontag">Em breve</span><div class="cc-ico" style="background:linear-gradient(135deg,#22d3ee,#0e7490)">🚰</div><h3>Hidráulica</h3><p>Pontos de água/esgoto, conexões e metragem.</p></div>
+              <div class="cc-card pkg-soon cc-reveal" style="--cc-accent:#f43f5e"><span class="pkg-soontag">Em breve</span><div class="cc-ico" style="background:linear-gradient(135deg,#fb7185,#be123c)">🎨</div><h3>Pintura</h3><p>Área de parede e teto, demãos e rendimento.</p></div>
+              <div class="cc-card pkg-soon cc-reveal" style="--cc-accent:#8b5cf6"><span class="pkg-soontag">Em breve</span><div class="cc-ico" style="background:linear-gradient(135deg,#a78bfa,#6d28d9)">🏗️</div><h3>Estrutura</h3><p>Concreto, fôrma e aço por elemento.</p></div>
             </div>
 
             <!-- FAQ -->
