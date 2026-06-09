@@ -37,12 +37,12 @@ layout_top(t('app_name'));
   /* TEXTO DOS CARDS maior (estava pequeno) */
   .feat{padding:30px 26px}                                     /* CARDS maiores (mais presença) */
   .feat-ic{font-size:36px;margin-bottom:14px}                  /* ícone maior */
-  .feat h3{font-size:22px;margin:.3em 0 .2em}                  /* título do card maior */
-  .feat p{font-size:17px;line-height:1.6}                      /* descrição do card maior/legível */
+  .feat h3{font-size:24px;margin:.3em 0 .2em}                  /* título do card maior */
+  .feat p{font-size:18.5px;line-height:1.6}                    /* descrição do card BEM maior/legível */
   .features{gap:22px}                                          /* mais espaço entre os cards */
-  .step h3{font-size:19px}
-  .step p{font-size:15.5px;line-height:1.5}
-  .plist{font-size:15.5px}
+  .step h3{font-size:21px}
+  .step p{font-size:17px;line-height:1.55}
+  .plist{font-size:17px}
   .sec-title{text-shadow:0 2px 16px rgba(0,0,0,.6);font-size:28px}   /* títulos de seção maiores */
   /* rodapé destacado sobre o vídeo (crédito do desenvolvedor bem visível) */
   footer{position:relative;z-index:2;text-align:center;background:rgba(12,10,6,.78);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid rgba(53,44,29,.7);border-radius:12px;color:#dccfb2;margin-top:30px;font-size:13.5px}
