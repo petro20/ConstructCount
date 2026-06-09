@@ -300,7 +300,7 @@
       + '    <span class="w-px h-5 bg-white/15 mx-1"></span>'
       + '    <button id="frToolPan"  class="wsBarTool px-2.5 py-1.5 rounded hover:bg-white/10" title="' + tr('Mover') + '">✋</button>'
       + '    <button id="frToolCal"  class="wsBarTool px-2.5 py-1.5 rounded hover:bg-white/10" title="' + tr('Calibrar escala') + '">📏</button>'
-      + '    <button id="frToolWall" class="wsBarTool px-2.5 py-1.5 rounded hover:bg-white/10" title="' + tr('Traçar parede') + '">🧱</button>'
+      + '    <button id="frToolWall" class="wsBarTool px-2.5 py-1.5 rounded hover:bg-white/10 inline-flex items-center gap-1" title="' + tr('Linear — traçar parede (clique p/ mudar de direção, Esc finaliza)') + '">📐<span class="text-xs font-semibold">' + tr('Linear') + '</span></button>'
       + '    <select id="frToolWT" class="text-steel-900 text-sm rounded px-2 py-1"></select>'
       + '  </div>'
       + '  <span id="frScale" class="ml-auto text-xs px-2 py-0.5 rounded bg-steel-600 text-steel-200">' + tr('escala não calibrada') + '</span>'
