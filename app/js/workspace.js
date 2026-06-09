@@ -380,7 +380,8 @@
   function updateSelWindow() {
     const code = S.highlight;
     const on = !!code;
-    ['#wsDimW', '#wsDimH', '#wsDimWmeas', '#wsDimHmeas', '#wsDimSave'].forEach(s => { const el = $(s); if (el) el.disabled = !on; });
+    ['#wsDimW', '#wsDimH', '#wsDimType', '#wsDimWmeas', '#wsDimHmeas', '#wsDimSave'].forEach(s => { const el = $(s); if (el) el.disabled = !on; });
+    populateTypeSelect();
     const cap = $('#wsSelCode');
     if (!on) { if (cap) cap.textContent = F.tr('Clique num código na lista à esquerda.'); return; }
     const r = (S.sched || {})[code] || {};
@@ -388,6 +389,24 @@
     const w = $('#wsDimW'), h = $('#wsDimH');
     if (w) w.value = r.w_raw || (r.w_mm ? r.w_mm + 'mm' : '');
     if (h) h.value = r.h_raw || (r.h_mm ? r.h_mm + 'mm' : '');
+    const ty = $('#wsDimType'); if (ty) ty.value = r.type || '';
+  }
+  /** popula o seletor de Tipo (janela/porta) a partir de F.WINDOW_TYPES (uma vez) */
+  function populateTypeSelect() {
+    const sel = $('#wsDimType'); if (!sel || sel._filled) return;
+    const types = F.WINDOW_TYPES || [];
+    if (!types.length) return;
+    sel._filled = true;
+    let html = '<option value="">' + F.tr('(automático)') + '</option>';
+    [...new Set(types.map(t => t.cat))].forEach(cat => {
+      html += '<optgroup label="' + cat + '">';
+      types.filter(t => t.cat === cat).forEach(t => {
+        const lbl = F.typeLabel ? F.typeLabel(t.name) : t.name;
+        html += '<option value="' + t.name + '">' + lbl + '</option>';
+      });
+      html += '</optgroup>';
+    });
+    sel.innerHTML = html;
   }
 
   /** Ajusta zoom/posição p/ caber TODAS as marcas passadas (com folga). */
@@ -1264,9 +1283,10 @@
     const dsv = $('#wsDimSave'); if (dsv) dsv.addEventListener('click', async () => {
       if (!S.highlight) return;
       const wmm = F.parseToMm($('#wsDimW').value), hmm = F.parseToMm($('#wsDimH').value);
-      if (!wmm && !hmm) { markSaved(F.tr('Informe largura e/ou altura')); return; }
+      const wtype = ($('#wsDimType') && $('#wsDimType').value) || null;
+      if (!wmm && !hmm && !wtype) { markSaved(F.tr('Informe medida ou tipo')); return; }
       if (!S.prov.setWindowDim) { alert(F.tr('Disponível no app de desktop.')); return; }
-      let r; try { r = await S.prov.setWindowDim(S.highlight, wmm || null, hmm || null, null, null); } catch (e) { markSaved(F.tr('Falha ao salvar')); return; }
+      let r; try { r = await S.prov.setWindowDim(S.highlight, wmm || null, hmm || null, wtype, null); } catch (e) { markSaved(F.tr('Falha ao salvar')); return; }
       if (r && r.rec) { S.sched = S.sched || {}; S.sched[S.highlight] = Object.assign({}, S.sched[S.highlight], r.rec); }
       renderItems(); updateSelWindow();
       markSaved(F.tr('Medida salva para {c}', { c: S.highlight }));
