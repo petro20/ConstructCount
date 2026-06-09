@@ -60,7 +60,7 @@ define('PLAN_DISPLAY', [
 // Recomendado: repo PÚBLICO só de releases no GitHub (código-fonte fica privado).
 // Use /releases/latest/download/<asset> p/ apontar sempre pra última versão.
 // Deixe '' para ocultar o botão de download no dashboard.
-define('APP_DOWNLOAD_URL', 'https://github.com/SEU-USUARIO/constructcount-releases/releases/latest/download/ConstructCount.zip');
+define('APP_DOWNLOAD_URL', 'https://github.com/petro20/constructcount-releases/releases/latest/download/ConstructCount-Setup.exe');
 
 // ---- Admin (M2PB) ----
 define('ADMIN_EMAILS', ['voce@m2pb.com']);        // e-mails com acesso ao /admin
