@@ -17,17 +17,17 @@
     tabs.forEach(tab => tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.toggle('active', t === tab));
       const target = tab.dataset.tab;
-      const isHome = (target === 'rbHome');
+      const isPage = (target === 'rbAbout');         // SÓ o ConstructCount vira página cheia (vitrine)
       const panels = [...document.querySelectorAll('.rb-panel')];
       panels.forEach(p => { p.classList.toggle('hidden', p.id !== target); p.classList.remove('rb-page'); });
       const main = document.querySelector('main');
       const panel = document.getElementById(target);
-      if (!isHome && panel) {                       // aba vira PÁGINA cheia (≠ Início)
+      if (isPage && panel) {                         // ConstructCount = página cheia
         panel.classList.add('rb-page');
         const mb = document.getElementById('menubar');
         panel.style.top = (mb ? Math.round(mb.getBoundingClientRect().bottom) : 120) + 'px';
         if (main) main.style.display = 'none';
-      } else if (main) {                            // Início = home normal
+      } else if (main) {                             // Início e as demais = faixa (padrão) + conteúdo
         main.style.display = '';
       }
     }));
