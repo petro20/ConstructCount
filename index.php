@@ -28,6 +28,7 @@ layout_top(t('app_name'));
   .nav{position:absolute;top:0;left:0;right:0;max-width:1160px;margin:0 auto;z-index:30;background:transparent;border-bottom:0;padding-left:28px;padding-right:28px}
   main{position:relative;max-width:1100px}         /* área de conteúdo mais larga (Dite) → cards maiores. Sem z-index: vídeo fixo vai pro fundo */
   .vhero{min-height:0;padding-top:108px;padding-bottom:56px}   /* altura guiada pelo conteúdo (sem vão de 100vh) → cards sobem, hero cheio estilo Dite */
+  .vhero-grid,.vhero-overlay{display:none}                     /* remove a "máscara" (grade/vinheta presa na caixa do hero); o fundo é o vídeo escurecido global */
   .sec{margin:48px 0}                                          /* mais respiro entre seções (Dite) */
   .vhero-inner{max-width:1040px}                               /* container mais largo (Dite) → título respira */
   .vhero-h1{font-size:clamp(40px,7.8vw,90px);line-height:1.0;letter-spacing:-.03em;background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:#f1d488;color:#f1d488;animation:none;text-shadow:0 3px 22px rgba(0,0,0,.6)}   /* título BEM maior + SEM máscara/shine: cor sólida e limpa */
