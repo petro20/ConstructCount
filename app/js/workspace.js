@@ -16,6 +16,7 @@
     scale: 1, ox: 0, oy: 0, dragging: false, moved: false, lastX: 0, lastY: 0,
     countMode: false, autoMode: false, delMode: false, busy: false, highlight: null,
     calibMode: false, measMode: false, mmPerPx: null, clickA: null, measures: [],
+    lineMode: false, linePts: [], lines: [],   // LINEAR (traço contínuo, por camada/trade)
     snap: false, ortho: false, hover: null, snapData: null, lastMeas: null, dragMeas: null, selSet: null, curX: null, curY: null,
     marquee: null, maybeMarquee: false, marqStart: null, marqMods: null, marqCrossing: false, selMarks: null,
     autoDragStart: null, autoSample: null, autoRegion: null,   // área de busca do Auto Count (arraste)
@@ -34,6 +35,7 @@
     S.onConsolidate = opts.onConsolidate || null;
     S.labelIdx = {}; S.countMode = false; S.autoMode = false; S.delMode = false;
     S.calibMode = false; S.measMode = false; S.clickA = null; S.measures = [];
+    S.lineMode = false; S.linePts = []; S.lines = [];
     S.schedulePages = (opts.schedulePages || []).slice();
     S.sections = (opts.sections && opts.sections.length) ? opts.sections.slice() : ['Geral'];
     S.activeSection = opts.activeSection || S.sections[0];
@@ -573,6 +575,28 @@
       ctx.fillStyle = bg; ctx.fillRect(lx - tw / 2 - 4, ly - 18, tw + 8, 18);
       ctx.fillStyle = '#fff'; ctx.fillText(txt, lx - tw / 2, ly - 5);
     });
+    // LINEAR — traços contínuos da folha atual (cor = camada/trade)
+    (S.lines || []).forEach(ln => {
+      if (ln.page !== S.page || !layerVisible(ln.layer)) return;
+      const lay = layerById(ln.layer), col = (lay && lay.color) || '#e3b653';
+      ctx.lineWidth = 3; ctx.strokeStyle = col; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath();
+      ln.path.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+      ctx.stroke();
+      const mid = ln.path[Math.floor(ln.path.length / 2)], mx = mid[0] * S.scale + S.ox, my = mid[1] * S.scale + S.oy;
+      const txt = mmToFtIn(ln.mm); ctx.font = '700 12px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
+      ctx.fillStyle = 'rgba(15,14,11,.85)'; ctx.fillRect(mx + 6, my - 16, tw + 8, 15);
+      ctx.fillStyle = col; ctx.fillText(txt, mx + 10, my - 4);
+    });
+    if (S.lineMode && S.linePts.length) {                 // traço em construção
+      const lay = activeLayerObj(), col = (lay && lay.color) || '#fde047';
+      ctx.lineWidth = 3; ctx.strokeStyle = col; ctx.setLineDash([6, 4]); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath();
+      S.linePts.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+      if (S.hover) { const hx = S.hover[0] * S.scale + S.ox, hy = S.hover[1] * S.scale + S.oy; ctx.lineTo(hx, hy); }
+      ctx.stroke(); ctx.setLineDash([]);
+      S.linePts.forEach(p => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = col; ctx.fill(); });
+    }
     if (S.clickA) {
       const px = S.clickA[0] * S.scale + S.ox, py = S.clickA[1] * S.scale + S.oy;
       ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.strokeStyle = '#d9a02a'; ctx.lineWidth = 2; ctx.stroke();
@@ -931,6 +955,27 @@
     updateScaleInfo(); draw();
   }
 
+  // LINEAR — traço contínuo (núcleo): cada clique = ponto de mudança de direção; Esc/Enter finaliza.
+  function handleLine(sx, sy) {
+    if (!S.mmPerPx) { alert(F.tr('Calibre a escala primeiro (📏 Calibrar escala).')); return; }
+    let p = snapPt(...toImg(sx, sy));
+    if (S.linePts.length) p = applyOrtho(S.linePts[S.linePts.length - 1], p);   // trava H/V se Ortho
+    S.linePts.push(p); draw();
+  }
+  function finishLine() {
+    while (S.linePts.length >= 2) {                       // remove ponto duplicado no fim (duplo-clique)
+      const a = S.linePts[S.linePts.length - 1], b = S.linePts[S.linePts.length - 2];
+      if (Math.abs(a[0] - b[0]) < 1 && Math.abs(a[1] - b[1]) < 1) S.linePts.pop(); else break;
+    }
+    if (S.linePts.length >= 2 && S.mmPerPx) {
+      let px = 0; for (let i = 1; i < S.linePts.length; i++) px += Math.hypot(S.linePts[i][0] - S.linePts[i - 1][0], S.linePts[i][1] - S.linePts[i - 1][1]);
+      S.lines.push({ path: S.linePts.slice(), mm: px * S.mmPerPx, layer: S.activeLayer, page: S.page });
+      markSaved(F.tr('Linear: {ft}', { ft: mmToFtIn(px * S.mmPerPx) }));
+    }
+    S.linePts = []; draw();
+  }
+  F._framingLines = () => S.lines;   // o pacote Framing lê os traços daqui (próximo passo)
+
   function updateSchedUI() {
     const on = S.schedulePages.indexOf(S.page) >= 0;
     const btn = $('#wsSchedPage');
@@ -1101,10 +1146,10 @@
   }
   F._updateSmartPanel = updateSmartPanel;
 
-  function toolActive() { return S.countMode || S.autoMode || S.delMode || S.calibMode || S.measMode; }
+  function toolActive() { return S.countMode || S.autoMode || S.delMode || S.calibMode || S.measMode || S.lineMode; }
   function applyCursor() { if (cv) cv.style.cursor = 'none'; }   // cruz de tela cheia é sempre o cursor
   function syncBarActive() {
-    const on = { wsCount: S.countMode, wsAuto: S.autoMode, wsDelete: S.delMode, wsCalib: S.calibMode, wsMeasure: S.measMode };
+    const on = { wsCount: S.countMode, wsAuto: S.autoMode, wsDelete: S.delMode, wsCalib: S.calibMode, wsMeasure: S.measMode, wsLinear: S.lineMode };
     document.querySelectorAll('.wsBarTool').forEach(b => {
       const active = !!on[b.dataset.proxy];
       const del = b.dataset.proxy === 'wsDelete';
@@ -1208,7 +1253,7 @@
           S.autoRegion = null;
         }
         // pode selecionar/arrastar/laço fora dos modos de clique (Medir ou neutro)
-        const canSelect = !S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.clickA;
+        const canSelect = !S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.clickA;
         if (canSelect) {
           S.dragMeas = hitMeasEnd(e.offsetX, e.offsetY);   // pegar ponta de medida p/ arrastar
           if (S.dragMeas) cv.style.cursor = 'move';
@@ -1266,7 +1311,7 @@
         if (Math.abs(dx) + Math.abs(dy) > 3) S.moved = true;
         S.ox += dx; S.oy += dy; S.lastX = e.offsetX; S.lastY = e.offsetY;
       }
-      if (S.calibMode || S.measMode) S.hover = snapPt(mix, miy);   // prévia da régua
+      if (S.calibMode || S.measMode || S.lineMode) S.hover = snapPt(mix, miy);   // prévia da régua/linear
       draw();                                 // SEMPRE redesenha → cruz acompanha o cursor
     });
     const endPan = () => { S.panning = false; applyCursor(); };
@@ -1317,10 +1362,11 @@
         // sem arraste (só clique) → segue o fluxo normal (folha toda) abaixo
       }
       if (S.moved) return;                            // foi arraste, não clique
-      if (!S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.clickA) {  // clicar numa medida = selecionar (Ctrl/Shift = múltiplas)
+      if (!S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.clickA) {  // clicar numa medida = selecionar (Ctrl/Shift = múltiplas)
         const hm = hitMeasLine(e.offsetX, e.offsetY);
         if (hm) { pickMeasure(hm, e); markSaved(F.tr('{n} medida(s) selecionada(s) · Del p/ apagar', { n: selSet().size })); draw(); return; }
       }
+      if (S.lineMode) { handleLine(e.offsetX, e.offsetY); return; }
       if (S.calibMode || S.measMode) { handleRuler(e.offsetX, e.offsetY); return; }
       const m = hit(e.offsetX, e.offsetY);
       if (S.delMode) { if (m) { S.marks.splice(S.marks.indexOf(m), 1); changed(); } return; }
@@ -1335,6 +1381,7 @@
       } else if (m) { m.confirmed = !m.confirmed; changed(); }
     });
     cv.addEventListener('dblclick', (e) => {
+      if (S.lineMode) { e.preventDefault(); finishLine(); return; }   // duplo-clique finaliza o Linear
       if (S.legend && S.legendRect) {                 // duplo-clique na legenda = volta ao canto automático
         const r = S.legendRect;
         if (e.offsetX >= r.x && e.offsetX <= r.x + r.w && e.offsetY >= r.y && e.offsetY <= r.y + r.h) {
@@ -1352,6 +1399,8 @@
       S.delMode = which === 'del' && !S.delMode;
       S.calibMode = which === 'calib' && !S.calibMode;
       S.measMode = which === 'measure' && !S.measMode;
+      S.lineMode = which === 'linear' && !S.lineMode;
+      if (which !== 'linear') S.linePts = [];
       S.clickA = null; S.hover = null; S.maybeMarquee = false; S.marquee = null;
       S.autoDragStart = null; S.autoRegion = null; S.autoSample = null;
       const act = (id, on) => { const b = $(id); if (b) b.classList.toggle('ws-tool-active', on); };
@@ -1359,6 +1408,7 @@
       act('#wsAuto', S.autoMode);
       act('#wsCalib', S.calibMode);
       act('#wsMeasure', S.measMode);
+      act('#wsLinear', S.lineMode);
       const wd = $('#wsDelete'); if (wd) wd.classList.toggle('ws-tool-active-del', S.delMode);
       applyCursor(); syncBarActive();
       if (ruler && S.measMode && !S.mmPerPx) markSaved(F.tr('Calibre a escala primeiro (📏).'));
@@ -1370,6 +1420,7 @@
       draw();
     }
     $('#wsCount').addEventListener('click', () => setMode('count'));
+    { const wl = $('#wsLinear'); if (wl) wl.addEventListener('click', () => setMode('linear')); }
     $('#wsAuto').addEventListener('click', () => setMode('auto'));
     $('#wsDelete').addEventListener('click', () => setMode('del'));
     const wcal = $('#wsCalib'); if (wcal) wcal.addEventListener('click', () => setMode('calib'));
@@ -1488,8 +1539,13 @@
     window.addEventListener('keydown', (e) => {
       if ($('#workspace').classList.contains('hidden')) return;
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '');
-      if (e.key === 'Escape') {                        // cancela ponto/arraste/seleção
+      if (e.key === 'Escape') {                        // Linear: finaliza; senão cancela ponto/arraste/seleção
+        if (S.lineMode && S.linePts.length) { finishLine(); return; }
         if (S.clickA || S.dragMeas || selCount()) { S.clickA = null; S.dragMeas = null; clearSel(); updateMeasSel(); markSaved(F.tr('Cancelado')); draw(); }
+      } else if (e.key === 'Enter' && S.lineMode && S.linePts.length) {
+        e.preventDefault(); finishLine();              // Enter também finaliza o Linear
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.lineMode && S.linePts.length) {
+        e.preventDefault(); S.linePts.pop(); draw();    // desfaz último ponto do Linear
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && selCount()) {
         e.preventDefault(); deleteSelMeas();           // apaga a medida selecionada
       }
