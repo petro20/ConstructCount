@@ -452,6 +452,14 @@
   }
   F._toggleSummary = function () { const p = document.querySelector('#wsSummary'); if (p) { positionSummary(); p.classList.toggle('hidden'); renderSummary(); } };
   window.addEventListener('resize', () => { const p = document.querySelector('#wsSummary'); if (p && !p.classList.contains('hidden')) positionSummary(); });
+  // recolher/expandir as barras laterais muda o tamanho do canvas → reposiciona o resumo
+  (function () {
+    if (!window.ResizeObserver) return;
+    const reposition = () => { const p = document.querySelector('#wsSummary'); if (p && !p.classList.contains('hidden')) positionSummary(); };
+    const ro = new ResizeObserver(reposition);
+    const arm = () => { const c = document.querySelector('#wsCanvas'); if (c) ro.observe(c); };
+    if (document.readyState !== 'loading') arm(); else document.addEventListener('DOMContentLoaded', arm);
+  })();
 
   /** Clicar num item da lista → realça TODAS as marcas iguais e enquadra todas juntas. */
   function selectItem(label) {
