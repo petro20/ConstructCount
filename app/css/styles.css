@@ -389,6 +389,29 @@ button:focus-visible {
 #frTakeoff .ft-total { display: flex; align-items: center; justify-content: space-between; background: #262420; color: #fff; border-radius: 10px; padding: 12px 14px; margin-top: 6px; }
 #frTakeoff .ft-total b { font-size: 18px; }
 
+/* Takeoff de Framing — TABELA no painel inferior (estilo Resumo) */
+#frTakeoff .ftt-top { display: flex; align-items: center; gap: 14px; padding: 8px 14px; background: #262420; color: #fff; font-weight: 700; flex: 0 0 auto; }
+#frTakeoff .ftt-top > span:first-child { font-size: 13.5px; }
+#frTakeoff .ftt-pr { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 600; color: #cfcabd; }
+#frTakeoff .ftt-pr label { display: inline-flex; align-items: center; gap: 4px; }
+#frTakeoff .ftt-pr input { width: 64px; border: 1px solid #56524a; border-radius: 6px; padding: 3px 6px; background: #34312b; color: #fff; font-size: 12px; font-variant-numeric: tabular-nums; }
+#frTakeoff .ftt-conf { flex: 0 0 auto; background: #fff8e6; border-bottom: 1px solid #f3d98a; padding: 6px 14px; font-size: 11.5px; color: #8a6d10; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+#frTakeoff .ftt-cflag { display: inline-flex; align-items: center; gap: 4px; background: #fffdf5; border: 1px solid #f0e3b8; border-radius: 7px; padding: 2px 8px; }
+#frTakeoff .ftt-conf .ft-mat, #frTakeoff .ftt-conf .ft-conf, #frTakeoff .ftt-conf .ft-confall { float: none; margin: 0; padding: 1px 7px; font-size: 10.5px; }
+#frTakeoff .ftt-tablewrap { flex: 1; overflow: auto; }
+#frTakeoff .ftt-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+#frTakeoff .ftt-table thead th { position: sticky; top: 0; background: #f4f2ee; color: #6c6960; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; text-align: left; padding: 7px 10px; border-bottom: 1px solid #e3e1db; white-space: nowrap; z-index: 1; }
+#frTakeoff .ftt-table td { padding: 6px 10px; border-bottom: 1px solid #f2f1ee; white-space: nowrap; }
+#frTakeoff .ftt-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+#frTakeoff .ftt-row { cursor: pointer; transition: background .12s; }
+#frTakeoff .ftt-row:hover { background: #faf9f6; }
+#frTakeoff .ftt-row.is-active { background: #fbf0d6; box-shadow: inset 3px 0 0 #d9a02a; }
+#frTakeoff .ftt-name { font-weight: 600; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+#frTakeoff .ftt-fl { color: #79766d; font-size: 11.5px; }
+#frTakeoff .ftt-dup { border: 0; background: transparent; cursor: pointer; font-size: 14px; color: #8b887f; padding: 0 2px; }
+#frTakeoff .ftt-dup:hover { color: #c4881a; }
+#frTakeoff .ftt-table tfoot td { padding: 8px 10px; border-top: 2px solid #c4881a; background: #faf7f0; font-variant-numeric: tabular-nums; }
+
 /* cards "em breve" (próximos pacotes) */
 .pkg-soon { background: #fbfaf8; }
 .pkg-soon .cc-ico { filter: grayscale(.25); opacity: .92; }

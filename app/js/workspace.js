@@ -508,6 +508,26 @@
     const arm = () => { const c = document.querySelector('#wsCanvas'); if (c) ro.observe(c); };
     if (document.readyState !== 'loading') arm(); else document.addEventListener('DOMContentLoaded', arm);
   })();
+  // Takeoff de Framing (#frTakeoff) — mesmo posicionamento do Resumo: ENTRE as barras, ACIMA do status
+  F._positionFraming = function () {
+    const p = document.querySelector('#frTakeoff'); if (!p) return;
+    const vis = (el) => el && !el.classList.contains('hidden') && el.offsetWidth > 0;
+    const lw = vis(document.querySelector('#wsLeft')) ? document.querySelector('#wsLeft').offsetWidth
+      : (vis(document.querySelector('#wsLeftBar')) ? document.querySelector('#wsLeftBar').offsetWidth : 0);
+    const rw = vis(document.querySelector('#wsRight')) ? document.querySelector('#wsRight').offsetWidth
+      : (vis(document.querySelector('#wsRightBar')) ? document.querySelector('#wsRightBar').offsetWidth : 0);
+    p.style.left = lw + 'px'; p.style.right = rw + 'px';
+    const sb = document.querySelector('#wsStatusBar');
+    p.style.bottom = (sb ? sb.offsetHeight : 24) + 'px';
+  };
+  window.addEventListener('resize', () => { const p = document.querySelector('#frTakeoff'); if (p && p.style.display !== 'none' && F._positionFraming) F._positionFraming(); });
+  (function () {
+    if (!window.ResizeObserver) return;
+    const reposition = () => { const p = document.querySelector('#frTakeoff'); if (p && p.style.display !== 'none' && F._positionFraming) F._positionFraming(); };
+    const ro = new ResizeObserver(reposition);
+    const arm = () => { const c = document.querySelector('#wsCanvas'); if (c) ro.observe(c); };
+    if (document.readyState !== 'loading') arm(); else document.addEventListener('DOMContentLoaded', arm);
+  })();
 
   /** Clicar num item da lista → realça TODAS as marcas iguais e enquadra todas juntas. */
   function selectItem(label) {
