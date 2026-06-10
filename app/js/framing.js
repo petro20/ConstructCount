@@ -420,8 +420,23 @@
   // dropdown dos relatórios (ancorado no botão Relatórios)
   function openReportsMenu(anchor) {
     var old = document.getElementById('ftReportsMenu'); if (old) { old.remove(); return; }
-    var reps = F.framingReports || [];
     var menu = document.createElement('div'); menu.id = 'ftReportsMenu'; menu.className = 'ftt-repmenu';
+    var hasReports = (!F.hasPackage) || F.hasPackage('reports');
+    if (!hasReports) {
+      // add-on não assinado → upsell
+      var info = document.createElement('div'); info.className = 'ftt-repitem'; info.style.cursor = 'default'; info.style.opacity = '.8';
+      info.textContent = '🔒 ' + tr('Relatórios é um add-on (US$ 15/mês)');
+      var buy = document.createElement('div'); buy.className = 'ftt-repitem'; buy.textContent = '💳 ' + tr('Assinar Relatórios');
+      buy.addEventListener('click', function (e) { e.stopPropagation(); close(); try { window.open('https://constructcount.com/checkout.php?plan=reports', '_blank'); } catch (er) {} });
+      menu.appendChild(info); menu.appendChild(buy);
+      document.body.appendChild(menu);
+      var rc0 = anchor.getBoundingClientRect();
+      menu.style.left = Math.min(rc0.left, window.innerWidth - menu.offsetWidth - 6) + 'px'; menu.style.top = (rc0.bottom + 4) + 'px';
+      function close() { menu.remove(); document.removeEventListener('click', close); }
+      setTimeout(function () { document.addEventListener('click', close); }, 0);
+      return;
+    }
+    var reps = F.framingReports || [];
     reps.forEach(function (r) {
       var b = document.createElement('div'); b.className = 'ftt-repitem'; b.textContent = tr(r.label);
       b.addEventListener('click', function (e) { e.stopPropagation(); close(); try { r.fn(); } catch (err) { if (F.flashExport) F.flashExport('⚠️ ' + (err && err.message ? err.message : 'erro')); } });

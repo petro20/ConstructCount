@@ -42,6 +42,8 @@ define('DITE_PLAN_CATALOG', [
   // Combo Parede completa (libera os 4 ofícios)
   'parede'     => ['name' => 'Parede completa — mensal', 'amount' => 45.00,  'currency' => 'USD', 'interval' => 'month', 'modules' => ['wall_combo', 'framing', 'drywall', 'insulation', 'paint']],
   'parede_ano' => ['name' => 'Parede completa — anual',  'amount' => 450.00, 'currency' => 'USD', 'interval' => 'year',  'modules' => ['wall_combo', 'framing', 'drywall', 'insulation', 'paint']],
+  // Add-on: Relatórios (sempre à parte — libera os documentos + editores)
+  'reports'    => ['name' => 'Relatórios — mensal', 'amount' => 15.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['reports']],
 ]);
 
 // PACOTES exibidos na landing do portal (cards de preço). 'plan' aponta p/ uma
@@ -53,6 +55,7 @@ define('PORTAL_PACKAGES', [
   ['plan' => 'insulation', 'name' => 'Insulation',       'price' => '$12', 'per' => '/mês', 'desc' => 'Área de cavidade isolada por SF.'],
   ['plan' => 'paint',      'name' => 'Paint',            'price' => '$12', 'per' => '/mês', 'desc' => 'Pintura de parede por SF.'],
   ['plan' => 'mensal',     'name' => 'Janelas & Portas', 'price' => '$19', 'per' => '/mês', 'desc' => 'Esquadrias: leitura por IA, takeoff e documentos.'],
+  ['plan' => 'reports',    'name' => 'Relatórios (add-on)', 'price' => '$15', 'per' => '/mês', 'desc' => 'Orçamento, materiais, planta marcada + editores + texto por IA. Liga em qualquer pacote.'],
 ]);
 
 // Catálogo de PACOTES (trades) p/ exibição. Nomes embutidos no license.php; este
