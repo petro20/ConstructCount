@@ -88,12 +88,12 @@
       const t = document.querySelector('.rb-tab[data-tab="rbHelp"]'); if (t) t.click();
     });
     // ----- Pacote (plano / assinatura) -----
-    const psub = $('#pkgSubscribe'); if (psub) psub.addEventListener('click', () => { window.open('https://constructcount.com/assinar', '_blank'); });
+    const psub = $('#pkgSubscribe'); if (psub) psub.addEventListener('click', () => { window.open('https://constructcount.com/checkout.php?plan=mensal', '_blank'); });
     const pact = $('#pkgActivate'); if (pact) pact.addEventListener('click', () => { if (F.openLicenseGate) F.openLicenseGate(); else openLic(); });
     const pfr = $('#pkgOpenFraming'); if (pfr) pfr.addEventListener('click', () => { const mo = $('#miOpen'); if (mo) mo.click(); });  // Framing vive no workspace: abre projeto → camada + Linear + 🏗️ Framing
-    const pfs = $('#pkgFrSubscribe'); if (pfs) pfs.addEventListener('click', () => { window.open('https://constructcount.com/assinar?pkg=framing', '_blank'); });
+    const pfs = $('#pkgFrSubscribe'); if (pfs) pfs.addEventListener('click', () => { window.open('https://constructcount.com/checkout.php?plan=parede', '_blank'); });
     const pfa = $('#pkgFrActivate'); if (pfa) pfa.addEventListener('click', () => { if (F.openLicenseGate) F.openLicenseGate(); else openLic(); });
-    document.querySelectorAll('.pkg-trade-sub').forEach(b => b.addEventListener('click', () => { const t = b.getAttribute('data-trade'); window.open('https://constructcount.com/assinar?pkg=' + t, '_blank'); }));
+    document.querySelectorAll('.pkg-trade-sub').forEach(b => b.addEventListener('click', () => { const t = b.getAttribute('data-trade'); window.open('https://constructcount.com/checkout.php?plan=' + t, '_blank'); }));
   }
 
   // ----------------------------------------------------------------- aba Pacote: status da assinatura
