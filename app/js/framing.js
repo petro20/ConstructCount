@@ -18,7 +18,7 @@
     wallTypes: [],   // vazio: só os tipos LIDOS pela IA (ou criados) — sem padrões poluindo
     segments: [],   // { id, wtId, len(ft), qty, path?:[{x,y}img], source:'draw'|'manual' }
     openings: [],   // { id, wtId, width(ft), qty }
-    prices: { stud: 0, plateLF: 0, sheet: 0, headerLF: 0, drywallSf: 0, insulSf: 0 },   // MATERIAL (por unidade do item)
+    prices: { stud: 0, plateLF: 0, sheet: 0, headerLF: 0, sheathSf: 0, drywallSf: 0, insulSf: 0 },   // MATERIAL (por unidade do item)
     labor: { framing: 0, drywall: 0, insulation: 0 },                                    // MÃO DE OBRA — taxa por OFÍCIO, por SF
     pxPerFt: null,  // escala calibrada (px da imagem por pé)
     floors: [], activeFloor: null,   // PISOS (cada um com altura) — o traço herda a altura do piso ativo
@@ -37,24 +37,39 @@
   /* =======================================================================
      MOTOR DE CÁLCULO
      ===================================================================== */
+  // FACES da parede: chapa INTERNA (gypsum=drywall ou plywood, nº de lados) + chapa EXTERNA (densglass/plywood/osb = sheathing)
+  function faceBoards(wt) {
+    var intSides = (wt.intSides != null) ? num(wt.intSides) : (wt.sheathSides != null ? num(wt.sheathSides) : 2);
+    var intBoard = (wt.intBoard != null) ? wt.intBoard : 'gypsum';   // interno padrão = drywall
+    var extBoard = wt.extBoard || '';                                 // '' = sem chapa externa (parede interna)
+    return {
+      gyp: (intBoard === 'gypsum') ? intSides : 0,                                       // drywall (interno)
+      sheath: (extBoard ? 1 : 0) + (intBoard === 'plywood' ? intSides : 0)               // sheathing externo (+ plywood interno)
+    };
+  }
+  F.framingFaceBoards = faceBoards;
+
   F.framingCompute = function () {
-    var studs = {}, track = {}, plates = {}, sheath = {};
+    var studs = {}, track = {}, plates = {};
     var bridgingLF = 0, blockingLF = 0, headersLF = 0, totalLF = 0, openExtraStuds = {};
 
-    var wallSf = 0, insulationSf = 0;
+    var wallSf = 0, insulationSf = 0, drywallSf = 0, sheathingSf = 0;
     FR.segments.forEach(function (s) {
       var wt = wtById(s.wtId); if (!wt) return;
       var qty = num(s.qty, 1), L = num(s.len);
       if (L <= 0 || qty <= 0) return;
       var H = num(s.height) || (wt.height || 9);   // altura: do PISO (traço) → senão do tipo
       totalLF += L * qty;
-      wallSf += L * H * qty;                         // área de parede = LF × altura do piso
+      var face = L * H * qty;                         // área de UMA face = LF × altura
+      wallSf += face;                                // área de parede (1 face)
       studs[wt.studSize] = (studs[wt.studSize] || 0) + (Math.ceil((L * 12) / (wt.spacing || 16)) + 1) * qty;
       var horizLF = L * (wt.plates || 2) * qty, brLF = L * (wt.bracingRows || 0) * qty;
       if (wt.material === 'metal') { track[wt.studSize] = (track[wt.studSize] || 0) + horizLF; bridgingLF += brLF; }
       else { plates[wt.studSize] = (plates[wt.studSize] || 0) + horizLF; blockingLF += brLF; }
-      sheath[wt.material] = (sheath[wt.material] || 0) + L * H * (wt.sheathSides || 0) * qty;   // drywall/board (por lados)
-      if (wtHasInsulation(wt)) insulationSf += L * H * qty;                                     // cavidade isolada (1 camada)
+      var fb = faceBoards(wt);
+      drywallSf += face * fb.gyp;                    // drywall = faces de gypsum (interno)
+      sheathingSf += face * fb.sheath;               // sheathing = chapa externa (densglass/plywood/osb)
+      if (wtHasInsulation(wt)) insulationSf += face;                                     // cavidade isolada (1 camada)
     });
     FR.openings.forEach(function (o) {
       var wt = wtById(o.wtId), qty = num(o.qty, 1), W = num(o.width);
@@ -65,17 +80,19 @@
     });
     Object.keys(openExtraStuds).forEach(function (k) { studs[k] = (studs[k] || 0) + openExtraStuds[k]; });
 
-    var sheathSf = 0; Object.keys(sheath).forEach(function (m) { sheathSf += sheath[m]; });
     var totalStuds = 0; Object.keys(studs).forEach(function (k) { totalStuds += studs[k]; });
     var totalTrackLF = 0; Object.keys(track).forEach(function (k) { totalTrackLF += track[k]; });
     var totalPlateLF = 0; Object.keys(plates).forEach(function (k) { totalPlateLF += plates[k]; });
     return {
-      studs: studs, track: track, plates: plates, sheath: sheath,
+      studs: studs, track: track, plates: plates,
       bridgingLF: bridgingLF, blockingLF: blockingLF,
       totalStuds: totalStuds, totalTrackLF: totalTrackLF, totalPlateLF: totalPlateLF,
       totalHorizLF: totalTrackLF + totalPlateLF, wallSf: wallSf,
-      headersLF: headersLF, sheathSf: sheathSf, sheets: Math.ceil(sheathSf / 32), totalLF: totalLF,
-      drywallSf: sheathSf, drywallSheets: Math.ceil(sheathSf / 32), insulationSf: insulationSf
+      headersLF: headersLF, totalLF: totalLF,
+      drywallSf: drywallSf, drywallSheets: Math.ceil(drywallSf / 32),
+      sheathingSf: sheathingSf, sheathingSheets: Math.ceil(sheathingSf / 32),
+      insulationSf: insulationSf,
+      sheathSf: drywallSf, sheets: Math.ceil(drywallSf / 32)   // compat (código dormente)
     };
   };
   // a parede tem isolamento? (lido da planta: campo insulation ou componente "isol")
@@ -112,6 +129,12 @@
     (walls || []).forEach(function (w) {
       var mat = (w.material === 'wood') ? 'wood' : 'metal';   // 'both' → metal (nota no nome)
       var plates = (parseInt(w.bottom_plates, 10) || 1) + (parseInt(w.top_plates, 10) || 2);
+      // FACES: parede EXTERIOR = sheathing externo (densglass/plywood/osb) + drywall interno (1 lado);
+      //        parede INTERIOR = drywall nos 2 lados. (Editável depois — IA dá o palpite.)
+      var nm = (w.name || ''), sh = (w.sheathing || '');
+      var isExt = /exterior|perimeter|stair|elevator|shaft|siding/i.test(nm) || /densglass|siding|stucco/i.test(sh);
+      var extBoard = isExt ? (/plywood|plywd/i.test(sh) ? 'plywood' : (/osb/i.test(sh) ? 'osb' : 'densglass')) : '';
+      var intSides = isExt ? 1 : (w.sheathing_sides != null ? parseInt(w.sheathing_sides, 10) : 2);
       // id ESTÁVEL pelo nº do tipo (Tipo 2A → wt_2A): reler não perde a associação dos traços
       var tid = (w.type_id || '').toString().replace(/[^A-Za-z0-9]/g, '');
       var id = tid ? ('wt_' + tid) : uid('wt');
@@ -125,6 +148,7 @@
         plates: plates,
         bracingRows: 1,
         sheathSides: (w.sheathing_sides != null ? parseInt(w.sheathing_sides, 10) : 2),
+        extBoard: extBoard, intBoard: 'gypsum', intSides: intSides,   // duas faces (externa = sheathing, interna = drywall/plywood)
         color: COLORS[FR.wallTypes.length % COLORS.length],
         ai: true, typeId: w.type_id || '', sheathing: w.sheathing || '', insulation: w.insulation || '',
         components: Array.isArray(w.components) ? w.components : [],
@@ -146,7 +170,7 @@
   F._framingLoad = function (d) {
     if (!d) return;
     if (Array.isArray(d.wallTypes) && d.wallTypes.length) FR.wallTypes = d.wallTypes;
-    if (d.prices) FR.prices = Object.assign({ stud: 0, plateLF: 0, sheet: 0, headerLF: 0, drywallSf: 0, insulSf: 0 }, d.prices);
+    if (d.prices) FR.prices = Object.assign({ stud: 0, plateLF: 0, sheet: 0, headerLF: 0, sheathSf: 0, drywallSf: 0, insulSf: 0 }, d.prices);
     if (d.labor) FR.labor = Object.assign({ framing: 0, drywall: 0, insulation: 0 }, d.labor);
     if (d.scope) FR.scope = Object.assign({ framing: true, drywall: true, insulation: true }, d.scope);
     if (d.layerAssembly) FR.layerAssembly = d.layerAssembly;
@@ -226,13 +250,26 @@
   // MATERIAL = por item; MÃO DE OBRA = taxa por OFÍCIO × SF (Framing=SF parede, Drywall=SF chapa, Insulation=SF)
   function priceParts(m) {
     var p = FR.prices, l = FR.labor, s = FR.scope, mat = 0, lab = 0;
-    if (s.framing) { mat += m.totalStuds * num(p.stud) + m.totalHorizLF * num(p.plateLF) + m.headersLF * num(p.headerLF); lab += m.wallSf * num(l.framing); }
+    if (s.framing) { mat += m.totalStuds * num(p.stud) + m.totalHorizLF * num(p.plateLF) + m.headersLF * num(p.headerLF) + m.sheathingSf * num(p.sheathSf); lab += m.wallSf * num(l.framing); }
     if (s.drywall) { mat += (num(p.drywallSf) > 0 ? m.drywallSf * num(p.drywallSf) : m.drywallSheets * num(p.sheet)); lab += m.drywallSf * num(l.drywall); }
     if (s.insulation) { mat += m.insulationSf * num(p.insulSf); lab += m.insulationSf * num(l.insulation); }
     return { mat: mat, lab: lab, total: mat + lab };
   }
   function typePrice(m) { return priceParts(m).total; }
   F.framingPriceParts = priceParts;
+
+  // selects das duas faces da parede
+  function optList(cls, val, opts) {
+    return '<select class="' + cls + '">' + opts.map(function (o) {
+      return '<option value="' + o[0] + '"' + (val === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+    }).join('') + '</select>';
+  }
+  function extSel(wt) {
+    return optList('fe-ext', wt.extBoard || '', [['', tr('Nenhuma (parede interna)')], ['densglass', 'DensGlass 5/8"'], ['plywood', 'Plywood'], ['osb', 'OSB']]);
+  }
+  function intSel(wt) {
+    return optList('fe-int', (wt.intBoard != null ? wt.intBoard : 'gypsum'), [['gypsum', tr('Drywall (gypsum)')], ['plywood', 'Plywood'], ['', tr('Nenhuma')]]);
+  }
 
   // editor inline do TIPO — completa a spec e resolve a dúvida (⚠️)
   function editorHTML(wt) {
@@ -249,7 +286,9 @@
       + '<label>' + tr('Bitola (stud)') + '<input class="fe-size" value="' + esc(wt.studSize || '') + '"></label>'
       + '<label>' + tr('Espaç. (in)') + '<input class="fe-sp" type="number" min="1" step="1" value="' + (wt.spacing || '') + '"></label>'
       + '<label>' + tr('Plates/Track') + '<input class="fe-pl" type="number" min="0" step="1" value="' + (wt.plates || '') + '"></label>'
-      + '<label>' + tr('Lados de chapa') + '<input class="fe-sh" type="number" min="0" max="2" step="1" value="' + (wt.sheathSides != null ? wt.sheathSides : '') + '"></label>'
+      + '<label>' + tr('Chapa externa (sheathing)') + extSel(wt) + '</label>'
+      + '<label>' + tr('Chapa interna') + intSel(wt) + '</label>'
+      + '<label>' + tr('Lados internos') + '<input class="fe-insides" type="number" min="0" max="2" step="1" value="' + (wt.intSides != null ? wt.intSides : (wt.sheathSides != null ? wt.sheathSides : 2)) + '"></label>'
       + '<label>' + tr('Isolamento') + '<input class="fe-ins" value="' + esc(wt.insulation || '') + '" placeholder="' + tr('ex.: R-13 / 3½\" fiberglass') + '"></label>'
       + '</div>'
       + '<label class="ftt-edcomp">' + tr('Componentes (1 por linha — o que está no desenho/nota)') + '<textarea class="fe-comp" rows="4">' + esc(comps) + '</textarea></label>'
@@ -263,8 +302,8 @@
     var sc = FR.scope;
     var rows = FR.wallTypes.map(function (wt) { return { wt: wt, m: computeType(wt.id) }; })
       .filter(function (x) { return x.m.totalLF > 0 || x.wt.id === FR.activeWT; });
-    var T = { lf: 0, sf: 0, studs: 0, horiz: 0, sheets: 0, dwsf: 0, header: 0, insul: 0, mat: 0, lab: 0, price: 0 };
-    rows.forEach(function (x) { var m = x.m, pp = priceParts(m); T.lf += m.totalLF; T.sf += m.wallSf; T.studs += m.totalStuds; T.horiz += m.totalHorizLF; T.sheets += m.drywallSheets; T.dwsf += m.drywallSf; T.header += m.headersLF; T.insul += m.insulationSf; T.mat += pp.mat; T.lab += pp.lab; T.price += pp.total; });
+    var T = { lf: 0, sf: 0, studs: 0, horiz: 0, sheets: 0, dwsf: 0, shsf: 0, header: 0, insul: 0, mat: 0, lab: 0, price: 0 };
+    rows.forEach(function (x) { var m = x.m, pp = priceParts(m); T.lf += m.totalLF; T.sf += m.wallSf; T.studs += m.totalStuds; T.horiz += m.totalHorizLF; T.sheets += m.drywallSheets; T.dwsf += m.drywallSf; T.shsf += m.sheathingSf; T.header += m.headersLF; T.insul += m.insulationSf; T.mat += pp.mat; T.lab += pp.lab; T.price += pp.total; });
 
     // colunas dinâmicas: fixas + grupos por escopo ligado
     var cols = [];
@@ -277,6 +316,7 @@
       cols.push({ h: tr('Studs'), n: 1, sc: 'framing', body: function (wt, m) { return '<td class="num">' + m.totalStuds + '</td>'; }, foot: '<td class="num"><b>' + T.studs + '</b></td>' });
       cols.push({ h: 'Plate/Track LF', n: 1, sc: 'framing', body: function (wt, m) { return '<td class="num">' + m.totalHorizLF.toFixed(0) + '</td>'; }, foot: '<td class="num"><b>' + T.horiz.toFixed(0) + '</b></td>' });
       cols.push({ h: tr('Vergas') + ' LF', n: 1, sc: 'framing', body: function (wt, m) { return '<td class="num">' + m.headersLF.toFixed(0) + '</td>'; }, foot: '<td class="num"><b>' + T.header.toFixed(0) + '</b></td>' });
+      cols.push({ h: 'Sheathing SF', n: 1, sc: 'framing', body: function (wt, m) { return '<td class="num">' + m.sheathingSf.toFixed(0) + '</td>'; }, foot: '<td class="num"><b>' + T.shsf.toFixed(0) + '</b></td>' });
     }
     if (sc.drywall) {
       cols.push({ h: 'Drywall SF', n: 1, sc: 'drywall', body: function (wt, m) { return '<td class="num">' + m.drywallSf.toFixed(0) + '</td>'; }, foot: '<td class="num"><b>' + T.dwsf.toFixed(0) + '</b></td>' });
@@ -314,7 +354,7 @@
     // MÃO DE OBRA por ofício (por SF)
     var pinL = function (id, k, lb) { return '<span class="ftt-pritem"><span class="ftt-prlb">' + lb + '</span><input id="' + id + '" class="ftt-prlab" type="number" min="0" step="0.01" value="' + (FR.labor[k] || '') + '"></span>'; };
     var matHTML = '<span class="ftt-prhint">' + tr('Material $:') + '</span>';
-    if (sc.framing) matHTML += pinM('ftPrStud', 'stud', tr('Stud')) + pinM('ftPrPlate', 'plateLF', 'Plate/LF') + pinM('ftPrHeader', 'headerLF', tr('Verga/LF'));
+    if (sc.framing) matHTML += pinM('ftPrStud', 'stud', tr('Stud')) + pinM('ftPrPlate', 'plateLF', 'Plate/LF') + pinM('ftPrHeader', 'headerLF', tr('Verga/LF')) + pinM('ftPrSheath', 'sheathSf', 'Sheath/SF');
     if (sc.drywall) matHTML += pinM('ftPrSheet', 'sheet', tr('Chapa'));
     if (sc.insulation) matHTML += pinM('ftPrInsul', 'insulSf', 'Insul/SF');
     var labHTML = '<span class="ftt-prhint ftt-prhint-lab">' + tr('M.O. $/SF:') + '</span>';
@@ -367,7 +407,9 @@
       bind('.fe-size', function (v) { ew.studSize = v; });
       bind('.fe-sp', function (v) { ew.spacing = num(v) || ew.spacing; });
       bind('.fe-pl', function (v) { ew.plates = num(v); });
-      bind('.fe-sh', function (v) { ew.sheathSides = Math.max(0, Math.min(2, parseInt(v, 10) || 0)); });
+      bind('.fe-ext', function (v) { ew.extBoard = v; });
+      bind('.fe-int', function (v) { ew.intBoard = v; });
+      bind('.fe-insides', function (v) { ew.intSides = Math.max(0, Math.min(2, parseInt(v, 10) || 0)); });
       bind('.fe-ins', function (v) { ew.insulation = v; });
       bind('.fe-comp', function (v) { ew.components = v.split('\n').map(function (s) { return s.trim(); }).filter(Boolean); });
       var ok = ov.querySelector('.fe-ok'); if (ok) ok.addEventListener('click', function () { ew.specConfirmed = true; save(); });
@@ -379,7 +421,7 @@
       var ci = row.querySelector('input.ft-color'); if (ci) ci.addEventListener('input', function (e) { var wt = wtById(wid); if (wt) { wt.color = e.target.value; if (F._wsRedraw) F._wsRedraw(); renderFramingTakeoff(ov); persistFraming(); } });
     });
     ov.querySelectorAll('.ftt-dup').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); cloneWallType(b.getAttribute('data-wt')); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); renderFramingTakeoff(ov); }); });
-    [['ftPrStud', 'stud'], ['ftPrPlate', 'plateLF'], ['ftPrSheet', 'sheet'], ['ftPrHeader', 'headerLF'], ['ftPrInsul', 'insulSf']].forEach(function (pr) {
+    [['ftPrStud', 'stud'], ['ftPrPlate', 'plateLF'], ['ftPrSheath', 'sheathSf'], ['ftPrSheet', 'sheet'], ['ftPrHeader', 'headerLF'], ['ftPrInsul', 'insulSf']].forEach(function (pr) {
       var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('change', function () { FR.prices[pr[1]] = num(inp.value); renderFramingTakeoff(ov); persistFraming(); });
     });
     [['ftLbFraming', 'framing'], ['ftLbDrywall', 'drywall'], ['ftLbInsul', 'insulation']].forEach(function (pr) {
