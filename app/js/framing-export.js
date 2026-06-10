@@ -160,6 +160,7 @@
   }
   function valsFromM(m) { return { horiz: m.totalHorizLF, header: m.headersLF, shsf: m.sheathingSf, dwsf: m.drywallSf, wrsf: m.drywallWrSf, insul: m.insulationSf, paint: m.paintSf }; }
   function valsFromT(T) { return { horiz: T.horiz, header: T.header, shsf: T.shsf, dwsf: T.dwsf, wrsf: T.wrsf, insul: T.insul, paint: T.paint }; }
+  F._framingMatRows = buildMatRows; F._framingValsFromT = valsFromT; F._framingValsFromM = valsFromM;   // reuso pelo editor de relatório
 
   /* ---------- Material POR PISO (Excel) ---------- */
   F.framingExportByFloorXLSX = async function () {
@@ -241,6 +242,7 @@
 
   // lista dos relatórios (p/ o menu/dropdown no takeoff)
   F.framingReports = [
+    { id: 'editor', label: '✏️ ' + 'Editor de relatório (blocos)', fn: function () { if (F.openFramingReportEditor) F.openFramingReportEditor(); } },
     { id: 'quote', label: '📄 ' + 'Orçamento ao cliente (PDF)', fn: function () { return F.framingExportQuotePDF(); } },
     { id: 'owner', label: '🔒 ' + 'Análise do proprietário — custo × venda (PDF)', fn: function () { return F.framingExportOwnerPDF(); } },
     { id: 'materials', label: '📦 ' + 'Lista de materiais / Pedido (Excel)', fn: function () { return F.framingExportMaterialsXLSX(); } },
