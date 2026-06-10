@@ -108,7 +108,7 @@
         bracingRows: 1,
         sheathSides: (w.sheathing_sides != null ? parseInt(w.sheathing_sides, 10) : 2),
         color: COLORS[FR.wallTypes.length % COLORS.length],
-        ai: true, sheathing: w.sheathing || '', insulation: w.insulation || ''
+        ai: true, typeId: w.type_id || '', sheathing: w.sheathing || '', insulation: w.insulation || ''
       });
       added++;
     });
