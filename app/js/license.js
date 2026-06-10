@@ -88,6 +88,7 @@
       var ent = F.hasPackage(nodes[i].getAttribute('data-pkg'));
       nodes[i].classList.toggle('pkg-locked', !ent);
     }
+    if (F._renderFramingCard) { try { F._renderFramingCard(); } catch (e) {} }
   }
   F.applyPackageGates = applyPackageGates;
   F.setPackages = function (arr) { F.entitlements = Array.isArray(arr) ? arr : null; applyPackageGates(); };

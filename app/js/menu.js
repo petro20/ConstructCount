@@ -91,6 +91,8 @@
     const psub = $('#pkgSubscribe'); if (psub) psub.addEventListener('click', () => { window.open('https://constructcount.com/assinar', '_blank'); });
     const pact = $('#pkgActivate'); if (pact) pact.addEventListener('click', () => { if (F.openLicenseGate) F.openLicenseGate(); else openLic(); });
     const pfr = $('#pkgOpenFraming'); if (pfr) pfr.addEventListener('click', () => { const mo = $('#miOpen'); if (mo) mo.click(); });  // Framing vive no workspace: abre projeto → camada + Linear + 🏗️ Framing
+    const pfs = $('#pkgFrSubscribe'); if (pfs) pfs.addEventListener('click', () => { window.open('https://constructcount.com/assinar?pkg=framing', '_blank'); });
+    const pfa = $('#pkgFrActivate'); if (pfa) pfa.addEventListener('click', () => { if (F.openLicenseGate) F.openLicenseGate(); else openLic(); });
   }
 
   // ----------------------------------------------------------------- aba Pacote: status da assinatura
@@ -116,8 +118,18 @@
       box.classList.add('is-off');
       txt.textContent = F.tr('Assinatura não autorizada') + (st.reason ? (' · ' + st.reason) : '');
     }
+    renderFramingCard();
+  }
+  // card do pacote Framing reflete a POSSE (entitlement) — vendido separado
+  function renderFramingCard() {
+    const owned = !F.hasPackage || F.hasPackage('framing');   // sem servidor de pacotes → libera (dev)
+    const tag = $('#pkgFrTag'), sub = $('#pkgFrSubscribe'), open = $('#pkgOpenFraming');
+    if (tag) { tag.textContent = owned ? F.tr('🟢 Ativo no seu plano') : F.tr('🏗️ Pacote estrutural'); tag.classList.toggle('pkg-tag--live', owned); tag.classList.toggle('pkg-tag--beta', !owned); }
+    if (sub) sub.classList.toggle('hidden', owned);
+    if (open) open.classList.toggle('hidden', !owned);
   }
   F._renderPackage = renderPackage;
+  F._renderFramingCard = renderFramingCard;
 
   // ----------------------------------------------------------------- configurações
   async function openSettings() {
