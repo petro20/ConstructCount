@@ -22,6 +22,7 @@
     waste: { stud: 0, plateLF: 0, sheet: 0, headerLF: 0, sheathSf: 0, drywallSf: 0, drywallWrSf: 0, insulSf: 0, paintSf: 0 },    // SOBRA/perda de material (%)
     labor: { framing: 0, drywall: 0, insulation: 0, paint: 0 },                          // MÃO DE OBRA — taxa por OFÍCIO, por SF
     markup: 0,                                                                            // % de GANHO (custo → venda)
+    taxMaterial: 0,                                                                       // % de IMPOSTO (sales tax) sobre o material
     region: '',                                                                           // REGIÃO do trabalho (cidade/estado/ZIP) — define o preço
     sizes: {},                                                                            // tamanho padrão por material (lido pela IA)
     priceMeta: {},                                                                        // { key: {source, date, estimate:true} } — preço = estimativa IA até confirmar
@@ -208,6 +209,7 @@
     if (d.prices) FR.prices = Object.assign({ stud: 0, plateLF: 0, sheet: 0, headerLF: 0, sheathSf: 0, drywallSf: 0, drywallWrSf: 0, insulSf: 0, paintSf: 0 }, d.prices);
     if (d.waste) FR.waste = Object.assign({ stud: 0, plateLF: 0, sheet: 0, headerLF: 0, sheathSf: 0, drywallSf: 0, drywallWrSf: 0, insulSf: 0, paintSf: 0 }, d.waste);
     if (d.markup != null) FR.markup = num(d.markup);
+    if (d.taxMaterial != null) FR.taxMaterial = num(d.taxMaterial);
     if (d.region != null) FR.region = d.region;
     if (d.sizes) FR.sizes = d.sizes;
     if (d.priceMeta) FR.priceMeta = d.priceMeta;
@@ -218,7 +220,7 @@
     FR.activeFloor = d.activeFloor || (FR.floors[0] && FR.floors[0].id) || null;
     FR.activeWT = d.activeWT || (FR.wallTypes[0] && FR.wallTypes[0].id) || null;
   };
-  F._framingSnapshot = function () { return { wallTypes: FR.wallTypes, prices: FR.prices, waste: FR.waste, labor: FR.labor, markup: FR.markup, region: FR.region, sizes: FR.sizes, priceMeta: FR.priceMeta, scope: FR.scope, activeWT: FR.activeWT, layerAssembly: FR.layerAssembly, floors: FR.floors, activeFloor: FR.activeFloor }; };
+  F._framingSnapshot = function () { return { wallTypes: FR.wallTypes, prices: FR.prices, waste: FR.waste, labor: FR.labor, markup: FR.markup, taxMaterial: FR.taxMaterial, region: FR.region, sizes: FR.sizes, priceMeta: FR.priceMeta, scope: FR.scope, activeWT: FR.activeWT, layerAssembly: FR.layerAssembly, floors: FR.floors, activeFloor: FR.activeFloor }; };
 
   // ---- PISOS (cada um com altura) ----
   function floorById(id) { for (var i = 0; i < FR.floors.length; i++) if (FR.floors[i].id === id) return FR.floors[i]; return null; }
@@ -299,7 +301,8 @@
     if (on('drywall')) { mat += m.drywallSf * num(p.drywallSf) * wf('drywallSf') + m.drywallWrSf * num(p.drywallWrSf) * wf('drywallWrSf'); lab += m.drywallTotalSf * num(l.drywall); }
     if (on('insulation')) { mat += m.insulationSf * num(p.insulSf) * wf('insulSf'); lab += m.insulationSf * num(l.insulation); }
     if (on('paint')) { mat += m.paintSf * num(p.paintSf) * wf('paintSf'); lab += m.paintSf * num(l.paint); }
-    return { mat: mat, lab: lab, total: mat + lab };
+    var tax = mat * num(FR.taxMaterial) / 100;   // imposto (sales tax) só sobre o MATERIAL
+    return { mat: mat, tax: tax, lab: lab, total: mat + tax + lab };
   }
   function typePrice(m) { return priceParts(m).total; }       // CUSTO (material+sobra + MO)
   function saleOf(cost) { return cost * (1 + num(FR.markup) / 100); }   // VENDA = custo × (1 + ganho%)
@@ -388,8 +391,8 @@
     ['framing', 'drywall', 'insulation', 'paint'].forEach(function (k) { sc[k] = FR.scope[k] && F.framingHasScope(k); });
     var rows = FR.wallTypes.map(function (wt) { return { wt: wt, m: computeType(wt.id) }; })
       .filter(function (x) { return x.m.totalLF > 0 || x.wt.id === FR.activeWT; });
-    var T = { lf: 0, sf: 0, studs: 0, horiz: 0, sheets: 0, dwsf: 0, wrsf: 0, shsf: 0, header: 0, insul: 0, paint: 0, mat: 0, lab: 0, price: 0 };
-    rows.forEach(function (x) { var m = x.m, pp = priceParts(m); T.lf += m.totalLF; T.sf += m.wallSf; T.studs += m.totalStuds; T.horiz += m.totalHorizLF; T.sheets += m.drywallSheets; T.dwsf += m.drywallSf; T.wrsf += m.drywallWrSf; T.shsf += m.sheathingSf; T.header += m.headersLF; T.insul += m.insulationSf; T.paint += m.paintSf; T.mat += pp.mat; T.lab += pp.lab; T.price += pp.total; });
+    var T = { lf: 0, sf: 0, studs: 0, horiz: 0, sheets: 0, dwsf: 0, wrsf: 0, shsf: 0, header: 0, insul: 0, paint: 0, mat: 0, tax: 0, lab: 0, price: 0 };
+    rows.forEach(function (x) { var m = x.m, pp = priceParts(m); T.lf += m.totalLF; T.sf += m.wallSf; T.studs += m.totalStuds; T.horiz += m.totalHorizLF; T.sheets += m.drywallSheets; T.dwsf += m.drywallSf; T.wrsf += m.drywallWrSf; T.shsf += m.sheathingSf; T.header += m.headersLF; T.insul += m.insulationSf; T.paint += m.paintSf; T.mat += pp.mat; T.tax += pp.tax; T.lab += pp.lab; T.price += pp.total; });
 
     // colunas dinâmicas: fixas + grupos por escopo ligado
     var cols = [];
@@ -417,6 +420,7 @@
     }
     cols.push({ h: tr('Material') + ' $', n: 1, body: function (wt, m) { return '<td class="num ftt-mat">' + money(priceParts(m).mat) + '</td>'; }, foot: '<td class="num ftt-mat"><b>' + money(T.mat) + '</b></td>' });
     cols.push({ h: tr('M.O.') + ' $', n: 1, body: function (wt, m) { return '<td class="num ftt-lab">' + money(priceParts(m).lab) + '</td>'; }, foot: '<td class="num ftt-lab"><b>' + money(T.lab) + '</b></td>' });
+    cols.push({ h: tr('Imposto') + ' $', n: 1, body: function (wt, m) { return '<td class="num ftt-tax">' + money(priceParts(m).tax) + '</td>'; }, foot: '<td class="num ftt-tax"><b>' + money(T.tax) + '</b></td>' });
     cols.push({ h: tr('Custo') + ' $', n: 1, body: function (wt, m) { return '<td class="num ftt-tot">' + money(priceParts(m).total) + '</td>'; }, foot: '<td class="num ftt-tot"><b>' + money(T.price) + '</b></td>' });
     cols.push({ h: tr('Venda') + ' $', n: 1, body: function (wt, m) { return '<td class="num ftt-sale">' + money(saleOf(priceParts(m).total)) + '</td>'; }, foot: '<td class="num ftt-sale"><b>' + money(saleOf(T.price)) + '</b></td>' });
     cols.push({ h: '', body: function (wt, m) { return '<td class="ftt-acts"><button class="ftt-editbtn" data-wt="' + wt.id + '" title="' + tr('Editar tipo / completar especificação') + '">✎</button><button class="ftt-dup" data-wt="' + wt.id + '" title="' + tr('Duplicar (outro piso)') + '">⧉</button></td>'; }, foot: '<td></td>' });
@@ -460,7 +464,8 @@
     if (sc.drywall) labHTML += pinL('ftLbDrywall', 'drywall', '🧱 Drywall');
     if (sc.insulation) labHTML += pinL('ftLbInsul', 'insulation', '🧊 Insulation');
     if (sc.paint) labHTML += pinL('ftLbPaint', 'paint', '🎨 Paint');
-    var gainHTML = '<span class="ftt-prhint ftt-prhint-gain">💰 ' + tr('Ganho %:') + '</span><input id="ftMarkup" class="ftt-prgain" type="number" min="0" step="1" title="' + tr('% de ganho — custo vira venda') + '" value="' + (FR.markup || '') + '">';
+    var gainHTML = '<span class="ftt-prhint">🧾 ' + tr('Imposto mat. %:') + '</span><input id="ftTax" class="ftt-prgain" type="number" min="0" step="0.01" title="' + tr('Imposto (sales tax) sobre o material') + '" value="' + (FR.taxMaterial || '') + '">'
+      + '<span class="ftt-prhint ftt-prhint-gain">💰 ' + tr('Ganho %:') + '</span><input id="ftMarkup" class="ftt-prgain" type="number" min="0" step="1" title="' + tr('% de ganho — custo vira venda') + '" value="' + (FR.markup || '') + '">';
     var prHTML = '<span class="ftt-prgrp">' + matHTML + '</span><span class="ftt-prgrp ftt-prgrp-lab">' + labHTML + '</span><span class="ftt-prgrp ftt-prgrp-gain">' + gainHTML + '</span>';
     var scopeChips = [['framing', '🏗️ Framing'], ['drywall', '🧱 Drywall'], ['insulation', '🧊 Insulation'], ['paint', '🎨 Paint']]
       .map(function (s) {
@@ -542,6 +547,7 @@
       var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('change', function () { FR.waste[pr[1]] = num(inp.value); renderFramingTakeoff(ov); persistFraming(); });
     });
     { var mk = ov.querySelector('#ftMarkup'); if (mk) mk.addEventListener('change', function () { FR.markup = num(mk.value); renderFramingTakeoff(ov); persistFraming(); }); }
+    { var tx = ov.querySelector('#ftTax'); if (tx) tx.addEventListener('change', function () { FR.taxMaterial = num(tx.value); renderFramingTakeoff(ov); persistFraming(); }); }
     // REGIÃO + busca de preços (IA)
     { var rg = ov.querySelector('#ftRegion'); if (rg) rg.addEventListener('change', function () { FR.region = rg.value.trim(); persistFraming(); }); }
     { var rr = ov.querySelector('#ftReadRegion'); if (rr) rr.addEventListener('click', function () {
