@@ -55,10 +55,16 @@
     renderSections();
     renderLayers();
     renderPagesList();
+    // carrega as ASSEMBLIES de framing salvas do projeto (não reler toda vez)
+    (async () => {
+      try { if (S.prov && S.prov.getFraming) { const d = await S.prov.getFraming(); if (d && d.wallTypes && d.wallTypes.length && F._framingLoad) F._framingLoad(d); } } catch (e) {}
+      populateWallTypeSelect(); renderPagesList();
+    })();
     const first = S.pages.find(p => p.n_hex > 0) || S.pages[0];
     if (first) loadPage(first.page);
     maybeReadSheets();                          // lê os códigos das folhas (T-100…) em 2º plano
   };
+  F._saveFraming = () => { if (S.prov && S.prov.saveFraming && F._framingSnapshot) { try { S.prov.saveFraming(F._framingSnapshot()); } catch (e) {} } };
 
   /** Lê os códigos das folhas (carimbo) em 2º plano e atualiza a lista ao vivo. */
   async function maybeReadSheets() {
@@ -616,10 +622,13 @@
       const fr = F.framing, wt = (ln.wt && fr && fr.wallTypes) ? fr.wallTypes.filter(w => w.id === ln.wt)[0] : null;
       const lay = layerById(ln.layer), col = (wt && wt.color) || (lay && lay.color) || '#e3b653';   // cor do TIPO; senão da camada
       const seld = S.lineSel && S.lineSel.has(ln);
-      ctx.lineWidth = seld ? 5 : 3; ctx.strokeStyle = seld ? '#ef4444' : col; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      const isActive = wt && fr && ln.wt === fr.activeWT;   // tipo ATIVO → evidencia
+      ctx.lineWidth = seld ? 5 : (isActive ? 4.5 : 3); ctx.strokeStyle = seld ? '#ef4444' : col; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      if (isActive && !seld) { ctx.shadowColor = col; ctx.shadowBlur = 12; } else { ctx.shadowBlur = 0; }
       ctx.beginPath();
       ln.path.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
       ctx.stroke();
+      ctx.shadowBlur = 0;
       const mid = ln.path[Math.floor(ln.path.length / 2)], mx = mid[0] * S.scale + S.ox, my = mid[1] * S.scale + S.oy;
       const txt = mmToFtIn(ln.mm); ctx.font = '700 12px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
       ctx.fillStyle = 'rgba(15,14,11,.85)'; ctx.fillRect(mx + 6, my - 16, tw + 8, 15);
@@ -1587,7 +1596,7 @@
     { const wl = $('#wsLinear'); if (wl) wl.addEventListener('click', () => setMode('linear')); }
     { const dwb = $('#wsDetectWalls'); if (dwb) dwb.addEventListener('click', detectWallsAI); }
     { const rwb = $('#wsReadWalls'); if (rwb) rwb.addEventListener('click', readWallTypesAI); }
-    { const wts = $('#wsWallType'); if (wts) wts.addEventListener('change', () => { if (F.framing) F.framing.activeWT = wts.value; updateWallTypeSwatch(); if (F._renderFramingPanel) F._renderFramingPanel(); }); populateWallTypeSelect(); }
+    { const wts = $('#wsWallType'); if (wts) wts.addEventListener('change', () => { if (F.framing) F.framing.activeWT = wts.value; updateWallTypeSwatch(); if (F._renderFramingPanel) F._renderFramingPanel(); draw(); if (F._saveFraming) F._saveFraming(); }); populateWallTypeSelect(); }
     $('#wsAuto').addEventListener('click', () => setMode('auto'));
     $('#wsDelete').addEventListener('click', () => setMode('del'));
     const wcal = $('#wsCalib'); if (wcal) wcal.addEventListener('click', () => setMode('calib'));

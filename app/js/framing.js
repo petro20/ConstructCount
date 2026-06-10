@@ -112,8 +112,20 @@
       });
       added++;
     });
+    persistFraming();
     return added;
   };
+
+  // ---- persistência das assemblies (nível de projeto) ----
+  function persistFraming() { if (F._saveFraming) { try { F._saveFraming(); } catch (e) {} } }
+  F._framingLoad = function (d) {
+    if (!d) return;
+    if (Array.isArray(d.wallTypes) && d.wallTypes.length) FR.wallTypes = d.wallTypes;
+    if (d.prices) FR.prices = d.prices;
+    if (d.layerAssembly) FR.layerAssembly = d.layerAssembly;
+    FR.activeWT = d.activeWT || (FR.wallTypes[0] && FR.wallTypes[0].id) || null;
+  };
+  F._framingSnapshot = function () { return { wallTypes: FR.wallTypes, prices: FR.prices, activeWT: FR.activeWT, layerAssembly: FR.layerAssembly }; };
 
   FR.activeWT = FR.activeWT || null;   // tipo de parede ATIVO (o que você traça)
 
@@ -187,13 +199,13 @@
       row.addEventListener('click', function (e) {
         if (e.target && e.target.classList && e.target.classList.contains('ft-color')) return;
         if (!wid) return;
-        FR.activeWT = wid; renderFramingTakeoff(ov); if (F._syncWallTypeSelect) F._syncWallTypeSelect();
+        FR.activeWT = wid; renderFramingTakeoff(ov); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); if (F._wsRedraw) F._wsRedraw(); persistFraming();
       });
       var ci = row.querySelector('input.ft-color');
-      if (ci) ci.addEventListener('input', function (e) { var wt = wtById(wid); if (wt) { wt.color = e.target.value; if (F._wsRedraw) F._wsRedraw(); renderFramingTakeoff(ov); } });
+      if (ci) ci.addEventListener('input', function (e) { var wt = wtById(wid); if (wt) { wt.color = e.target.value; if (F._wsRedraw) F._wsRedraw(); renderFramingTakeoff(ov); persistFraming(); } });
     });
     [['ftPrStud', 'stud'], ['ftPrPlate', 'plateLF'], ['ftPrSheet', 'sheet'], ['ftPrHeader', 'headerLF']].forEach(function (pr) {
-      var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('input', function () { FR.prices[pr[1]] = num(inp.value); var mm = F.framingCompute(); var t = ov.querySelector('#ftTotal'); if (t) t.textContent = money(priceTotal(mm)); });
+      var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('input', function () { FR.prices[pr[1]] = num(inp.value); var mm = F.framingCompute(); var t = ov.querySelector('#ftTotal'); if (t) t.textContent = money(priceTotal(mm)); persistFraming(); });
     });
   }
 

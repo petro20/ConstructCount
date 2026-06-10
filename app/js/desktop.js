@@ -219,6 +219,8 @@
       openFolder: () => api.open_folder(slug),
       saveMeasures: (page, measures) => api.save_measures(slug, page, measures),
       saveLines: (page, lines) => api.save_lines(slug, page, lines),
+      saveFraming: (data) => api.save_framing(slug, data),
+      getFraming: () => api.get_framing(slug),
       setWindowDim: (code, w, h, t, m) => api.set_window_dim(slug, code, w, h, t, m),
       addSection: (name) => api.add_section(slug, name),
       setActiveSection: (name) => api.set_active_section(slug, name),
