@@ -176,6 +176,15 @@
     if (shell && body) shell.insertBefore(bar, body);
   }
 
+  // orientação da página (retrato/paisagem) — preview + @page na impressão
+  function applyOrient(doc, modal) {
+    var land = st.tpl.orient === 'landscape';
+    doc.style.width = land ? '1040px' : '760px';
+    var btn = modal.querySelector('#freOrient'); if (btn) btn.innerHTML = '🔄 ' + (land ? tr('Retrato') : tr('Paisagem'));
+    var sty = document.getElementById('frePageStyle') || (function () { var s = document.createElement('style'); s.id = 'frePageStyle'; document.head.appendChild(s); return s; })();
+    sty.textContent = '@media print{ @page { size: A4 ' + (land ? 'landscape' : 'portrait') + '; margin: 12mm; } }';
+  }
+
   F.openFramingReportEditor = function () {
     if (!F.framingReportData) return;
     var d = F.framingReportData();
@@ -187,6 +196,7 @@
       '<div class="fre-shell">'
       + '<div class="fre-bar no-print"><b>✏️ ' + tr('Editor de relatório') + '</b>'
       + '<span class="fre-spacer"></span>'
+      + '<button id="freOrient" class="fre-btn">🔄 ' + tr('Paisagem') + '</button>'
       + '<button id="freSave" class="fre-btn">💾 ' + tr('Salvar modelo') + '</button>'
       + '<button id="freReset" class="fre-btn">↺ ' + tr('Padrão') + '</button>'
       + '<button id="frePrint" class="fre-btn fre-btn-primary">🖨️ ' + tr('Imprimir / PDF') + '</button>'
@@ -201,6 +211,8 @@
     CATALOG.forEach(function (c) { var b = document.createElement('button'); b.className = 'fre-pal-item'; b.textContent = '+ ' + c.label; b.addEventListener('click', function () { st.tpl.blocks.push({ type: c.type }); renderDoc(doc, d); doc.scrollTop = doc.scrollHeight; }); pal.appendChild(b); });
     renderDoc(doc, d);
     buildToolbar(modal, doc);
+    applyOrient(doc, modal);
+    modal.querySelector('#freOrient').addEventListener('click', function () { st.tpl.orient = (st.tpl.orient === 'landscape') ? 'portrait' : 'landscape'; applyOrient(doc, modal); });
     modal.querySelector('#freClose').addEventListener('click', function () { modal.remove(); });
     modal.querySelector('#freSave').addEventListener('click', function () { var ok = saveTpl(st.tpl); if (F.flashExport) F.flashExport(ok ? ('✓ ' + tr('Modelo salvo')) : ('⚠️ ' + tr('Modelo grande demais p/ salvar — reduza/retire fotos (o documento atual segue ok p/ imprimir).'))); });
     modal.querySelector('#freReset').addEventListener('click', function () { st.tpl = defaultTpl(); renderDoc(doc, d); });
