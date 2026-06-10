@@ -1303,6 +1303,39 @@ window.ConstructCount = window.ConstructCount || {};
     'Orçamento, Pedido, Proposta e Planta Marcada — com a sua marca.': { en: 'Quote, Order, Proposal and Marked Plan — with your brand.', es: 'Cotización, Pedido, Propuesta y Plano Marcado — con tu marca.' }
   });
 
+  // ---- Ajuda: seção do pacote Parede completa + FAQ de pacotes ----
+  Object.assign(DICT, {
+    'O ConstructCount lê a planta arquitetônica e levanta esquadrias e paredes (framing, drywall, insulation e pintura) — e entrega os documentos prontos. Veja o fluxo completo abaixo.': { en: 'ConstructCount reads the architectural plan and takes off windows/doors and walls (framing, drywall, insulation and paint) — and delivers ready documents. See the full flow below.', es: 'ConstructCount lee el plano arquitectónico y computa carpinterías y paredes (framing, drywall, insulation y pintura) — y entrega los documentos listos. Mira el flujo completo abajo.' },
+    'Pacote Parede completa (Framing · Drywall · Insulation · Paint)': { en: 'Complete wall package (Framing · Drywall · Insulation · Paint)', es: 'Paquete Pared completa (Framing · Drywall · Insulation · Paint)' },
+    '1. Escopo da obra': { en: '1. Job scope', es: '1. Alcance de la obra' },
+    '— em FERRAMENTAS, ligue os ofícios que esta estimativa cobre (🏗️ Framing · 🧱 Drywall · 🧊 Insulation · 🎨 Paint). A mesma parede gera quantidades para cada escopo ligado.': { en: '— in TOOLS, turn on the trades this estimate covers (🏗️ Framing · 🧱 Drywall · 🧊 Insulation · 🎨 Paint). The same wall produces quantities for each scope turned on.', es: '— en HERRAMIENTAS, activa los oficios que cubre esta estimación (🏗️ Framing · 🧱 Drywall · 🧊 Insulation · 🎨 Paint). La misma pared genera cantidades para cada alcance activado.' },
+    '2. Tipos de parede por IA': { en: '2. Wall types by AI', es: '2. Tipos de pared por IA' },
+    '— abra a folha de partições (ex.: A301) e clique em': { en: '— open the partition sheet (e.g. A301) and click', es: '— abre la hoja de particiones (ej. A301) y haz clic en' },
+    ': ela cria os tipos com montante, espaçamento, plates, gypsum e isolamento. Itens com ⚠️ pedem a sua conferência — a IA pergunta, não chuta.': { en: ': it creates the types with stud, spacing, plates, gypsum and insulation. Items with ⚠️ ask for your review — the AI asks, it does not guess.', es: ': crea los tipos con montante, espaciado, plates, gypsum y aislamiento. Los ítems con ⚠️ piden tu revisión — la IA pregunta, no adivina.' },
+    '3. Pisos e alturas': { en: '3. Floors and heights', es: '3. Pisos y alturas' },
+    '— defina o': { en: '— set the', es: '— define el' },
+    'ativo e a altura (lida da A302). Cada parede traçada guarda a altura do seu piso (LF × altura = SF).': { en: 'active and the height (read from A302). Each drawn wall keeps its floor height (LF × height = SF).', es: 'activo y la altura (leída de A302). Cada pared trazada guarda la altura de su piso (LF × altura = SF).' },
+    '4. Trace as paredes': { en: '4. Draw the walls', es: '4. Traza las paredes' },
+    '— calibre a escala (📏), escolha o': { en: '— calibrate the scale (📏), choose the', es: '— calibra la escala (📏), elige el' },
+    'e use': { en: 'and use', es: 'y usa' },
+    '📐 Linear': { en: '📐 Linear', es: '📐 Lineal' },
+    '(ou ✨ Detectar paredes por IA). O rótulo mostra o tipo e a medida, ex.: (2) 36\'-2".': { en: '(or ✨ Detect walls by AI). The label shows the type and the measure, e.g. (2) 36\'-2".', es: '(o ✨ Detectar paredes por IA). La etiqueta muestra el tipo y la medida, ej. (2) 36\'-2".' },
+    '5. Takeoff e preços': { en: '5. Takeoff and prices', es: '5. Cómputo y precios' },
+    '— clique em': { en: '— click', es: '— haz clic en' },
+    'na barra de status: tabela editável com Material + M.O. + sobra % + imposto → Custo → Ganho % → Venda. Defina a': { en: 'in the status bar: editable table with Material + Labor + waste % + tax → Cost → Markup % → Sale. Set the', es: 'en la barra de estado: tabla editable con Material + M.O. + merma % + impuesto → Costo → Ganancia % → Venta. Define la' },
+    'e use 💲 Buscar preços (IA) — você confirma tudo.': { en: 'and use 💲 Find prices (AI) — you confirm everything.', es: 'y usa 💲 Buscar precios (IA) — tú confirmas todo.' },
+    '6. Relatórios': { en: '6. Reports', es: '6. Informes' },
+    '— no botão': { en: '— on the', es: '— en el botón' },
+    '(add-on): orçamento ao cliente, lista de materiais, material por piso, cotação ao fornecedor, análise do proprietário, resumo técnico, planta marcada — e os editores (blocos e visual) com texto por IA.': { en: 'button (add-on): client quote, material list, material by floor, supplier RFQ, owner analysis, technical summary, marked plan — plus the editors (blocks and visual) with AI text.', es: '(add-on): cotización al cliente, lista de materiales, material por piso, cotización al proveedor, análisis del propietario, resumen técnico, plano marcado — y los editores (bloques y visual) con texto por IA.' },
+    '📄 Relatórios': { en: '📄 Reports', es: '📄 Informes' },
+    'O que cada pacote libera?': { en: 'What does each package unlock?', es: '¿Qué desbloquea cada paquete?' },
+    'Cada ofício é vendido à parte (Framing, Drywall, Insulation, Paint) e o combo': { en: 'Each trade is sold separately (Framing, Drywall, Insulation, Paint) and the', es: 'Cada oficio se vende por separado (Framing, Drywall, Insulation, Paint) y el combo' },
+    'libera os 4. O app destrava exatamente o que você comprou — ofícios fora do plano aparecem com 🔒. Janelas & Portas é um pacote próprio.': { en: 'combo unlocks all 4. The app unlocks exactly what you bought — trades outside your plan show 🔒. Windows & Doors is its own package.', es: 'desbloquea los 4. La app desbloquea exactamente lo que compraste — los oficios fuera del plan aparecen con 🔒. Ventanas y Puertas es un paquete propio.' },
+    'Como funciona o add-on Relatórios?': { en: 'How does the Reports add-on work?', es: '¿Cómo funciona el add-on de Informes?' },
+    'Os relatórios e editores do pacote Parede (orçamento, materiais, planta marcada, editor de blocos e visual, texto por IA) são um': { en: 'The Wall package reports and editors (quote, materials, marked plan, block and visual editors, AI text) are a', es: 'Los informes y editores del paquete Pared (cotización, materiales, plano marcado, editores de bloques y visual, texto por IA) son un' },
+    'que você liga em qualquer pacote, na aba': { en: 'you can add to any package, in the', es: 'que activas en cualquier paquete, en la pestaña' }
+  });
+
   // índice normalizado (chaves com espaços colapsados) p/ casar HTML e chamadas JS
   const NDICT = {};
   Object.keys(DICT).forEach(k => { NDICT[norm(k)] = DICT[k]; });

@@ -330,7 +330,7 @@
             <div class="text-center mb-12">
               <div class="text-5xl mb-3">📐</div>
               <h1 class="text-3xl sm:text-4xl font-bold text-steel-800">Do PDF ao orçamento em minutos</h1>
-              <p class="text-steel-500 mt-3 max-w-2xl mx-auto text-lg">O ConstructCount lê a planta arquitetônica, conta e dimensiona as esquadrias e entrega os documentos prontos. Veja o fluxo completo abaixo.</p>
+              <p class="text-steel-500 mt-3 max-w-2xl mx-auto text-lg">O ConstructCount lê a planta arquitetônica e levanta esquadrias e paredes (framing, drywall, insulation e pintura) — e entrega os documentos prontos. Veja o fluxo completo abaixo.</p>
             </div>
 
             <!-- PASSO A PASSO -->
@@ -400,6 +400,19 @@
               <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🌐</div><div class="font-semibold text-steel-800">Idioma e unidade</div><div class="text-steel-500 text-sm mt-1">Alterne PT · EN · ES e m² / ft² na aba Configurações — vale também nos documentos.</div></div>
             </div>
 
+            <!-- PACOTE PAREDE COMPLETA -->
+            <h2 class="text-xl font-bold text-steel-800 mb-5">Pacote Parede completa (Framing · Drywall · Insulation · Paint)</h2>
+            <div class="bg-white border border-steel-200 rounded-xl p-6 shadow-sm mb-6">
+              <ol class="space-y-3 text-sm text-steel-600">
+                <li><b class="text-steel-800">1. Escopo da obra</b> — em FERRAMENTAS, ligue os ofícios que esta estimativa cobre (🏗️ Framing · 🧱 Drywall · 🧊 Insulation · 🎨 Paint). A mesma parede gera quantidades para cada escopo ligado.</li>
+                <li><b class="text-steel-800">2. Tipos de parede por IA</b> — abra a folha de partições (ex.: A301) e clique em <b>🧠 Ler tipos de parede (IA)</b>: ela cria os tipos com montante, espaçamento, plates, gypsum e isolamento. Itens com ⚠️ pedem a sua conferência — a IA pergunta, não chuta.</li>
+                <li><b class="text-steel-800">3. Pisos e alturas</b> — defina o <b>Piso:</b> ativo e a altura (lida da A302). Cada parede traçada guarda a altura do seu piso (LF × altura = SF).</li>
+                <li><b class="text-steel-800">4. Trace as paredes</b> — calibre a escala (📏), escolha o <b>Tipo:</b> e use <b>📐 Linear</b> (ou ✨ Detectar paredes por IA). O rótulo mostra o tipo e a medida, ex.: (2) 36'-2".</li>
+                <li><b class="text-steel-800">5. Takeoff e preços</b> — clique em <b>🏗️ Framing</b> na barra de status: tabela editável com Material + M.O. + sobra % + imposto → Custo → Ganho % → Venda. Defina a <b>Região</b> e use 💲 Buscar preços (IA) — você confirma tudo.</li>
+                <li><b class="text-steel-800">6. Relatórios</b> — no botão <b>📄 Relatórios</b> (add-on): orçamento ao cliente, lista de materiais, material por piso, cotação ao fornecedor, análise do proprietário, resumo técnico, planta marcada — e os editores (blocos e visual) com texto por IA.</li>
+              </ol>
+            </div>
+
             <!-- FAQ -->
             <h2 class="text-xl font-bold text-steel-800 mb-5">Perguntas frequentes</h2>
             <div class="space-y-3 mb-10">
@@ -418,6 +431,14 @@
               <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
                 <summary class="font-semibold text-steel-800 cursor-pointer">Já tenho o takeoff pronto. Posso usar?</summary>
                 <div class="text-steel-500 text-sm mt-2">Sim. Use <b>Importar Takeoff (Excel / JSON)</b> e o sistema gera preço e documentos sem reprocessar a planta.</div>
+              </details>
+              <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
+                <summary class="font-semibold text-steel-800 cursor-pointer">O que cada pacote libera?</summary>
+                <div class="text-steel-500 text-sm mt-2">Cada ofício é vendido à parte (Framing, Drywall, Insulation, Paint) e o combo <b>Parede completa</b> libera os 4. O app destrava exatamente o que você comprou — ofícios fora do plano aparecem com 🔒. Janelas &amp; Portas é um pacote próprio.</div>
+              </details>
+              <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
+                <summary class="font-semibold text-steel-800 cursor-pointer">Como funciona o add-on Relatórios?</summary>
+                <div class="text-steel-500 text-sm mt-2">Os relatórios e editores do pacote Parede (orçamento, materiais, planta marcada, editor de blocos e visual, texto por IA) são um <b>add-on à parte</b> que você liga em qualquer pacote, na aba <b>Pacote</b>.</div>
               </details>
             </div>
 
@@ -1161,7 +1182,7 @@
     </div>
   </div>
 
-  <script src="js/i18n.js?v=219"></script>
+  <script src="js/i18n.js?v=220"></script>
   <script src="js/license.js?v=207"></script>
   <script src="js/calculator.js?v=216"></script>
   <script src="js/svg-engine.js?v=200"></script>
