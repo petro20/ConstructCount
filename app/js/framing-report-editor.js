@@ -97,6 +97,7 @@
     }
   }
 
+  F._freBlockHTML = blockBody;   // reuso pelo editor visual (GrapesJS)
   var st = { tpl: null, dragIx: -1 };
 
   function renderDoc(doc, d) {

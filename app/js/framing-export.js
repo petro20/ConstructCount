@@ -243,6 +243,7 @@
   // lista dos relatórios (p/ o menu/dropdown no takeoff)
   F.framingReports = [
     { id: 'editor', label: '✏️ ' + 'Editor de relatório (blocos)', fn: function () { if (F.openFramingReportEditor) F.openFramingReportEditor(); } },
+    { id: 'visual', label: '🎨 ' + 'Editor visual completo (arrastar/soltar)', fn: function () { if (F.openFramingReportGrapes) F.openFramingReportGrapes(); } },
     { id: 'quote', label: '📄 ' + 'Orçamento ao cliente (PDF)', fn: function () { return F.framingExportQuotePDF(); } },
     { id: 'owner', label: '🔒 ' + 'Análise do proprietário — custo × venda (PDF)', fn: function () { return F.framingExportOwnerPDF(); } },
     { id: 'materials', label: '📦 ' + 'Lista de materiais / Pedido (Excel)', fn: function () { return F.framingExportMaterialsXLSX(); } },

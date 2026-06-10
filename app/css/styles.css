@@ -479,6 +479,13 @@ button:focus-visible {
 #frTakeoff .ftt-dup:hover { color: #c4881a; }
 #frTakeoff .ftt-table tfoot td { padding: 8px 10px; border-top: 2px solid #c4881a; background: #faf7f0; font-variant-numeric: tabular-nums; }
 
+/* editor visual completo (GrapesJS) */
+.fre-gjs { position: fixed; inset: 0; z-index: 100060; background: #fff; display: flex; flex-direction: column; }
+.fre-gjs-bar { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #262420; color: #fff; flex: 0 0 auto; }
+.fre-gjs-bar .fre-gjs-spacer { flex: 1; }
+.fre-gjs-canvas { flex: 1; min-height: 0; }
+@media print { body.cc-print-only > *:not(#ccPrintDoc) { display: none !important; } #ccPrintDoc { display: block !important; } }
+
 /* editor de relatório por blocos */
 .fre-modal { position: fixed; inset: 0; z-index: 100050; background: rgba(15,18,24,.86); display: flex; align-items: stretch; justify-content: center; }
 .fre-shell { width: 100%; max-width: 1080px; margin: 18px; background: #f3f4f6; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 70px rgba(0,0,0,.5); }
