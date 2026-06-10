@@ -108,7 +108,8 @@
         bracingRows: 1,
         sheathSides: (w.sheathing_sides != null ? parseInt(w.sheathing_sides, 10) : 2),
         color: COLORS[FR.wallTypes.length % COLORS.length],
-        ai: true, typeId: w.type_id || '', sheathing: w.sheathing || '', insulation: w.insulation || ''
+        ai: true, typeId: w.type_id || '', sheathing: w.sheathing || '', insulation: w.insulation || '',
+        components: Array.isArray(w.components) ? w.components : []
       };
       var ix = -1;
       for (var i = 0; i < FR.wallTypes.length; i++) if (FR.wallTypes[i].id === id) { ix = i; break; }
@@ -180,14 +181,19 @@
     if (m.bridgingLF > 0 || m.blockingLF > 0) partsHTML += card(tr('Travamento'), (m.bridgingLF > 0 ? '<div class="ft-part"><span>Bridging</span><b>' + lf(m.bridgingLF) + '</b></div>' : '') + (m.blockingLF > 0 ? '<div class="ft-part"><span>Blocking</span><b>' + lf(m.blockingLF) + '</b></div>' : ''));
     partsHTML += card(tr('Chapas (sheathing)'), '<div class="ft-part"><span>' + tr('Área') + '</span><b>' + m.sheathSf.toFixed(0) + ' SF</b></div><div class="ft-part"><span>' + tr('Folhas 4x8') + '</span><b>' + m.sheets + ' EA</b></div>');
     partsHTML += card(tr('Vergas (headers)'), '<div class="ft-part"><span>' + tr('Comprimento') + '</span><b>' + lf(m.headersLF) + '</b></div>');
-    var activeName = (wtById(FR.activeWT) || {}).name || '';
+    var aw = wtById(FR.activeWT) || {};
+    var activeName = aw.name || '';
+    var specHTML = (aw.components && aw.components.length)
+      ? card(tr('Especificação (lida da planta)'), aw.components.map(function (c) { return '<div class="ft-part"><span>' + esc(c) + '</span></div>'; }).join(''))
+      : '';
 
     ov.innerHTML =
       '<div class="ft-top"><span>🏗️ ' + tr('Takeoff de Framing') + '</span><button id="ftClose" class="ft-x">✕</button></div>'
       + '<div class="ft-body">'
       + '<div class="ft-sec">' + tr('Tipos — clique p/ ativar e traçar') + '</div>'
       + '<div class="ft-types">' + typesHTML + '</div>'
-      + '<div class="ft-sec" style="margin-top:14px">' + tr('Parts do tipo ativo') + ' · ' + esc(activeName) + '</div>' + partsHTML
+      + (specHTML ? ('<div class="ft-sec" style="margin-top:14px">' + tr('Especificação · ') + esc(activeName) + '</div>' + specHTML) : '')
+      + '<div class="ft-sec" style="margin-top:14px">' + tr('Parts (cálculo)') + '</div>' + partsHTML
       + card(tr('Preço (USD)'),
         '<div class="ft-pr"><label>' + tr('Montante') + '<input id="ftPrStud" type="number" min="0" step="0.01" value="' + (FR.prices.stud || '') + '"></label>'
         + '<label>' + tr('Guia/plate LF') + '<input id="ftPrPlate" type="number" min="0" step="0.01" value="' + (FR.prices.plateLF || '') + '"></label>'
