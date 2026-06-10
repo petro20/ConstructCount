@@ -67,6 +67,31 @@
     return isDesktop() ? (F._licInfo || { key: '', device: '' }) : { key: webKey(), device: webDevice() };
   };
 
+  /* ---- PACOTES (entitlements) — cada ofício é vendido SEPARADO ----
+     F.entitlements = array de ids comprados (ex.: ['framing'] ou ['all']).
+     null/[] = ainda sem info → LIBERA tudo (não trava dev nem usuários antes
+     do servidor M2PB emitir a lista de pacotes no token). */
+  F.entitlements = null;
+  function setEntFromToken() {
+    var pay = payload(localStorage.getItem('fenestra_license_token') || '');
+    if (pay && Array.isArray(pay.pkgs)) F.entitlements = pay.pkgs;
+  }
+  F.hasPackage = function (id) {
+    if (!LICENSING) return true;
+    var e = F.entitlements;
+    if (!e || !e.length) return true;                 // sem info de pacote → não bloqueia
+    return e.indexOf(id) >= 0 || e.indexOf('all') >= 0;
+  };
+  function applyPackageGates() {
+    var nodes = document.querySelectorAll('[data-pkg]');
+    for (var i = 0; i < nodes.length; i++) {
+      var ent = F.hasPackage(nodes[i].getAttribute('data-pkg'));
+      nodes[i].classList.toggle('pkg-locked', !ent);
+    }
+  }
+  F.applyPackageGates = applyPackageGates;
+  F.setPackages = function (arr) { F.entitlements = Array.isArray(arr) ? arr : null; applyPackageGates(); };
+
   /* ---- Overlay de bloqueio / ativação ---- */
   function el() {
     var o = document.getElementById('licGate');
@@ -110,7 +135,12 @@
     else { err.textContent = tr('Licença inválida: {r}', { r: st.reason || '—' }); }
   }
 
-  async function refreshInfo() { if (isDesktop()) { try { F._licInfo = await window.pywebview.api.license_info(); } catch (e) {} } }
+  async function refreshInfo() {
+    if (isDesktop()) {
+      try { F._licInfo = await window.pywebview.api.license_info(); } catch (e) {}
+      if (F._licInfo && Array.isArray(F._licInfo.packages)) F.entitlements = F._licInfo.packages;
+    } else { setEntFromToken(); }
+  }
 
   function banner(st) {
     // aviso leve quando em carência ou perto de vencer
@@ -131,6 +161,7 @@
     if (!LICENSING) return;                    // licenciamento desligado → app livre
     await refreshInfo();
     var st = await getStatus();
+    setEntFromToken(); applyPackageGates();      // aplica gating de pacotes (Framing etc.)
     if (st.state === 'valid' || st.state === 'grace') { hide(); banner(st); return; }
     if (st.state === 'none') show(tr('Ative o ConstructCount'), tr('Insira a chave de licença fornecida pela M2PB para usar o aplicativo.'));
     else show(tr('Licença não autorizada'), tr('Motivo: {r}. Insira uma chave válida ou renove sua assinatura.', { r: st.reason || '—' }));
@@ -157,6 +188,7 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', kick);
   else kick();
   function kick() {
+    setEntFromToken(); applyPackageGates();      // estado inicial dos gates (default libera tudo)
     if (isDesktop()) start();
     else { window.addEventListener('pywebviewready', start); setTimeout(start, 1500); }   // web cai no timeout
     setInterval(function () { if (LICENSING) gate(); }, 6 * 60 * 60 * 1000);                // revalida a cada 6h

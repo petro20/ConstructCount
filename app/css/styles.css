@@ -440,6 +440,9 @@ button:focus-visible {
 #frTakeoff .ftt-dup:hover { color: #c4881a; }
 #frTakeoff .ftt-table tfoot td { padding: 8px 10px; border-top: 2px solid #c4881a; background: #faf7f0; font-variant-numeric: tabular-nums; }
 
+/* gating de pacote: ferramentas de um ofício só aparecem p/ quem comprou o pacote */
+.pkg-locked { display: none !important; }
+
 /* cards "em breve" (próximos pacotes) */
 .pkg-soon { background: #fbfaf8; }
 .pkg-soon .cc-ico { filter: grayscale(.25); opacity: .92; }
