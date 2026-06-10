@@ -361,6 +361,20 @@
     });
     return { region: FR.region || '', scope: FR.scope, prices: FR.prices, waste: FR.waste, labor: FR.labor, markup: FR.markup, taxMaterial: FR.taxMaterial, sizes: FR.sizes || {}, types: types, totals: T, studsBySize: studsBySize, generatedAtNote: '' };
   };
+  // calcula métricas para um SUBCONJUNTO de linhas (usado p/ "por piso")
+  function computeLinesSet(lines) {
+    var saved = FR.segments;
+    FR.segments = (lines || []).map(function (l) { return { id: uid('s'), wtId: l.wt, len: ftFromMm(l.mm), qty: 1, height: l.height || 0 }; });
+    var m = F.framingCompute();
+    FR.segments = saved;
+    return m;
+  }
+  // material agrupado por PISO (cada traço guarda o piso)
+  F.framingReportByFloor = function () {
+    var lines = (F._framingLines ? F._framingLines() : []) || [], byFloor = {};
+    lines.forEach(function (l) { if (!l.wt) return; var f = l.floor || tr('(sem piso)'); (byFloor[f] = byFloor[f] || []).push(l); });
+    return Object.keys(byFloor).map(function (f) { var m = computeLinesSet(byFloor[f]); return { floor: f, m: m, studsBySize: m.studs }; });
+  };
   function wallSidesLabel(wt) {
     var lbl = { '': '—', gyp: 'Drywall', gypWR: 'Drywall WR', densglass: 'DensGlass', plywood: 'Plywood', osb: 'OSB' };
     var s = (F.framingWallSides ? F.framingWallSides(wt) : ['', '']);

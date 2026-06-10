@@ -147,10 +147,105 @@
     if (F.flashExport) F.flashExport('✓ ' + tr('Planta marcada') + ' (PDF) ✓');
   };
 
+  // linhas de material (genéricas) a partir de valores agregados — reusadas em vários relatórios
+  function buildMatRows(vals, studsBySize, d) {
+    var sz = d.sizes || {}, sc = d.scope, out = [];
+    Object.keys(studsBySize || {}).forEach(function (size) { out.push([tr('Montante (stud)'), sz.stud || size, 'EA', Math.ceil(studsBySize[size])]); });
+    var add = function (lb, k, unit, q) { if (q > 0) out.push([lb, sz[k] || '', unit, Math.ceil(q * 10) / 10]); };
+    if (sc.framing) { add(tr('Plate / Track'), 'plateLF', 'LF', vals.horiz); add(tr('Verga (header)'), 'headerLF', 'LF', vals.header); add(tr('Sheathing (DensGlass/plywood)'), 'sheathSf', 'SF', vals.shsf); if (vals.shsf > 0) out.push([tr('Sheathing — folhas 4x8'), sz.sheathSf || '4x8', 'EA', Math.ceil(vals.shsf / 32)]); }
+    if (sc.drywall) { add(tr('Drywall comum'), 'drywallSf', 'SF', vals.dwsf); add(tr('Drywall resist. água (WR)'), 'drywallWrSf', 'SF', vals.wrsf); if (vals.dwsf + vals.wrsf > 0) out.push([tr('Drywall — folhas 4x8'), '4x8', 'EA', Math.ceil((vals.dwsf + vals.wrsf) / 32)]); }
+    if (sc.insulation) add(tr('Isolamento (batt)'), 'insulSf', 'SF', vals.insul);
+    if (sc.paint) add(tr('Tinta + primer'), 'paintSf', 'SF', vals.paint);
+    return out;
+  }
+  function valsFromM(m) { return { horiz: m.totalHorizLF, header: m.headersLF, shsf: m.sheathingSf, dwsf: m.drywallSf, wrsf: m.drywallWrSf, insul: m.insulationSf, paint: m.paintSf }; }
+  function valsFromT(T) { return { horiz: T.horiz, header: T.header, shsf: T.shsf, dwsf: T.dwsf, wrsf: T.wrsf, insul: T.insul, paint: T.paint }; }
+
+  /* ---------- Material POR PISO (Excel) ---------- */
+  F.framingExportByFloorXLSX = async function () {
+    if (!needLib(window.XLSX)) return;
+    if (!F.framingReportByFloor) return noData();
+    var floors = F.framingReportByFloor(); if (!floors.length) return noData();
+    var d = F.framingReportData();
+    var aoa = [[tr('MATERIAL POR PISO') + (d.region ? (' — ' + d.region) : '')], []];
+    floors.forEach(function (fl) {
+      aoa.push([tr('Piso') + ': ' + fl.floor + '   (' + fl.m.totalLF.toFixed(0) + ' LF · ' + fl.m.wallSf.toFixed(0) + ' SF)']);
+      aoa.push([tr('Material'), tr('Tamanho'), tr('Unidade'), tr('Quantidade')]);
+      buildMatRows(valsFromM(fl.m), fl.studsBySize, d).forEach(function (r) { aoa.push(r); });
+      aoa.push([]);
+    });
+    var ws = window.XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [{ wch: 32 }, { wch: 16 }, { wch: 9 }, { wch: 12 }];
+    var wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, tr('Por piso').slice(0, 31));
+    await F.saveBytes(fname('material-por-piso', 'xlsx'), window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
+    if (F.flashExport) F.flashExport('✓ ' + tr('Material por piso') + ' (Excel) ✓');
+  };
+
+  /* ---------- Cotação ao FORNECEDOR (Excel — fornecedor preenche o preço) ---------- */
+  F.framingExportSupplierRFQXLSX = async function () {
+    if (!needLib(window.XLSX)) return;
+    var d = F.framingReportData(); if (!d.types.length) return noData();
+    var rows = buildMatRows(valsFromT(d.totals), d.studsBySize, d);
+    var aoa = [[tr('PEDIDO DE COTAÇÃO — FORNECEDOR') + (d.region ? (' — ' + d.region) : '')], [tr('Preencha o "Preço unit." — o Total calcula sozinho.')], [],
+      [tr('Material'), tr('Tamanho'), tr('Unidade'), tr('Quantidade'), tr('Preço unit.'), tr('Total')]];
+    var first = aoa.length;   // 0-based índice da 1ª linha de material
+    rows.forEach(function (r) { aoa.push([r[0], r[1], r[2], r[3], '', '']); });
+    var ws = window.XLSX.utils.aoa_to_sheet(aoa);
+    for (var i = 0; i < rows.length; i++) { var rn = first + i + 1; ws['F' + rn] = { t: 'n', f: 'D' + rn + '*E' + rn }; }   // Total = Qtd × Preço
+    var totRow = first + rows.length + 1;
+    ws['E' + totRow] = { t: 's', v: tr('TOTAL') }; ws['F' + totRow] = { t: 'n', f: 'SUM(F' + (first + 1) + ':F' + (first + rows.length) + ')' };
+    ws['!cols'] = [{ wch: 32 }, { wch: 16 }, { wch: 9 }, { wch: 12 }, { wch: 12 }, { wch: 14 }];
+    var wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, tr('Cotação').slice(0, 31));
+    await F.saveBytes(fname('cotacao-fornecedor', 'xlsx'), window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
+    if (F.flashExport) F.flashExport('✓ ' + tr('Cotação ao fornecedor') + ' (Excel) ✓');
+  };
+
+  /* ---------- Análise do PROPRIETÁRIO (PDF — custo × venda, CONFIDENCIAL) ---------- */
+  F.framingExportOwnerPDF = async function () {
+    if (!needLib(window.jspdf)) return;
+    var d = F.framingReportData(); if (!d.types.length) return noData();
+    var L = F.pickDocLang ? await F.pickDocLang() : 'pt';
+    var jsPDF = window.jspdf.jsPDF, doc = new jsPDF();
+    if (F._pdfBrandHeader) F._pdfBrandHeader(doc, tr('Análise do proprietário — Custo × Venda · CONFIDENCIAL'));
+    var T = d.totals, lucro = T.sale - T.cost, margem = T.sale ? (lucro / T.sale * 100) : 0;
+    doc.autoTable({
+      startY: 36,
+      head: [[tr('Composição'), tr('Valor')]],
+      body: [
+        [tr('Material (com sobra)'), money(T.mat)],
+        [tr('Imposto sobre material'), money(T.tax)],
+        [tr('Mão de obra'), money(T.lab)],
+        [tr('CUSTO TOTAL'), money(T.cost)],
+        [tr('Ganho aplicado'), num(d.markup) + '%'],
+        [tr('VENDA FINAL'), money(T.sale)],
+        [tr('Lucro (Venda − Custo)'), money(lucro)],
+        [tr('Margem sobre a venda'), margem.toFixed(1) + '%']
+      ],
+      theme: 'plain', styles: { fontSize: 10, cellPadding: 2.4 },
+      columnStyles: { 0: { cellWidth: 110 }, 1: { halign: 'right', fontStyle: 'bold' } },
+      didParseCell: function (data) { if (data.section === 'body' && (data.row.index === 3 || data.row.index === 5)) { data.cell.styles.fillColor = [241, 237, 227]; data.cell.styles.fontStyle = 'bold'; } }
+    });
+    var y = doc.lastAutoTable.finalY + 8;
+    doc.setFontSize(11); doc.setFont(undefined, 'bold'); doc.setTextColor(40); doc.text(tr('Por tipo de parede'), 14, y); y += 2;
+    doc.autoTable({
+      startY: y + 2,
+      head: [[tr('Tipo'), tr('Custo'), tr('Venda'), tr('Lucro')]],
+      body: d.types.map(function (x) { return [(x.typeId ? '(' + x.typeId + ') ' : '') + x.name, money(x.cost), money(x.sale), money(x.sale - x.cost)]; }),
+      theme: 'striped', headStyles: { fillColor: (F._brAccentRGB ? F._brAccentRGB() : [44, 71, 106]), textColor: 255, fontSize: 8 },
+      styles: { fontSize: 8.5, cellPadding: 1.8 }, columnStyles: { 0: { cellWidth: 80 }, 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } }
+    });
+    doc.setFontSize(8); doc.setTextColor(150); doc.text(tr('Documento interno — não enviar ao cliente.'), 14, 286);
+    if (F._pdfBrandFooterAll) F._pdfBrandFooterAll(doc);
+    await F.saveBytes(fname('proprietario-custo-venda', 'pdf'), doc.output('arraybuffer'));
+    if (F.flashExport) F.flashExport('✓ ' + tr('Análise do proprietário') + ' (PDF) ✓');
+  };
+
   // lista dos relatórios (p/ o menu/dropdown no takeoff)
   F.framingReports = [
     { id: 'quote', label: '📄 ' + 'Orçamento ao cliente (PDF)', fn: function () { return F.framingExportQuotePDF(); } },
+    { id: 'owner', label: '🔒 ' + 'Análise do proprietário — custo × venda (PDF)', fn: function () { return F.framingExportOwnerPDF(); } },
     { id: 'materials', label: '📦 ' + 'Lista de materiais / Pedido (Excel)', fn: function () { return F.framingExportMaterialsXLSX(); } },
+    { id: 'byfloor', label: '🏢 ' + 'Material por piso (Excel)', fn: function () { return F.framingExportByFloorXLSX(); } },
+    { id: 'rfq', label: '🧾 ' + 'Cotação ao fornecedor (Excel)', fn: function () { return F.framingExportSupplierRFQXLSX(); } },
     { id: 'summary', label: '📊 ' + 'Resumo do takeoff (PDF)', fn: function () { return F.framingExportSummaryPDF(); } },
     { id: 'plan', label: '🗺️ ' + 'Planta marcada (PDF)', fn: function () { return F.framingExportMarkedPlanPDF(); } }
   ];
