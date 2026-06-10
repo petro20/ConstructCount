@@ -1103,9 +1103,11 @@
     S.busy = true; markSaved(F.tr('🧠 IA: lendo os tipos de parede desta folha…'));
     let r = null;
     try {
-      if (S.prov && S.prov.readWallTypes) {                 // DESKTOP — local, sem chave
+      if (S.prov && S.prov.readWallTypesAll) {              // DESKTOP — varre TODAS as folhas (acha a prancha de partições)
+        r = await S.prov.readWallTypesAll();
+      } else if (S.prov && S.prov.readWallTypes) {
         r = await S.prov.readWallTypes(S.page);
-      } else {                                              // WEB — Claude na nuvem
+      } else {                                              // WEB — Claude na nuvem (folha atual)
         if (!S.img || !(S.img.naturalWidth || S.img.width)) { S.busy = false; alert(F.tr('Abra uma folha primeiro.')); return; }
         const c = document.createElement('canvas');
         c.width = S.img.naturalWidth || S.img.width; c.height = S.img.naturalHeight || S.img.height;
@@ -1119,11 +1121,13 @@
     S.busy = false;
     if (r && r.error) { alert(F.tr('IA: ') + r.error); return; }
     const walls = (r && r.walls) || [];
-    if (!walls.length) { markSaved(F.tr('IA: nenhum tipo de parede encontrado nesta folha (use a folha de partições/wall types)')); return; }
-    const n = F.framingAddWallTypes ? F.framingAddWallTypes(walls) : 0;
+    if (!walls.length) { markSaved(F.tr('IA: nenhum tipo de parede encontrado no projeto')); alert(F.tr('A IA não encontrou nenhuma prancha de tipos de parede (wall type details) neste projeto.')); return; }
+    if (F.framingAddWallTypes) F.framingAddWallTypes(walls);
+    const n = walls.length;
     populateWallTypeSelect();
-    markSaved(F.tr('🧠 IA: {n} tipo(s) de parede lido(s) — escolha o tipo em FERRAMENTAS e traçe', { n: n }));
-    alert(F.tr('A IA leu {n} tipo(s) de parede. Escolha o TIPO na caixa de seleção (FERRAMENTAS) e trace — a parede entra nesse tipo, com a cor dele.', { n: n }));
+    const onSheet = (r && r.sheet) ? (' (' + r.sheet + ')') : '';
+    markSaved(F.tr('🧠 IA: {n} tipos lidos' + onSheet + ' — escolha o tipo em FERRAMENTAS e traçe', { n: n }));
+    alert(F.tr('A IA leu {n} tipo(s) de parede' + onSheet + '. Escolha o TIPO na caixa de seleção (FERRAMENTAS) e trace — a parede entra nesse tipo, com a cor dele.', { n: n }));
   }
 
   // ---- caixa de seleção do TIPO de framing ativo (FERRAMENTAS) ----
