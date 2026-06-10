@@ -1284,6 +1284,25 @@ window.ConstructCount = window.ConstructCount || {};
     '✕ fechar': { en: '✕ close', es: '✕ cerrar' }
   });
 
+  // ---- vitrine da Home (herói, cards, passos) ----
+  Object.assign(DICT, {
+    'Da planta ao ': { en: 'From the plan to the ', es: 'Del plano a la ' },
+    'orçamento': { en: 'quote', es: 'cotización' },
+    'em minutos, não horas': { en: 'in minutes, not hours', es: 'en minutos, no horas' },
+    'Minutos': { en: 'Minutes', es: 'Minutos' },
+    'não horas': { en: 'not hours', es: 'no horas' },
+    'sem digitar tabela': { en: 'no typing tables', es: 'sin teclear tablas' },
+    'geminada conta dobro': { en: 'paired counts double', es: 'geminada cuenta doble' },
+    'app e documentos': { en: 'app and documents', es: 'app y documentos' },
+    'Pavimentos×': { en: 'Floors×', es: 'Pisos×' },
+    'Planta marcada': { en: 'Marked plan', es: 'Plano marcado' },
+    'Orçamento, Pedido (Excel), Proposta e Planta Marcada.': { en: 'Quote, Order (Excel), Proposal and Marked Plan.', es: 'Cotización, Pedido (Excel), Propuesta y Plano Marcado.' },
+    'PDF com as marcas coloridas + legenda em cada folha.': { en: 'PDF with colored marks + legend on every sheet.', es: 'PDF con las marcas coloreadas + leyenda en cada hoja.' },
+    'Envie a planta. A IA lê as folhas e o ': { en: 'Send the plan. The AI reads the sheets and the ', es: 'Envía el plano. La IA lee las hojas y el ' },
+    ' de esquadrias.': { en: ' of windows & doors.', es: ' de carpinterías.' },
+    'Orçamento, Pedido, Proposta e Planta Marcada — com a sua marca.': { en: 'Quote, Order, Proposal and Marked Plan — with your brand.', es: 'Cotización, Pedido, Propuesta y Plano Marcado — con tu marca.' }
+  });
+
   // índice normalizado (chaves com espaços colapsados) p/ casar HTML e chamadas JS
   const NDICT = {};
   Object.keys(DICT).forEach(k => { NDICT[norm(k)] = DICT[k]; });
