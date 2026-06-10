@@ -308,6 +308,21 @@
       nameEl.className = 'flex-1 truncate'; nameEl.innerHTML = name;
       row.appendChild(nameEl);
       row.insertAdjacentHTML('beforeend', sched + badge);
+      // bolinha por FOLHA: oculta/mostra TODAS as cores abaixo (verde=ativo, vermelho=desativado) — duplo-clique alterna
+      if (types.length) {
+        const ids = types.map(t => t.id).filter(Boolean);
+        const allHidden = ids.length > 0 && ids.every(id => S.hiddenTypes.has(id));
+        const dot = document.createElement('span');
+        dot.title = F.tr('Duplo-clique: ocultar/mostrar todas as cores desta folha');
+        dot.style.cssText = 'width:11px;height:11px;border-radius:50%;flex:0 0 auto;cursor:pointer;box-shadow:0 0 0 1px rgba(0,0,0,.25) inset;background:' + (allHidden ? '#ef4444' : '#10b981');
+        dot.addEventListener('click', (ev) => ev.stopPropagation());
+        dot.addEventListener('dblclick', (ev) => {
+          ev.stopPropagation();
+          if (allHidden) ids.forEach(id => S.hiddenTypes.delete(id)); else ids.forEach(id => S.hiddenTypes.add(id));
+          draw(); renderPagesList(); if (F._renderFramingPanel) F._renderFramingPanel();
+        });
+        row.appendChild(dot);
+      }
       const trash = document.createElement('button');
       trash.className = 'text-xs px-1 rounded hover:bg-steel-600 ' + (picked ? 'opacity-100 text-amber-300' : 'opacity-60');
       trash.textContent = picked ? '☑' : '☐'; trash.title = picked ? F.tr('desmarcar') : F.tr('selecionar');
@@ -1223,8 +1238,25 @@
     if (fr && !floors.length) { fr.floors.push({ id: 'fl1', name: F.tr('Piso 1'), height: 9 }); floors = fr.floors; }   // semente
     if (fr && !fr.activeFloor && floors[0]) fr.activeFloor = floors[0].id;
     sel.innerHTML = floors.map(f => '<option value="' + f.id + '"' + (fr && f.id === fr.activeFloor ? ' selected' : '') + '>' + (f.name || '').replace(/</g, '&lt;') + '</option>').join('');
-    const hin = $('#wsFloorH'); if (hin) { const af = floors.filter(f => f.id === (fr && fr.activeFloor))[0]; hin.value = af ? af.height : ''; }
+    populateFloorHeight();
   }
+  // altura do piso = SELETOR com as medidas lidas pela IA (A302). Ao trocar o piso, a altura vem automática.
+  function populateFloorHeight() {
+    const hin = $('#wsFloorH'); if (!hin) return;
+    const fr = F.framing; const floors = (fr && fr.floors) || [];
+    const af = floors.filter(f => f.id === (fr && fr.activeFloor))[0];
+    const cur = af ? Number(af.height) : NaN;
+    const ai = (fr && fr._heights) || [];                 // [{raw:"9'-0\"", ft:9.0}, ...]
+    const opts = []; const seen = new Set();
+    const add = (ft, raw) => { const v = Math.round(Number(ft) * 100) / 100; if (!(v > 0) || seen.has(v)) return; seen.add(v); opts.push({ ft: v, raw: raw || (v + " ft") }); };
+    ai.forEach(h => add(h.ft, h.raw));                    // medidas da IA primeiro
+    if (cur > 0) add(cur, cur + " ft");                   // garante a altura atual do piso
+    if (!opts.length) [8, 9, 10].forEach(v => add(v));    // fallback se a IA ainda não leu
+    opts.sort((a, b) => a.ft - b.ft);
+    hin.innerHTML = opts.map(o => '<option value="' + o.ft + '"' + (o.ft === cur ? ' selected' : '') + '>' + String(o.raw).replace(/</g, '&lt;') + '</option>').join('')
+      + '<option value="__custom">✎ ' + F.tr('outra…') + '</option>';
+  }
+  F._syncFloorHeight = populateFloorHeight;
   F._syncFloorSelect = populateFloorSelect;
 
   function updateSchedUI() {
@@ -1442,6 +1474,7 @@
       if (!F.toggleFramingTakeoff) { alert(F.tr('Takeoff de Framing indisponível.')); return; }
       if (F.framing && !F.framing._heights && S.prov && S.prov.readHeights) {   // lê as alturas (CLG HT) 1x
         try { const r = await S.prov.readHeights(); F.framing._heights = (r && r.heights) || []; } catch (e) { F.framing._heights = []; }
+        populateFloorHeight();   // alturas da IA entram no seletor de altura do piso
       }
       F.toggleFramingTakeoff(S.lines, S.layers);
     }); }
@@ -1700,7 +1733,13 @@
       if (F._renderFramingPanel) F._renderFramingPanel(); draw(); if (F._saveFraming) F._saveFraming();
     }); populateWallTypeSelect(); }
     { const fsel = $('#wsFloor'); if (fsel) fsel.addEventListener('change', () => { if (F.framingSetFloor) F.framingSetFloor(fsel.value); populateFloorSelect(); }); populateFloorSelect(); }
-    { const fh = $('#wsFloorH'); if (fh) fh.addEventListener('change', () => { if (F.framing && F.framingUpdateFloor) F.framingUpdateFloor(F.framing.activeFloor, { height: fh.value }); if (F._renderFramingPanel) F._renderFramingPanel(); }); }
+    { const fh = $('#wsFloorH'); if (fh) fh.addEventListener('change', () => {
+      let v = fh.value;
+      if (v === '__custom') { const r = prompt(F.tr('Altura do piso em pés (ex.: 9.1, 10):'), ''); if (r === null) { populateFloorHeight(); return; } v = parseFloat(r); if (!(v > 0)) { populateFloorHeight(); return; } }
+      if (F.framing && F.framingUpdateFloor) F.framingUpdateFloor(F.framing.activeFloor, { height: parseFloat(v) });
+      populateFloorHeight();
+      if (F._renderFramingPanel) F._renderFramingPanel();
+    }); }
     { const fa = $('#wsFloorAdd'); if (fa) fa.addEventListener('click', () => { const nm = prompt(F.tr('Nome do piso (ex.: 2nd Floor):'), ''); if (nm === null) return; const h = prompt(F.tr('Altura do piso em pés (ex.: 9.1, 10):'), '9'); if (h === null) return; if (F.framingAddFloor) F.framingAddFloor((nm || '').trim(), parseFloat(h)); populateFloorSelect(); }); }
     { const af2 = $('#wsApplyFloor'); if (af2) af2.addEventListener('click', () => {
       if (!S.lineSel || !S.lineSel.size) { markSaved(F.tr('Selecione paredes na planta primeiro')); return; }
