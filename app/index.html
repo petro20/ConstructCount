@@ -333,8 +333,9 @@
               <p class="text-steel-500 mt-3 max-w-2xl mx-auto text-lg">O ConstructCount lê a planta arquitetônica e levanta esquadrias e paredes (framing, drywall, insulation e pintura) — e entrega os documentos prontos. Veja o fluxo completo abaixo.</p>
             </div>
 
-            <!-- PASSO A PASSO -->
-            <h2 class="text-xl font-bold text-steel-800 mb-5">Passo a passo</h2>
+            <!-- TRILHA 1: JANELAS & PORTAS -->
+            <h2 class="text-xl font-bold text-steel-800 mb-1">🪟 Trilha 1 — Janelas &amp; Portas</h2>
+            <p class="text-steel-500 text-sm mb-5">O fluxo do pacote de esquadrias: a IA lê o schedule e você confere.</p>
             <div class="space-y-4 mb-14">
               <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
                 <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">1</div>
@@ -374,6 +375,20 @@
               </div>
             </div>
 
+            <!-- TRILHA 2: PAREDE COMPLETA -->
+            <h2 class="text-xl font-bold text-steel-800 mb-1">🏗️ Trilha 2 — Parede completa</h2>
+            <p class="text-steel-500 text-sm mb-5">O fluxo do pacote de parede: Framing · Drywall · Insulation · Paint, da planta ao preço de venda.</p>
+            <div class="bg-white border border-steel-200 rounded-xl p-6 shadow-sm mb-14">
+              <ol class="space-y-3 text-sm text-steel-600">
+                <li><b class="text-steel-800">1. Escopo da obra</b> — em FERRAMENTAS, ligue os ofícios que esta estimativa cobre (🏗️ Framing · 🧱 Drywall · 🧊 Insulation · 🎨 Paint). A mesma parede gera quantidades para cada escopo ligado.</li>
+                <li><b class="text-steel-800">2. Tipos de parede por IA</b> — abra a folha de partições (ex.: A301) e clique em <b>🧠 Ler tipos de parede (IA)</b>: ela cria os tipos com montante, espaçamento, plates, gypsum e isolamento. Itens com ⚠️ pedem a sua conferência — a IA pergunta, não chuta.</li>
+                <li><b class="text-steel-800">3. Pisos e alturas</b> — defina o <b>Piso:</b> ativo e a altura (lida da A302). Cada parede traçada guarda a altura do seu piso (LF × altura = SF).</li>
+                <li><b class="text-steel-800">4. Trace as paredes</b> — calibre a escala (📏), escolha o <b>Tipo:</b> e use <b>📐 Linear</b> (ou ✨ Detectar paredes por IA). O rótulo mostra o tipo e a medida, ex.: (2) 36'-2".</li>
+                <li><b class="text-steel-800">5. Takeoff e preços</b> — clique em <b>🏗️ Framing</b> na barra de status: tabela editável com Material + M.O. + sobra % + imposto → Custo → Ganho % → Venda. Defina a <b>Região</b> e use 💲 Buscar preços (IA) — você confirma tudo.</li>
+                <li><b class="text-steel-800">6. Relatórios</b> — no botão <b>📄 Relatórios</b> (add-on): orçamento ao cliente, lista de materiais, material por piso, cotação ao fornecedor, análise do proprietário, resumo técnico, planta marcada — e os editores (blocos e visual) com texto por IA.</li>
+              </ol>
+            </div>
+
             <!-- DOIS CAMINHOS -->
             <h2 class="text-xl font-bold text-steel-800 mb-5">Dois tipos de PDF</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-14">
@@ -398,19 +413,6 @@
               <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">📐</div><div class="font-semibold text-steel-800">Ortho / Snap</div><div class="text-steel-500 text-sm mt-1">Medições retas e encaixe nos pontos, para marcações precisas.</div></div>
               <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🪟</div><div class="font-semibold text-steel-800">Janela selecionada</div><div class="text-steel-500 text-sm mt-1">Painel à direita mostra e edita o tipo e a medida da marca atual.</div></div>
               <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🌐</div><div class="font-semibold text-steel-800">Idioma e unidade</div><div class="text-steel-500 text-sm mt-1">Alterne PT · EN · ES e m² / ft² na aba Configurações — vale também nos documentos.</div></div>
-            </div>
-
-            <!-- PACOTE PAREDE COMPLETA -->
-            <h2 class="text-xl font-bold text-steel-800 mb-5">Pacote Parede completa (Framing · Drywall · Insulation · Paint)</h2>
-            <div class="bg-white border border-steel-200 rounded-xl p-6 shadow-sm mb-6">
-              <ol class="space-y-3 text-sm text-steel-600">
-                <li><b class="text-steel-800">1. Escopo da obra</b> — em FERRAMENTAS, ligue os ofícios que esta estimativa cobre (🏗️ Framing · 🧱 Drywall · 🧊 Insulation · 🎨 Paint). A mesma parede gera quantidades para cada escopo ligado.</li>
-                <li><b class="text-steel-800">2. Tipos de parede por IA</b> — abra a folha de partições (ex.: A301) e clique em <b>🧠 Ler tipos de parede (IA)</b>: ela cria os tipos com montante, espaçamento, plates, gypsum e isolamento. Itens com ⚠️ pedem a sua conferência — a IA pergunta, não chuta.</li>
-                <li><b class="text-steel-800">3. Pisos e alturas</b> — defina o <b>Piso:</b> ativo e a altura (lida da A302). Cada parede traçada guarda a altura do seu piso (LF × altura = SF).</li>
-                <li><b class="text-steel-800">4. Trace as paredes</b> — calibre a escala (📏), escolha o <b>Tipo:</b> e use <b>📐 Linear</b> (ou ✨ Detectar paredes por IA). O rótulo mostra o tipo e a medida, ex.: (2) 36'-2".</li>
-                <li><b class="text-steel-800">5. Takeoff e preços</b> — clique em <b>🏗️ Framing</b> na barra de status: tabela editável com Material + M.O. + sobra % + imposto → Custo → Ganho % → Venda. Defina a <b>Região</b> e use 💲 Buscar preços (IA) — você confirma tudo.</li>
-                <li><b class="text-steel-800">6. Relatórios</b> — no botão <b>📄 Relatórios</b> (add-on): orçamento ao cliente, lista de materiais, material por piso, cotação ao fornecedor, análise do proprietário, resumo técnico, planta marcada — e os editores (blocos e visual) com texto por IA.</li>
-              </ol>
             </div>
 
             <!-- FAQ -->
@@ -1182,7 +1184,7 @@
     </div>
   </div>
 
-  <script src="js/i18n.js?v=220"></script>
+  <script src="js/i18n.js?v=221"></script>
   <script src="js/license.js?v=207"></script>
   <script src="js/calculator.js?v=216"></script>
   <script src="js/svg-engine.js?v=200"></script>
