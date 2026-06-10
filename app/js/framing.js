@@ -156,7 +156,7 @@
     var r = [];
     if (!wt) return r;
     if (wt.materialConfirmed === false) r.push(tr('Material: madeira ou metal?'));
-    if (!wt.components || wt.components.length < 3) r.push(tr('Especificação incompleta'));
+    if ((!wt.components || wt.components.length < 3) && !wt.specConfirmed) r.push(tr('Especificação incompleta'));
     return r;
   }
   F.framingWallTypeReview = wallTypeReview;
@@ -223,11 +223,12 @@
     var flagged = FR.wallTypes.map(function (wt) { return { wt: wt, reasons: wallTypeReview(wt) }; }).filter(function (x) { return x.reasons.length; });
     var reviewHTML = '';
     if (flagged.length) {
-      reviewHTML = '<div class="ft-review"><div class="ft-rh">⚠️ ' + tr('Conferência') + ' (' + flagged.length + ') — defina:</div>'
+      reviewHTML = '<div class="ft-review"><div class="ft-rh">⚠️ ' + tr('Conferência') + ' (' + flagged.length + ') — defina: <button id="ftConfAll" class="ft-confall">✓ ' + tr('Conferir specs (todos)') + '</button></div>'
         + flagged.map(function (x) {
           var mat = (x.wt.materialConfirmed === false)
-            ? '<span class="ft-matbtns"><button class="ft-mat" data-wt="' + x.wt.id + '" data-mat="wood">🪵 Wood</button><button class="ft-mat" data-wt="' + x.wt.id + '" data-mat="metal">🔩 Metal</button></span>' : '';
-          return '<div class="ft-rrow" data-wt="' + x.wt.id + '"><div class="ft-rname">' + esc(x.wt.name) + '</div><div class="ft-rreason">' + x.reasons.map(esc).join(' · ') + '</div>' + mat + '</div>';
+            ? '<button class="ft-mat" data-wt="' + x.wt.id + '" data-mat="wood">🪵 Wood</button><button class="ft-mat" data-wt="' + x.wt.id + '" data-mat="metal">🔩 Metal</button>' : '';
+          var conf = '<button class="ft-conf" data-wt="' + x.wt.id + '" title="' + tr('Revisei e está OK — limpa o aviso') + '">✓ ' + tr('Conferido') + '</button>';
+          return '<div class="ft-rrow" data-wt="' + x.wt.id + '"><div class="ft-rname">' + esc(x.wt.name) + '</div><div class="ft-rreason">' + x.reasons.map(esc).join(' · ') + '</div><div class="ft-matbtns">' + mat + conf + '</div></div>';
         }).join('') + '</div>';
     }
     if (noQty) typesHTML += '<div class="ft-type" data-wt=""><span class="ft-color" style="background:#999;border-radius:3px;width:20px;height:20px;display:inline-block"></span><span class="ft-tname">' + tr('(sem tipo)') + '</span><span class="ft-tqty">' + noQty + '×</span><span class="ft-tlf">' + noLf.toFixed(1) + ' LF</span></div>';
@@ -298,8 +299,12 @@
         if (w) { w.material = b.getAttribute('data-mat'); w.materialConfirmed = true; renderFramingTakeoff(ov); if (F._wsRedraw) F._wsRedraw(); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); persistFraming(); }
       });
     });
+    ov.querySelectorAll('.ft-conf').forEach(function (b) {
+      b.addEventListener('click', function (e) { e.stopPropagation(); var w = wtById(b.getAttribute('data-wt')); if (w) { w.specConfirmed = true; renderFramingTakeoff(ov); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); persistFraming(); } });
+    });
+    { var ca = ov.querySelector('#ftConfAll'); if (ca) ca.addEventListener('click', function (e) { e.stopPropagation(); FR.wallTypes.forEach(function (w) { w.specConfirmed = true; }); renderFramingTakeoff(ov); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); persistFraming(); }); }
     ov.querySelectorAll('.ft-rrow').forEach(function (row) {
-      row.addEventListener('click', function (e) { if (e.target && e.target.classList && e.target.classList.contains('ft-mat')) return; var id = row.getAttribute('data-wt'); if (id && wtById(id)) { FR.activeWT = id; renderFramingTakeoff(ov); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); } });
+      row.addEventListener('click', function (e) { if (e.target && e.target.classList && (e.target.classList.contains('ft-mat') || e.target.classList.contains('ft-conf'))) return; var id = row.getAttribute('data-wt'); if (id && wtById(id)) { FR.activeWT = id; renderFramingTakeoff(ov); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); } });
     });
   }
 
