@@ -22,6 +22,9 @@
     waste: { stud: 0, plateLF: 0, sheet: 0, headerLF: 0, sheathSf: 0, drywallSf: 0, drywallWrSf: 0, insulSf: 0 },    // SOBRA/perda de material (%)
     labor: { framing: 0, drywall: 0, insulation: 0 },                                    // MÃO DE OBRA — taxa por OFÍCIO, por SF
     markup: 0,                                                                            // % de GANHO (custo → venda)
+    region: '',                                                                           // REGIÃO do trabalho (cidade/estado/ZIP) — define o preço
+    sizes: {},                                                                            // tamanho padrão por material (lido pela IA)
+    priceMeta: {},                                                                        // { key: {source, date, estimate:true} } — preço = estimativa IA até confirmar
     pxPerFt: null,  // escala calibrada (px da imagem por pé)
     floors: [], activeFloor: null,   // PISOS (cada um com altura) — o traço herda a altura do piso ativo
     scope: { framing: true, drywall: true, insulation: true },   // ESCOPO da obra — definido ANTES do levantamento
@@ -202,6 +205,9 @@
     if (d.prices) FR.prices = Object.assign({ stud: 0, plateLF: 0, sheet: 0, headerLF: 0, sheathSf: 0, drywallSf: 0, drywallWrSf: 0, insulSf: 0 }, d.prices);
     if (d.waste) FR.waste = Object.assign({ stud: 0, plateLF: 0, sheet: 0, headerLF: 0, sheathSf: 0, drywallSf: 0, drywallWrSf: 0, insulSf: 0 }, d.waste);
     if (d.markup != null) FR.markup = num(d.markup);
+    if (d.region != null) FR.region = d.region;
+    if (d.sizes) FR.sizes = d.sizes;
+    if (d.priceMeta) FR.priceMeta = d.priceMeta;
     if (d.labor) FR.labor = Object.assign({ framing: 0, drywall: 0, insulation: 0 }, d.labor);
     if (d.scope) FR.scope = Object.assign({ framing: true, drywall: true, insulation: true }, d.scope);
     if (d.layerAssembly) FR.layerAssembly = d.layerAssembly;
@@ -209,7 +215,7 @@
     FR.activeFloor = d.activeFloor || (FR.floors[0] && FR.floors[0].id) || null;
     FR.activeWT = d.activeWT || (FR.wallTypes[0] && FR.wallTypes[0].id) || null;
   };
-  F._framingSnapshot = function () { return { wallTypes: FR.wallTypes, prices: FR.prices, waste: FR.waste, labor: FR.labor, markup: FR.markup, scope: FR.scope, activeWT: FR.activeWT, layerAssembly: FR.layerAssembly, floors: FR.floors, activeFloor: FR.activeFloor }; };
+  F._framingSnapshot = function () { return { wallTypes: FR.wallTypes, prices: FR.prices, waste: FR.waste, labor: FR.labor, markup: FR.markup, region: FR.region, sizes: FR.sizes, priceMeta: FR.priceMeta, scope: FR.scope, activeWT: FR.activeWT, layerAssembly: FR.layerAssembly, floors: FR.floors, activeFloor: FR.activeFloor }; };
 
   // ---- PISOS (cada um com altura) ----
   function floorById(id) { for (var i = 0; i < FR.floors.length; i++) if (FR.floors[i].id === id) return FR.floors[i]; return null; }
@@ -294,6 +300,47 @@
   function saleOf(cost) { return cost * (1 + num(FR.markup) / 100); }   // VENDA = custo × (1 + ganho%)
   F.framingPriceParts = priceParts;
   F.framingSaleOf = saleOf;
+
+  // materiais ATIVOS (por escopo) — base p/ a IA buscar tamanho + preço regional
+  function materialCatalog() {
+    var sc = FR.scope, out = [];
+    if (sc.framing) {
+      out.push({ key: 'stud', label: 'Wood/metal stud (precut)', unit: 'EA' });
+      out.push({ key: 'plateLF', label: 'Plate/track (bottom+top)', unit: 'LF' });
+      out.push({ key: 'headerLF', label: 'Header lumber', unit: 'LF' });
+      out.push({ key: 'sheathSf', label: 'Exterior sheathing (DensGlass / plywood / OSB)', unit: 'SF' });
+    }
+    if (sc.drywall) {
+      out.push({ key: 'drywallSf', label: '5/8" gypsum drywall (Type-X)', unit: 'SF' });
+      out.push({ key: 'drywallWrSf', label: 'Water-resistant drywall (mold/moisture)', unit: 'SF' });
+    }
+    if (sc.insulation) out.push({ key: 'insulSf', label: 'Batt insulation (fiberglass)', unit: 'SF' });
+    return out;
+  }
+  F.framingMaterialCatalog = materialCatalog;
+
+  // IA estima TAMANHOS + PREÇOS da REGIÃO (busca na web) → pré-preenche como ESTIMATIVA (usuário confirma)
+  F.framingFetchPrices = function (region) {
+    region = (region || FR.region || '').trim();
+    if (!region) return Promise.reject(new Error(tr('Defina a região do trabalho primeiro.')));
+    var li = (F.licenseInfo ? F.licenseInfo() : { key: '', device: '' });
+    var body = { region: region, materials: materialCatalog(), license_key: li.key || '', device: li.device || '', device_label: 'app' };
+    return fetch('https://constructcount.com/app/api/region_prices.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j && j.error ? j.error : ('HTTP ' + r.status)); return j; }); })
+      .then(function (j) {
+        (j.items || []).forEach(function (it) {
+          var k = it.key; if (k == null || FR.prices[k] === undefined) return;
+          var v = num(it.price) || ((num(it.price_low) + num(it.price_high)) / 2);
+          if (v > 0) FR.prices[k] = Math.round(v * 100) / 100;
+          if (it.size) FR.sizes[k] = String(it.size);
+          FR.priceMeta[k] = { source: it.source || j.source || '', date: it.date || j.date || '', low: num(it.price_low), high: num(it.price_high), estimate: true, note: it.note || '' };
+        });
+        FR.region = region; persistFraming();
+        return j;
+      });
+  };
+  F.framingHasEstimates = function () { return Object.keys(FR.priceMeta || {}).some(function (k) { return FR.priceMeta[k] && FR.priceMeta[k].estimate; }); };
+  F.framingConfirmPrices = function () { Object.keys(FR.priceMeta || {}).forEach(function (k) { if (FR.priceMeta[k]) FR.priceMeta[k].estimate = false; }); persistFraming(); };
 
   // select de MATERIAL por LADO da parede (mesmas opções dos dois lados)
   function sideSel(cls, val) {
@@ -383,10 +430,12 @@
       return tr1;
     }).join('') : ('<tr><td colspan="' + cols.length + '" style="text-align:center;color:#8b887f;padding:18px">' + tr('Trace paredes (📐 Linear) e atribua um tipo para o takeoff aparecer aqui.') + '</td></tr>');
 
-    // MATERIAL por item: preço $ + SOBRA %
+    // MATERIAL por item: preço $ + SOBRA % (+ tamanho lido pela IA, badge de estimativa)
     var pinM = function (idP, idW, k, lb) {
-      return '<span class="ftt-pritem"><span class="ftt-prlb">' + lb + '</span>'
-        + '<input id="' + idP + '" class="ftt-prmat" type="number" min="0" step="0.01" title="' + tr('Preço do material') + '" value="' + (FR.prices[k] || '') + '">'
+      var pm = FR.priceMeta[k], est = pm && pm.estimate, sz = FR.sizes[k] || '';
+      var ttl = tr('Preço do material') + (est ? (' — ' + tr('estimativa IA') + (pm.source ? (' (' + pm.source + ')') : '')) : '') + (sz ? (' — ' + sz) : '');
+      return '<span class="ftt-pritem"><span class="ftt-prlb">' + lb + (sz ? '<span class="ftt-przs" title="' + esc(sz) + '">' + esc(sz) + '</span>' : '') + '</span>'
+        + '<input id="' + idP + '" class="ftt-prmat' + (est ? ' is-est' : '') + '" type="number" min="0" step="0.01" title="' + esc(ttl) + '" value="' + (FR.prices[k] || '') + '">'
         + '<input id="' + idW + '" class="ftt-prwaste" type="number" min="0" step="1" title="' + tr('Sobra/perda de material (%)') + '" placeholder="%" value="' + (FR.waste[k] || '') + '"></span>';
     };
     // MÃO DE OBRA por ofício (por SF)
@@ -404,12 +453,24 @@
     var scopeChips = [['framing', '🏗️ Framing'], ['drywall', '🧱 Drywall'], ['insulation', '🧊 Insulation']]
       .map(function (s) { return '<button class="ftt-scope' + (sc[s[0]] ? ' on' : '') + '" data-scope="' + s[0] + '">' + s[1] + '</button>'; }).join('');
 
+    // barra REGIÃO + busca de preços por IA (estimativa → confirmar)
+    var anyMeta = null; Object.keys(FR.priceMeta).forEach(function (k) { var pm = FR.priceMeta[k]; if (pm && pm.estimate && !anyMeta) anyMeta = pm; });
+    var regionHTML = '<div class="ftt-region">'
+      + '<span class="ftt-reglb">📍 ' + tr('Região:') + '</span>'
+      + '<input id="ftRegion" class="ftt-reginput" placeholder="' + tr('cidade, estado ou ZIP') + '" value="' + esc(FR.region || '') + '">'
+      + '<button id="ftReadRegion" class="ftt-regbtn" title="' + tr('Ler do carimbo/endereço da planta') + '">' + tr('Ler da planta') + '</button>'
+      + '<button id="ftFetchPrices" class="ftt-regbtn ftt-regbtn-ai" title="' + tr('IA busca tamanho + preço da região (você confirma)') + '">💲 ' + tr('Buscar preços (IA)') + '</button>'
+      + (anyMeta ? ('<span class="ftt-regest">⚠️ ' + tr('Estimativa IA') + (anyMeta.source ? (' · ' + esc(anyMeta.source)) : '') + (anyMeta.date ? (' · ' + esc(anyMeta.date)) : '') + '<button id="ftConfirmPrices" class="ftt-regok">✓ ' + tr('Confirmar preços') + '</button></span>') : '')
+      + '<span id="ftPriceStatus" class="ftt-regstatus"></span>'
+      + '</div>';
+
     ov.innerHTML =
       '<div class="ftt-grip" title="' + tr('Arraste para aumentar/diminuir a tabela') + '"></div>'
       + '<div class="ftt-top"><span>🏗️ ' + tr('Takeoff de Framing') + '</span>'
       + '<span class="ftt-scopes" title="' + tr('Escopo da obra — quais ofícios o takeoff cobre') + '">' + scopeChips + '</span>'
       + '<span class="ftt-pr">' + prHTML + '</span>'
       + '<button id="ftClose" class="ft-x">✕</button></div>'
+      + regionHTML
       + confHTML
       + '<div class="ftt-tablewrap"><table class="ftt-table"><thead><tr>'
       + cols.map(function (c) { return '<th' + (c.n ? ' class="num"' : '') + '>' + c.h + '</th>'; }).join('') + '</tr></thead>'
@@ -460,12 +521,34 @@
     });
     ov.querySelectorAll('.ftt-dup').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); cloneWallType(b.getAttribute('data-wt')); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); renderFramingTakeoff(ov); }); });
     [['ftPrStud', 'stud'], ['ftPrPlate', 'plateLF'], ['ftPrSheath', 'sheathSf'], ['ftPrDry', 'drywallSf'], ['ftPrDryWr', 'drywallWrSf'], ['ftPrHeader', 'headerLF'], ['ftPrInsul', 'insulSf']].forEach(function (pr) {
-      var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('change', function () { FR.prices[pr[1]] = num(inp.value); renderFramingTakeoff(ov); persistFraming(); });
+      var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('change', function () { FR.prices[pr[1]] = num(inp.value); if (FR.priceMeta[pr[1]]) FR.priceMeta[pr[1]].estimate = false; renderFramingTakeoff(ov); persistFraming(); });
     });
     [['ftWsStud', 'stud'], ['ftWsPlate', 'plateLF'], ['ftWsSheath', 'sheathSf'], ['ftWsDry', 'drywallSf'], ['ftWsDryWr', 'drywallWrSf'], ['ftWsHeader', 'headerLF'], ['ftWsInsul', 'insulSf']].forEach(function (pr) {
       var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('change', function () { FR.waste[pr[1]] = num(inp.value); renderFramingTakeoff(ov); persistFraming(); });
     });
     { var mk = ov.querySelector('#ftMarkup'); if (mk) mk.addEventListener('change', function () { FR.markup = num(mk.value); renderFramingTakeoff(ov); persistFraming(); }); }
+    // REGIÃO + busca de preços (IA)
+    { var rg = ov.querySelector('#ftRegion'); if (rg) rg.addEventListener('change', function () { FR.region = rg.value.trim(); persistFraming(); }); }
+    { var rr = ov.querySelector('#ftReadRegion'); if (rr) rr.addEventListener('click', function () {
+      var st = ov.querySelector('#ftPriceStatus');
+      if (!(F._readRegion)) { if (st) st.textContent = tr('Leitura da planta só no app desktop.'); return; }
+      if (st) st.textContent = tr('Lendo a região da planta…');
+      F._readRegion().then(function (r) {
+        var reg = (r && r.region) || ''; if (reg) { FR.region = reg; persistFraming(); }
+        renderFramingTakeoff(ov);
+        var s2 = ov.querySelector('#ftPriceStatus'); if (s2) s2.textContent = reg ? (tr('Região: ') + reg) : tr('Não achei o endereço na planta — digite a região.');
+      }).catch(function () { var s2 = ov.querySelector('#ftPriceStatus'); if (s2) s2.textContent = tr('Falha ao ler a região.'); });
+    }); }
+    { var fp = ov.querySelector('#ftFetchPrices'); if (fp) fp.addEventListener('click', function () {
+      var st = ov.querySelector('#ftPriceStatus');
+      var reg = (ov.querySelector('#ftRegion') || {}).value || FR.region;
+      if (!reg || !reg.trim()) { if (st) st.textContent = tr('Defina a região primeiro.'); return; }
+      fp.disabled = true; if (st) st.textContent = tr('IA buscando tamanhos e preços da região…');
+      F.framingFetchPrices(reg).then(function () { renderFramingTakeoff(ov); }).catch(function (e) {
+        fp.disabled = false; var s2 = ov.querySelector('#ftPriceStatus'); if (s2) s2.textContent = tr('Não consegui buscar preços: ') + (e && e.message ? e.message : '');
+      });
+    }); }
+    { var cf = ov.querySelector('#ftConfirmPrices'); if (cf) cf.addEventListener('click', function () { F.framingConfirmPrices(); renderFramingTakeoff(ov); }); }
     [['ftLbFraming', 'framing'], ['ftLbDrywall', 'drywall'], ['ftLbInsul', 'insulation']].forEach(function (pr) {
       var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('change', function () { FR.labor[pr[1]] = num(inp.value); renderFramingTakeoff(ov); persistFraming(); });
     });

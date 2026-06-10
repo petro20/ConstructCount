@@ -1257,6 +1257,8 @@
       + '<option value="__custom">✎ ' + F.tr('outra…') + '</option>';
   }
   F._syncFloorHeight = populateFloorHeight;
+  // região do trabalho (lida do carimbo da planta) — usada pela busca de preços da IA
+  F._readRegion = function () { return (S.prov && S.prov.readRegion) ? S.prov.readRegion() : Promise.resolve(null); };
 
   // ESCOPO da obra (Framing / Drywall / Insulation) — definido ANTES do levantamento
   function populateScope() {
