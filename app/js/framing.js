@@ -109,7 +109,10 @@
         sheathSides: (w.sheathing_sides != null ? parseInt(w.sheathing_sides, 10) : 2),
         color: COLORS[FR.wallTypes.length % COLORS.length],
         ai: true, typeId: w.type_id || '', sheathing: w.sheathing || '', insulation: w.insulation || '',
-        components: Array.isArray(w.components) ? w.components : []
+        components: Array.isArray(w.components) ? w.components : [],
+        srcMaterial: w.material,                            // 'wood' | 'metal' | 'both' (original lido)
+        materialConfirmed: (w.material !== 'both'),         // 'both' → precisa você definir
+        heightSet: false                                    // altura ainda não confirmada (da elevação)
       };
       var ix = -1;
       for (var i = 0; i < FR.wallTypes.length; i++) if (FR.wallTypes[i].id === id) { ix = i; break; }
@@ -130,6 +133,17 @@
     FR.activeWT = d.activeWT || (FR.wallTypes[0] && FR.wallTypes[0].id) || null;
   };
   F._framingSnapshot = function () { return { wallTypes: FR.wallTypes, prices: FR.prices, activeWT: FR.activeWT, layerAssembly: FR.layerAssembly }; };
+
+  // CONFERÊNCIA: a IA pergunta quando tem dúvida (projetos diferem). Retorna os motivos.
+  function wallTypeReview(wt) {
+    var r = [];
+    if (!wt) return r;
+    if (wt.materialConfirmed === false) r.push(tr('Material: madeira ou metal?'));
+    if (wt.heightSet === false) r.push(tr('Altura não definida'));
+    if (!wt.components || wt.components.length < 3) r.push(tr('Especificação incompleta'));
+    return r;
+  }
+  F.framingWallTypeReview = wallTypeReview;
 
   FR.activeWT = FR.activeWT || null;   // tipo de parede ATIVO (o que você traça)
 
@@ -165,12 +179,24 @@
 
     var typesHTML = FR.wallTypes.map(function (wt) {
       var g = byType[wt.id] || { lf: 0, qty: 0 }, act = (wt.id === FR.activeWT);
+      var warn = wallTypeReview(wt).length ? '<span title="' + tr('Conferir') + '">⚠️ </span>' : '';
       return '<div class="ft-type' + (act ? ' is-active' : '') + '" data-wt="' + wt.id + '">'
         + '<input class="ft-color" type="color" value="' + (wt.color || '#3b82f6') + '" title="' + tr('Cor do tipo') + '">'
-        + '<span class="ft-tname">' + esc(wt.name) + '</span>'
+        + '<span class="ft-tname">' + warn + esc(wt.name) + '</span>'
         + '<span class="ft-tqty">' + (g.qty ? (g.qty + '×') : '') + '</span>'
         + '<span class="ft-tlf">' + g.lf.toFixed(1) + ' LF</span></div>';
     }).join('');
+    // CONFERÊNCIA — tipos que precisam da sua definição
+    var flagged = FR.wallTypes.map(function (wt) { return { wt: wt, reasons: wallTypeReview(wt) }; }).filter(function (x) { return x.reasons.length; });
+    var reviewHTML = '';
+    if (flagged.length) {
+      reviewHTML = '<div class="ft-review"><div class="ft-rh">⚠️ ' + tr('Conferência') + ' (' + flagged.length + ') — defina:</div>'
+        + flagged.map(function (x) {
+          var mat = (x.wt.materialConfirmed === false)
+            ? '<span class="ft-matbtns"><button class="ft-mat" data-wt="' + x.wt.id + '" data-mat="wood">🪵 Wood</button><button class="ft-mat" data-wt="' + x.wt.id + '" data-mat="metal">🔩 Metal</button></span>' : '';
+          return '<div class="ft-rrow" data-wt="' + x.wt.id + '"><div class="ft-rname">' + esc(x.wt.name) + '</div><div class="ft-rreason">' + x.reasons.map(esc).join(' · ') + '</div>' + mat + '</div>';
+        }).join('') + '</div>';
+    }
     if (noQty) typesHTML += '<div class="ft-type" data-wt=""><span class="ft-color" style="background:#999;border-radius:3px;width:20px;height:20px;display:inline-block"></span><span class="ft-tname">' + tr('(sem tipo)') + '</span><span class="ft-tqty">' + noQty + '×</span><span class="ft-tlf">' + noLf.toFixed(1) + ' LF</span></div>';
 
     function card(h, inner) { return '<div class="ft-card"><div class="ft-h">' + h + '</div>' + inner + '</div>'; }
@@ -198,6 +224,7 @@
     ov.innerHTML =
       '<div class="ft-top"><span>🏗️ ' + tr('Takeoff de Framing') + '</span><button id="ftClose" class="ft-x">✕</button></div>'
       + '<div class="ft-body">'
+      + reviewHTML
       + '<div class="ft-sec">' + tr('Tipos — clique p/ ativar e traçar') + '</div>'
       + '<div class="ft-types">' + typesHTML + '</div>'
       + (specHTML ? ('<div class="ft-sec" style="margin-top:14px">' + tr('Especificação · ') + esc(activeName) + '</div>' + specHTML) : '')
@@ -226,9 +253,19 @@
       var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('input', function () { FR.prices[pr[1]] = num(inp.value); var mm = F.framingCompute(); var t = ov.querySelector('#ftTotal'); if (t) t.textContent = money(priceTotal(mm)); persistFraming(); });
     });
     var hin = ov.querySelector('#ftHeight');
-    if (hin) hin.addEventListener('change', function () { var w = wtById(FR.activeWT); if (w) { w.height = num(hin.value) || 9; renderFramingTakeoff(ov); persistFraming(); } });
+    if (hin) hin.addEventListener('change', function () { var w = wtById(FR.activeWT); if (w) { w.height = num(hin.value) || 9; w.heightSet = true; renderFramingTakeoff(ov); persistFraming(); } });
     var hpk = ov.querySelector('#ftHeightPick');
-    if (hpk) hpk.addEventListener('change', function () { var v = parseFloat(hpk.value); var w = wtById(FR.activeWT); if (w && v > 0) { w.height = Math.round(v * 100) / 100; renderFramingTakeoff(ov); persistFraming(); } });
+    if (hpk) hpk.addEventListener('change', function () { var v = parseFloat(hpk.value); var w = wtById(FR.activeWT); if (w && v > 0) { w.height = Math.round(v * 100) / 100; w.heightSet = true; renderFramingTakeoff(ov); persistFraming(); } });
+    // CONFERÊNCIA: botões wood/metal + clique no item ativa o tipo
+    ov.querySelectorAll('.ft-mat').forEach(function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation(); var w = wtById(b.getAttribute('data-wt'));
+        if (w) { w.material = b.getAttribute('data-mat'); w.materialConfirmed = true; renderFramingTakeoff(ov); if (F._wsRedraw) F._wsRedraw(); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); persistFraming(); }
+      });
+    });
+    ov.querySelectorAll('.ft-rrow').forEach(function (row) {
+      row.addEventListener('click', function (e) { if (e.target && e.target.classList && e.target.classList.contains('ft-mat')) return; var id = row.getAttribute('data-wt'); if (id && wtById(id)) { FR.activeWT = id; renderFramingTakeoff(ov); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); } });
+    });
   }
 
   /* =======================================================================

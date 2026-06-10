@@ -1191,7 +1191,7 @@
     const sel = $('#wsWallType'); if (!sel) return;
     const fr = F.framing; const types = (fr && fr.wallTypes) || [];
     if (fr && !fr.activeWT && types[0]) fr.activeWT = types[0].id;
-    sel.innerHTML = types.map(t => '<option value="' + t.id + '"' + (fr && t.id === fr.activeWT ? ' selected' : '') + '>' + (t.name || '').replace(/</g, '&lt;') + '</option>').join('');
+    sel.innerHTML = types.map(t => { const warn = (F.framingWallTypeReview && F.framingWallTypeReview(t).length) ? '⚠️ ' : ''; return '<option value="' + t.id + '"' + (fr && t.id === fr.activeWT ? ' selected' : '') + '>' + warn + (t.name || '').replace(/</g, '&lt;') + '</option>'; }).join('');
     updateWallTypeSwatch();
   }
   F._syncWallTypeSelect = populateWallTypeSelect;

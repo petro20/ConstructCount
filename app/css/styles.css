@@ -358,6 +358,16 @@ button:focus-visible {
 #frTakeoff .ft-tname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; font-size: 12.5px; }
 #frTakeoff .ft-tqty { color: #8b887f; font-size: 12px; font-variant-numeric: tabular-nums; }
 #frTakeoff .ft-tlf { color: #2a2822; font-weight: 700; font-size: 12.5px; font-variant-numeric: tabular-nums; min-width: 58px; text-align: right; }
+/* card de CONFERÊNCIA (IA pergunta quando tem dúvida) */
+#frTakeoff .ft-review { background: #fff8e6; border: 1px solid #f3d98a; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+#frTakeoff .ft-rh { font-size: 12px; font-weight: 800; color: #8a6d10; margin-bottom: 7px; }
+#frTakeoff .ft-rrow { padding: 6px 0; border-top: 1px solid #f0e3b8; cursor: pointer; }
+#frTakeoff .ft-rrow:first-of-type { border-top: 0; }
+#frTakeoff .ft-rname { font-weight: 600; font-size: 12.5px; color: #2a2822; }
+#frTakeoff .ft-rreason { font-size: 11.5px; color: #a06b12; }
+#frTakeoff .ft-matbtns { display: inline-flex; gap: 6px; margin-top: 5px; }
+#frTakeoff .ft-mat { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 7px; border: 1px solid #d9d7d1; background: #fff; cursor: pointer; }
+#frTakeoff .ft-mat:hover { background: #f4f3ef; border-color: #c4881a; }
 #frTakeoff .ft-asm { max-width: 120px; border: 1px solid #d9d7d1; border-radius: 6px; padding: 2px 4px; font-size: 12px; }
 #frTakeoff .ft-card { background: #faf9f6; border: 1px solid #ececea; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
 #frTakeoff .ft-h { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #8b887f; margin-bottom: 6px; }
