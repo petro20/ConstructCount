@@ -16,7 +16,7 @@
     scale: 1, ox: 0, oy: 0, dragging: false, moved: false, lastX: 0, lastY: 0,
     countMode: false, autoMode: false, delMode: false, busy: false, highlight: null,
     calibMode: false, measMode: false, mmPerPx: null, clickA: null, measures: [],
-    lineMode: false, linePts: [], lines: [], lineSel: new Set(),   // LINEAR (traço contínuo, por camada/trade) + seleção
+    lineMode: false, linePts: [], lines: [], lineSel: new Set(), hiddenTypes: new Set(),   // LINEAR + seleção + tipos ocultos
     snap: false, ortho: false, hover: null, snapData: null, lastMeas: null, dragMeas: null, selSet: null, curX: null, curY: null,
     marquee: null, maybeMarquee: false, marqStart: null, marqMods: null, marqCrossing: false, selMarks: null,
     autoDragStart: null, autoSample: null, autoRegion: null,   // área de busca do Auto Count (arraste)
@@ -35,7 +35,7 @@
     S.onConsolidate = opts.onConsolidate || null;
     S.labelIdx = {}; S.countMode = false; S.autoMode = false; S.delMode = false;
     S.calibMode = false; S.measMode = false; S.clickA = null; S.measures = [];
-    S.lineMode = false; S.linePts = []; S.lines = []; S.lineSel = new Set();
+    S.lineMode = false; S.linePts = []; S.lines = []; S.lineSel = new Set(); S.hiddenTypes = new Set();
     S.schedulePages = (opts.schedulePages || []).slice();
     S.sections = (opts.sections && opts.sections.length) ? opts.sections.slice() : ['Geral'];
     S.activeSection = opts.activeSection || S.sections[0];
@@ -318,10 +318,15 @@
       // FILHOS: tipos de parede levantados nesta folha (cor + LF) — clique ativa o tipo
       if (types.length && S.pageExp.has(p.page)) {
         types.forEach(t => {
+          const hidden = t.id && S.hiddenTypes && S.hiddenTypes.has(t.id);
           const c = document.createElement('div');
-          c.className = 'pl-8 pr-2 py-1 flex items-center gap-2 text-sm cursor-pointer hover:bg-steel-700/60';
-          const sw = document.createElement('span'); sw.style.cssText = 'width:12px;height:12px;border-radius:3px;flex:0 0 auto;background:' + t.color;
-          const nm = document.createElement('span'); nm.className = 'flex-1 truncate text-steel-200'; nm.textContent = t.name;
+          c.className = 'pl-8 pr-2 py-1 flex items-center gap-2 text-sm cursor-pointer hover:bg-steel-700/60' + (hidden ? ' opacity-40' : '');
+          const sw = document.createElement('span');
+          sw.title = F.tr('Duplo-clique p/ ocultar/mostrar este tipo');
+          sw.style.cssText = 'width:12px;height:12px;border-radius:3px;flex:0 0 auto;cursor:pointer;' + (hidden ? ('background:transparent;border:2px solid ' + t.color) : ('background:' + t.color));
+          sw.addEventListener('click', (ev) => ev.stopPropagation());                      // 1 clique na cor não ativa
+          sw.addEventListener('dblclick', (ev) => { ev.stopPropagation(); if (!t.id) return; S.hiddenTypes.has(t.id) ? S.hiddenTypes.delete(t.id) : S.hiddenTypes.add(t.id); draw(); renderPagesList(); });
+          const nm = document.createElement('span'); nm.className = 'flex-1 truncate text-steel-200' + (hidden ? ' line-through' : ''); nm.textContent = t.name;
           const q = document.createElement('span'); q.className = 'text-steel-300 tabular-nums text-xs'; q.textContent = t.lf.toFixed(1) + ' LF';
           c.appendChild(sw); c.appendChild(nm); c.appendChild(q);
           c.addEventListener('click', () => { if (F.framing) F.framing.activeWT = t.id; if (F._syncWallTypeSelect) F._syncWallTypeSelect(); if (p.page !== S.page) selectPage(p.page, {}); else if (F._wsRedraw) F._wsRedraw(); });
@@ -619,6 +624,7 @@
     // LINEAR — traços contínuos da folha atual (cor = camada/trade)
     (S.lines || []).forEach(ln => {
       if (ln.page !== S.page || !layerVisible(ln.layer)) return;
+      if (ln.wt && S.hiddenTypes && S.hiddenTypes.has(ln.wt)) return;   // tipo oculto (duplo-clique na cor)
       const fr = F.framing, wt = (ln.wt && fr && fr.wallTypes) ? fr.wallTypes.filter(w => w.id === ln.wt)[0] : null;
       const lay = layerById(ln.layer), col = (wt && wt.color) || (lay && lay.color) || '#e3b653';   // cor do TIPO; senão da camada
       const seld = S.lineSel && S.lineSel.has(ln);
