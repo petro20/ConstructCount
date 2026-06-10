@@ -487,6 +487,11 @@ button:focus-visible {
 .fre-btn { font: 600 12.5px Inter, system-ui; padding: 6px 12px; border-radius: 8px; border: 1px solid #4a463f; background: #34312b; color: #e5e7eb; cursor: pointer; }
 .fre-btn:hover { border-color: #c4881a; }
 .fre-btn-primary { background: #d9a02a; border-color: #e7b53f; color: #2a2208; }
+.fre-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 3px; padding: 6px 12px; background: #2f2c27; border-top: 1px solid #413d36; }
+.fre-tb { min-width: 28px; height: 26px; padding: 0 7px; border-radius: 6px; border: 1px solid #4a463f; background: #3a362f; color: #e5e7eb; font: 600 12.5px Inter, system-ui; cursor: pointer; }
+.fre-tb:hover { border-color: #c4881a; background: #46412f; }
+.fre-tb.fre-sw2 { width: 22px; min-width: 22px; padding: 0; border: 1px solid rgba(255,255,255,.3); }
+.fre-tbsep { width: 1px; height: 18px; background: #4a463f; margin: 0 4px; }
 .fre-body { flex: 1; display: flex; min-height: 0; }
 .fre-palette { width: 210px; flex: 0 0 auto; background: #e9eaee; border-right: 1px solid #d5d7dd; padding: 10px; overflow-y: auto; }
 .fre-pal-h { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; margin-bottom: 8px; }

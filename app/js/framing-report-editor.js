@@ -135,6 +135,40 @@
   }
   function blockLabel(type) { var f = CATALOG.filter(function (c) { return c.type === type; })[0]; return f ? f.label : type; }
 
+  // barra de formatação (rich text) — atua na seleção dentro do documento editável
+  function buildToolbar(modal, doc) {
+    try { document.execCommand('styleWithCSS', false, true); } catch (e) {}
+    var br = F.reportBrand ? F.reportBrand() : { accent: '#2c476a' };
+    var bar = document.createElement('div'); bar.className = 'fre-toolbar no-print';
+    var exec = function (cmd, val) { try { document.execCommand(cmd, false, val); } catch (e) {} };
+    var btn = function (html, fn, title) { var b = document.createElement('button'); b.className = 'fre-tb'; b.innerHTML = html; if (title) b.title = title; b.addEventListener('mousedown', function (e) { e.preventDefault(); fn(); }); return b; };
+    var sep = function () { var s = document.createElement('span'); s.className = 'fre-tbsep'; return s; };
+    bar.appendChild(btn('<b>B</b>', function () { exec('bold'); }, tr('Negrito')));
+    bar.appendChild(btn('<i>I</i>', function () { exec('italic'); }, tr('Itálico')));
+    bar.appendChild(btn('<u>U</u>', function () { exec('underline'); }, tr('Sublinhado')));
+    bar.appendChild(sep());
+    bar.appendChild(btn('T', function () { exec('formatBlock', 'H2'); }, tr('Título')));
+    bar.appendChild(btn('A+', function () { exec('fontSize', '5'); }, tr('Maior')));
+    bar.appendChild(btn('A', function () { exec('fontSize', '3'); }, tr('Normal')));
+    bar.appendChild(btn('a', function () { exec('fontSize', '2'); }, tr('Menor')));
+    bar.appendChild(sep());
+    bar.appendChild(btn('⬅', function () { exec('justifyLeft'); }, tr('Esquerda')));
+    bar.appendChild(btn('⬌', function () { exec('justifyCenter'); }, tr('Centro')));
+    bar.appendChild(btn('➡', function () { exec('justifyRight'); }, tr('Direita')));
+    bar.appendChild(sep());
+    bar.appendChild(btn('•', function () { exec('insertUnorderedList'); }, tr('Lista')));
+    bar.appendChild(btn('1.', function () { exec('insertOrderedList'); }, tr('Lista numerada')));
+    bar.appendChild(sep());
+    ['#1f2430', '#6b7280', '#b91c1c', '#157347', br.accent || '#2c476a'].forEach(function (c) {
+      var s = document.createElement('button'); s.className = 'fre-tb fre-sw2'; s.style.background = c; s.title = tr('Cor do texto');
+      s.addEventListener('mousedown', function (e) { e.preventDefault(); exec('foreColor', c); }); bar.appendChild(s);
+    });
+    bar.appendChild(sep());
+    bar.appendChild(btn('⌫', function () { exec('removeFormat'); }, tr('Limpar formatação')));
+    var shell = modal.querySelector('.fre-shell'), body = modal.querySelector('.fre-body');
+    if (shell && body) shell.insertBefore(bar, body);
+  }
+
   F.openFramingReportEditor = function () {
     if (!F.framingReportData) return;
     var d = F.framingReportData();
@@ -159,6 +193,7 @@
     var pal = modal.querySelector('#frePalList');
     CATALOG.forEach(function (c) { var b = document.createElement('button'); b.className = 'fre-pal-item'; b.textContent = '+ ' + c.label; b.addEventListener('click', function () { st.tpl.blocks.push({ type: c.type }); renderDoc(doc, d); doc.scrollTop = doc.scrollHeight; }); pal.appendChild(b); });
     renderDoc(doc, d);
+    buildToolbar(modal, doc);
     modal.querySelector('#freClose').addEventListener('click', function () { modal.remove(); });
     modal.querySelector('#freSave').addEventListener('click', function () { var ok = saveTpl(st.tpl); if (F.flashExport) F.flashExport(ok ? ('✓ ' + tr('Modelo salvo')) : ('⚠️ ' + tr('Modelo grande demais p/ salvar — reduza/retire fotos (o documento atual segue ok p/ imprimir).'))); });
     modal.querySelector('#freReset').addEventListener('click', function () { st.tpl = defaultTpl(); renderDoc(doc, d); });
