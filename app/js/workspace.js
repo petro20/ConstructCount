@@ -582,7 +582,8 @@
     // LINEAR — traços contínuos da folha atual (cor = camada/trade)
     (S.lines || []).forEach(ln => {
       if (ln.page !== S.page || !layerVisible(ln.layer)) return;
-      const lay = layerById(ln.layer), col = (lay && lay.color) || '#e3b653';
+      const fr = F.framing, wt = (ln.wt && fr && fr.wallTypes) ? fr.wallTypes.filter(w => w.id === ln.wt)[0] : null;
+      const lay = layerById(ln.layer), col = (wt && wt.color) || (lay && lay.color) || '#e3b653';   // cor do TIPO; senão da camada
       const seld = S.lineSel && S.lineSel.has(ln);
       ctx.lineWidth = seld ? 5 : 3; ctx.strokeStyle = seld ? '#ef4444' : col; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       ctx.beginPath();
@@ -978,13 +979,15 @@
     }
     if (S.linePts.length >= 2 && S.mmPerPx) {
       let px = 0; for (let i = 1; i < S.linePts.length; i++) px += Math.hypot(S.linePts[i][0] - S.linePts[i - 1][0], S.linePts[i][1] - S.linePts[i - 1][1]);
-      S.lines.push({ path: S.linePts.slice(), mm: px * S.mmPerPx, layer: S.activeLayer, page: S.page });
+      S.lines.push({ path: S.linePts.slice(), mm: px * S.mmPerPx, layer: S.activeLayer, page: S.page, wt: (F.framing && F.framing.activeWT) || null });
       markSaved(F.tr('Linear: {ft}', { ft: mmToFtIn(px * S.mmPerPx) }));
       saveLines();
+      if (F._renderFramingPanel) F._renderFramingPanel();
     }
     S.linePts = []; draw();
   }
   F._framingLines = () => S.lines;   // o pacote Framing lê os traços daqui
+  F._wsRedraw = () => { try { draw(); } catch (e) {} };   // o painel de Framing pede redraw (cor por tipo)
 
   // seleção de traços Linear (igual às marcas do Contar): clicar seleciona, Del apaga
   function distToSeg(px, py, ax, ay, bx, by) {
@@ -1044,10 +1047,10 @@
     let added = 0;
     walls.forEach(w => {
       const px = Math.hypot(w[2] - w[0], w[3] - w[1]);
-      S.lines.push({ path: [[w[0], w[1]], [w[2], w[3]]], mm: S.mmPerPx ? px * S.mmPerPx : 0, layer: S.activeLayer, page: S.page, ai: true });
+      S.lines.push({ path: [[w[0], w[1]], [w[2], w[3]]], mm: S.mmPerPx ? px * S.mmPerPx : 0, layer: S.activeLayer, page: S.page, ai: true, wt: (F.framing && F.framing.activeWT) || null });
       added++;
     });
-    saveLines(); draw();
+    saveLines(); draw(); if (F._renderFramingPanel) F._renderFramingPanel();
     markSaved(F.tr('✨ IA: +{n} paredes na camada ativa — revise: desligue o Linear, clique na linha e Del p/ apagar as erradas', { n: added }));
   }
 

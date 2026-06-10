@@ -348,6 +348,16 @@ button:focus-visible {
 #frTakeoff .ft-dot { width: 11px; height: 11px; border-radius: 3px; flex: 0 0 auto; }
 #frTakeoff .ft-lname { flex: 1; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #frTakeoff .ft-lf { color: #46433c; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* lista de TIPOS (Takeoff Summary, clicável) */
+#frTakeoff .ft-types { border: 1px solid #ececea; border-radius: 10px; overflow: hidden; }
+#frTakeoff .ft-type { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-bottom: 1px solid #f2f1ee; cursor: pointer; transition: background .12s; }
+#frTakeoff .ft-type:last-child { border-bottom: 0; }
+#frTakeoff .ft-type:hover { background: #faf9f6; }
+#frTakeoff .ft-type.is-active { background: #fbf0d6; box-shadow: inset 3px 0 0 #d9a02a; }
+#frTakeoff .ft-color { width: 20px; height: 20px; border: 0; padding: 0; background: none; border-radius: 4px; cursor: pointer; flex: 0 0 auto; }
+#frTakeoff .ft-tname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; font-size: 12.5px; }
+#frTakeoff .ft-tqty { color: #8b887f; font-size: 12px; font-variant-numeric: tabular-nums; }
+#frTakeoff .ft-tlf { color: #2a2822; font-weight: 700; font-size: 12.5px; font-variant-numeric: tabular-nums; min-width: 58px; text-align: right; }
 #frTakeoff .ft-asm { max-width: 120px; border: 1px solid #d9d7d1; border-radius: 6px; padding: 2px 4px; font-size: 12px; }
 #frTakeoff .ft-card { background: #faf9f6; border: 1px solid #ececea; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
 #frTakeoff .ft-h { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #8b887f; margin-bottom: 6px; }

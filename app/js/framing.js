@@ -115,41 +115,47 @@
     return added;
   };
 
+  FR.activeWT = FR.activeWT || null;   // tipo de parede ATIVO (o que você traça)
+
   F.toggleFramingTakeoff = function (lines, layers) {
+    FR._layers = layers || [];
     var ws = document.getElementById('workspace') || document.body;
     var ov = document.getElementById('frTakeoff');
     if (ov && ov.style.display !== 'none') { ov.style.display = 'none'; return; }
     if (!ov) {
       ov = document.createElement('div'); ov.id = 'frTakeoff';
-      ov.style.cssText = 'position:absolute;top:0;right:0;bottom:24px;width:372px;z-index:46;background:#fff;border-left:1px solid #d9d7d1;box-shadow:-10px 0 30px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden';
+      ov.style.cssText = 'position:absolute;top:0;right:0;bottom:24px;width:380px;z-index:46;background:#fff;border-left:1px solid #d9d7d1;box-shadow:-10px 0 30px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden';
       ws.appendChild(ov);
     }
     ov.style.display = 'flex';
-    renderFramingTakeoff(ov, lines || [], layers || []);
+    renderFramingTakeoff(ov);
   };
+  F._renderFramingPanel = function () { var ov = document.getElementById('frTakeoff'); if (ov && ov.style.display !== 'none') renderFramingTakeoff(ov); };
 
-  function renderFramingTakeoff(ov, lines, layers) {
-    var byLayer = {};
-    lines.forEach(function (ln) { (byLayer[ln.layer] = byLayer[ln.layer] || []).push(ln); });
-    var nameOf = function (id) { var l = (layers || []).filter(function (x) { return x.id === id; })[0]; return l ? l.name : (id || 'default'); };
-    var colorOf = function (id) { var l = (layers || []).filter(function (x) { return x.id === id; })[0]; return (l && l.color) || '#999'; };
+  // PlanSwift Takeoff Summary — lista de TIPOS (cor + qtd + LF), clique ativa e traça
+  function renderFramingTakeoff(ov) {
+    var lines = (F._framingLines ? F._framingLines() : []) || [];
+    if ((!FR.activeWT || !wtById(FR.activeWT)) && FR.wallTypes[0]) FR.activeWT = FR.wallTypes[0].id;
 
-    FR.segments = []; var lids = Object.keys(byLayer), lfBy = {};
-    lids.forEach(function (lid) {
-      if (!FR.layerAssembly[lid]) FR.layerAssembly[lid] = autoAssembly(nameOf(lid));
-      var lf = 0;
-      byLayer[lid].forEach(function (ln) { var ft = ftFromMm(ln.mm); lf += ft; FR.segments.push({ id: uid('s'), wtId: FR.layerAssembly[lid], len: ft, qty: 1 }); });
-      lfBy[lid] = lf;
+    var byType = {}, noLf = 0, noQty = 0;
+    lines.forEach(function (ln) {
+      if (!ln.wt) { noLf += ftFromMm(ln.mm); noQty++; return; }
+      var g = byType[ln.wt] = byType[ln.wt] || { lf: 0, qty: 0 };
+      g.lf += ftFromMm(ln.mm); g.qty++;
     });
+    FR.segments = lines.filter(function (l) { return l.wt === FR.activeWT; }).map(function (l) { return { id: uid('s'), wtId: FR.activeWT, len: ftFromMm(l.mm), qty: 1 }; });
     var m = F.framingCompute();
     var lf = function (v) { return v.toFixed(1) + ' LF'; };
-    var asmOpt = function (sel) { return FR.wallTypes.map(function (wt) { return '<option value="' + wt.id + '"' + (wt.id === sel ? ' selected' : '') + '>' + esc(wt.name) + '</option>'; }).join(''); };
 
-    var layerHTML = lids.length ? lids.map(function (lid) {
-      return '<div class="ft-lay" data-lid="' + lid + '"><span class="ft-dot" style="background:' + colorOf(lid) + '"></span>'
-        + '<span class="ft-lname">' + esc(nameOf(lid)) + '</span><span class="ft-lf">' + lfBy[lid].toFixed(1) + ' LF</span>'
-        + '<select class="ft-asm">' + asmOpt(FR.layerAssembly[lid]) + '</select></div>';
-    }).join('') : ('<div class="ft-empty">' + tr('Nenhum traço Linear ainda. Use 📐 Linear na camada do trade.') + '</div>');
+    var typesHTML = FR.wallTypes.map(function (wt) {
+      var g = byType[wt.id] || { lf: 0, qty: 0 }, act = (wt.id === FR.activeWT);
+      return '<div class="ft-type' + (act ? ' is-active' : '') + '" data-wt="' + wt.id + '">'
+        + '<input class="ft-color" type="color" value="' + (wt.color || '#3b82f6') + '" title="' + tr('Cor do tipo') + '">'
+        + '<span class="ft-tname">' + esc(wt.name) + '</span>'
+        + '<span class="ft-tqty">' + (g.qty ? (g.qty + '×') : '') + '</span>'
+        + '<span class="ft-tlf">' + g.lf.toFixed(1) + ' LF</span></div>';
+    }).join('');
+    if (noQty) typesHTML += '<div class="ft-type" data-wt=""><span class="ft-color" style="background:#999;border-radius:3px;width:20px;height:20px;display:inline-block"></span><span class="ft-tname">' + tr('(sem tipo)') + '</span><span class="ft-tqty">' + noQty + '×</span><span class="ft-tlf">' + noLf.toFixed(1) + ' LF</span></div>';
 
     function card(h, inner) { return '<div class="ft-card"><div class="ft-h">' + h + '</div>' + inner + '</div>'; }
     function rowsObj(obj, unit, isLf) { var ks = Object.keys(obj); if (!ks.length) return '<div class="ft-part"><span>—</span></div>'; return ks.map(function (k) { return '<div class="ft-part"><span>' + esc(k) + '</span><b>' + (isLf ? obj[k].toFixed(1) : obj[k]) + ' ' + unit + '</b></div>'; }).join(''); }
@@ -159,24 +165,32 @@
     if (m.bridgingLF > 0 || m.blockingLF > 0) partsHTML += card(tr('Travamento'), (m.bridgingLF > 0 ? '<div class="ft-part"><span>Bridging</span><b>' + lf(m.bridgingLF) + '</b></div>' : '') + (m.blockingLF > 0 ? '<div class="ft-part"><span>Blocking</span><b>' + lf(m.blockingLF) + '</b></div>' : ''));
     partsHTML += card(tr('Chapas (sheathing)'), '<div class="ft-part"><span>' + tr('Área') + '</span><b>' + m.sheathSf.toFixed(0) + ' SF</b></div><div class="ft-part"><span>' + tr('Folhas 4x8') + '</span><b>' + m.sheets + ' EA</b></div>');
     partsHTML += card(tr('Vergas (headers)'), '<div class="ft-part"><span>' + tr('Comprimento') + '</span><b>' + lf(m.headersLF) + '</b></div>');
+    var activeName = (wtById(FR.activeWT) || {}).name || '';
 
     ov.innerHTML =
       '<div class="ft-top"><span>🏗️ ' + tr('Takeoff de Framing') + '</span><button id="ftClose" class="ft-x">✕</button></div>'
       + '<div class="ft-body">'
-      + '<div class="ft-sec">' + tr('Por camada (trade) → assembly') + '</div>' + layerHTML
-      + '<div class="ft-sec" style="margin-top:14px">' + tr('Parts (material + mão de obra)') + '</div>' + partsHTML
+      + '<div class="ft-sec">' + tr('Tipos — clique p/ ativar e traçar') + '</div>'
+      + '<div class="ft-types">' + typesHTML + '</div>'
+      + '<div class="ft-sec" style="margin-top:14px">' + tr('Parts do tipo ativo') + ' · ' + esc(activeName) + '</div>' + partsHTML
       + card(tr('Preço (USD)'),
         '<div class="ft-pr"><label>' + tr('Montante') + '<input id="ftPrStud" type="number" min="0" step="0.01" value="' + (FR.prices.stud || '') + '"></label>'
         + '<label>' + tr('Guia/plate LF') + '<input id="ftPrPlate" type="number" min="0" step="0.01" value="' + (FR.prices.plateLF || '') + '"></label>'
         + '<label>' + tr('Chapa') + '<input id="ftPrSheet" type="number" min="0" step="0.01" value="' + (FR.prices.sheet || '') + '"></label>'
         + '<label>' + tr('Verga LF') + '<input id="ftPrHeader" type="number" min="0" step="0.01" value="' + (FR.prices.headerLF || '') + '"></label></div>')
-      + '<div class="ft-total"><span>' + tr('Total estimado') + '</span><b id="ftTotal">' + money(priceTotal(m)) + '</b></div>'
+      + '<div class="ft-total"><span>' + tr('Total · tipo ativo') + '</span><b id="ftTotal">' + money(priceTotal(m)) + '</b></div>'
       + '</div>';
 
     ov.querySelector('#ftClose').addEventListener('click', function () { ov.style.display = 'none'; });
-    ov.querySelectorAll('.ft-lay').forEach(function (row) {
-      var lid = row.getAttribute('data-lid');
-      row.querySelector('.ft-asm').addEventListener('change', function (e) { FR.layerAssembly[lid] = e.target.value; renderFramingTakeoff(ov, lines, layers); });
+    ov.querySelectorAll('.ft-type').forEach(function (row) {
+      var wid = row.getAttribute('data-wt');
+      row.addEventListener('click', function (e) {
+        if (e.target && e.target.classList && e.target.classList.contains('ft-color')) return;
+        if (!wid) return;
+        FR.activeWT = wid; renderFramingTakeoff(ov);
+      });
+      var ci = row.querySelector('input.ft-color');
+      if (ci) ci.addEventListener('input', function (e) { var wt = wtById(wid); if (wt) { wt.color = e.target.value; if (F._wsRedraw) F._wsRedraw(); renderFramingTakeoff(ov); } });
     });
     [['ftPrStud', 'stud'], ['ftPrPlate', 'plateLF'], ['ftPrSheet', 'sheet'], ['ftPrHeader', 'headerLF']].forEach(function (pr) {
       var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('input', function () { FR.prices[pr[1]] = num(inp.value); var mm = F.framingCompute(); var t = ov.querySelector('#ftTotal'); if (t) t.textContent = money(priceTotal(mm)); });
