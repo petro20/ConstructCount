@@ -15,10 +15,7 @@
 
   var FR = F.framing = {
     built: false,
-    wallTypes: [
-      { id: 'wt1', name: 'Ext. 2x6 Wood',     material: 'wood',  studSize: '2x6',         spacing: 16, height: 9, plates: 3, bracingRows: 1, sheathSides: 1, color: COLORS[0] },
-      { id: 'wt2', name: 'Int. 3-5/8" Metal', material: 'metal', studSize: '3-5/8" 20ga', spacing: 16, height: 9, plates: 2, bracingRows: 1, sheathSides: 2, color: COLORS[1] },
-    ],
+    wallTypes: [],   // vazio: só os tipos LIDOS pela IA (ou criados) — sem padrões poluindo
     segments: [],   // { id, wtId, len(ft), qty, path?:[{x,y}img], source:'draw'|'manual' }
     openings: [],   // { id, wtId, width(ft), qty }
     prices: { stud: 0, plateLF: 0, sheet: 0, headerLF: 0 },
@@ -97,8 +94,11 @@
     (walls || []).forEach(function (w) {
       var mat = (w.material === 'wood') ? 'wood' : 'metal';   // 'both' → metal (nota no nome)
       var plates = (parseInt(w.bottom_plates, 10) || 1) + (parseInt(w.top_plates, 10) || 2);
-      FR.wallTypes.push({
-        id: uid('wt'),
+      // id ESTÁVEL pelo nº do tipo (Tipo 2A → wt_2A): reler não perde a associação dos traços
+      var tid = (w.type_id || '').toString().replace(/[^A-Za-z0-9]/g, '');
+      var id = tid ? ('wt_' + tid) : uid('wt');
+      var obj = {
+        id: id,
         name: (w.name || 'Tipo IA') + (w.material === 'both' ? ' (wood/metal)' : ''),
         material: mat,
         studSize: w.stud_size || (mat === 'wood' ? '2x4' : '3-5/8" 20ga'),
@@ -109,8 +109,11 @@
         sheathSides: (w.sheathing_sides != null ? parseInt(w.sheathing_sides, 10) : 2),
         color: COLORS[FR.wallTypes.length % COLORS.length],
         ai: true, typeId: w.type_id || '', sheathing: w.sheathing || '', insulation: w.insulation || ''
-      });
-      added++;
+      };
+      var ix = -1;
+      for (var i = 0; i < FR.wallTypes.length; i++) if (FR.wallTypes[i].id === id) { ix = i; break; }
+      if (ix >= 0) { obj.color = FR.wallTypes[ix].color; FR.wallTypes[ix] = obj; }   // upsert: mantém a cor já ajustada
+      else { FR.wallTypes.push(obj); added++; }
     });
     persistFraming();
     return added;
