@@ -145,6 +145,23 @@
   }
   F.framingWallTypeReview = wallTypeReview;
 
+  // duplicar um tipo (ex.: mesmo tipo em outro PAVIMENTO, com altura diferente)
+  function cloneWallType(id) {
+    var src = wtById(id); if (!src) return null;
+    var copy = JSON.parse(JSON.stringify(src));
+    copy.id = uid('wt');
+    copy.name = (src.name || 'Tipo') + ' (2)';
+    copy.color = COLORS[FR.wallTypes.length % COLORS.length];
+    copy.heightSet = false;        // nova altura precisa ser definida (conferência ⚠️)
+    copy.typeId = '';              // não é o id estável do original → reler IA não o sobrescreve
+    copy.ai = false;
+    var ix = FR.wallTypes.indexOf(src);
+    FR.wallTypes.splice(ix + 1, 0, copy);
+    FR.activeWT = copy.id;
+    persistFraming();
+    return copy.id;
+  }
+
   FR.activeWT = FR.activeWT || null;   // tipo de parede ATIVO (o que você traça)
 
   F.toggleFramingTakeoff = function (lines, layers) {
@@ -227,6 +244,7 @@
       + reviewHTML
       + '<div class="ft-sec">' + tr('Tipos — clique p/ ativar e traçar') + '</div>'
       + '<div class="ft-types">' + typesHTML + '</div>'
+      + (activeName ? ('<div class="ft-typeedit"><input id="ftTypeName" value="' + esc(activeName) + '" placeholder="' + tr('Nome do tipo') + '"><button id="ftDup" title="' + tr('Duplicar (ex.: mesmo tipo em outro pavimento, com outra altura)') + '">⧉ ' + tr('Duplicar') + '</button></div>') : '')
       + (specHTML ? ('<div class="ft-sec" style="margin-top:14px">' + tr('Especificação · ') + esc(activeName) + '</div>' + specHTML) : '')
       + '<div class="ft-sec" style="margin-top:14px">' + tr('Área (LF × altura)') + '</div>' + wallCard
       + '<div class="ft-sec" style="margin-top:14px">' + tr('Parts (cálculo)') + '</div>' + partsHTML
@@ -256,6 +274,10 @@
     if (hin) hin.addEventListener('change', function () { var w = wtById(FR.activeWT); if (w) { w.height = num(hin.value) || 9; w.heightSet = true; renderFramingTakeoff(ov); persistFraming(); } });
     var hpk = ov.querySelector('#ftHeightPick');
     if (hpk) hpk.addEventListener('change', function () { var v = parseFloat(hpk.value); var w = wtById(FR.activeWT); if (w && v > 0) { w.height = Math.round(v * 100) / 100; w.heightSet = true; renderFramingTakeoff(ov); persistFraming(); } });
+    var tn = ov.querySelector('#ftTypeName');
+    if (tn) tn.addEventListener('change', function () { var w = wtById(FR.activeWT); if (w) { w.name = tn.value || w.name; renderFramingTakeoff(ov); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); persistFraming(); } });
+    var dup = ov.querySelector('#ftDup');
+    if (dup) dup.addEventListener('click', function () { cloneWallType(FR.activeWT); renderFramingTakeoff(ov); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); });
     // CONFERÊNCIA: botões wood/metal + clique no item ativa o tipo
     ov.querySelectorAll('.ft-mat').forEach(function (b) {
       b.addEventListener('click', function (e) {

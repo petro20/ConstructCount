@@ -368,6 +368,11 @@ button:focus-visible {
 #frTakeoff .ft-matbtns { display: inline-flex; gap: 6px; margin-top: 5px; }
 #frTakeoff .ft-mat { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 7px; border: 1px solid #d9d7d1; background: #fff; cursor: pointer; }
 #frTakeoff .ft-mat:hover { background: #f4f3ef; border-color: #c4881a; }
+/* editor do tipo ativo (nome + duplicar) */
+#frTakeoff .ft-typeedit { display: flex; gap: 6px; margin-top: 8px; }
+#frTakeoff .ft-typeedit input { flex: 1; min-width: 0; border: 1px solid #d9d7d1; border-radius: 7px; padding: 5px 8px; font-size: 12.5px; font-weight: 600; }
+#frTakeoff .ft-typeedit button { white-space: nowrap; font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 7px; border: 1px solid #d9d7d1; background: #faf9f6; cursor: pointer; }
+#frTakeoff .ft-typeedit button:hover { background: #f1ede3; border-color: #c4881a; }
 #frTakeoff .ft-asm { max-width: 120px; border: 1px solid #d9d7d1; border-radius: 6px; padding: 2px 4px; font-size: 12px; }
 #frTakeoff .ft-card { background: #faf9f6; border: 1px solid #ececea; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
 #frTakeoff .ft-h { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #8b887f; margin-bottom: 6px; }
