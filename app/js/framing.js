@@ -20,6 +20,7 @@
     openings: [],   // { id, wtId, width(ft), qty }
     prices: { stud: 0, plateLF: 0, sheet: 0, headerLF: 0 },
     pxPerFt: null,  // escala calibrada (px da imagem por pé)
+    floors: [], activeFloor: null,   // PISOS (cada um com altura) — o traço herda a altura do piso ativo
   };
 
   var uid = (function () { var n = 0; return function (p) { n++; return (p || 'id') + n; }; })();
@@ -34,16 +35,19 @@
     var studs = {}, track = {}, plates = {}, sheath = {};
     var bridgingLF = 0, blockingLF = 0, headersLF = 0, totalLF = 0, openExtraStuds = {};
 
+    var wallSf = 0;
     FR.segments.forEach(function (s) {
       var wt = wtById(s.wtId); if (!wt) return;
       var qty = num(s.qty, 1), L = num(s.len);
       if (L <= 0 || qty <= 0) return;
+      var H = num(s.height) || (wt.height || 9);   // altura: do PISO (traço) → senão do tipo
       totalLF += L * qty;
+      wallSf += L * H * qty;                         // área de parede = LF × altura do piso
       studs[wt.studSize] = (studs[wt.studSize] || 0) + (Math.ceil((L * 12) / (wt.spacing || 16)) + 1) * qty;
       var horizLF = L * (wt.plates || 2) * qty, brLF = L * (wt.bracingRows || 0) * qty;
       if (wt.material === 'metal') { track[wt.studSize] = (track[wt.studSize] || 0) + horizLF; bridgingLF += brLF; }
       else { plates[wt.studSize] = (plates[wt.studSize] || 0) + horizLF; blockingLF += brLF; }
-      sheath[wt.material] = (sheath[wt.material] || 0) + L * (wt.height || 9) * (wt.sheathSides || 0) * qty;
+      sheath[wt.material] = (sheath[wt.material] || 0) + L * H * (wt.sheathSides || 0) * qty;
     });
     FR.openings.forEach(function (o) {
       var wt = wtById(o.wtId), qty = num(o.qty, 1), W = num(o.width);
@@ -62,7 +66,7 @@
       studs: studs, track: track, plates: plates, sheath: sheath,
       bridgingLF: bridgingLF, blockingLF: blockingLF,
       totalStuds: totalStuds, totalTrackLF: totalTrackLF, totalPlateLF: totalPlateLF,
-      totalHorizLF: totalTrackLF + totalPlateLF,
+      totalHorizLF: totalTrackLF + totalPlateLF, wallSf: wallSf,
       headersLF: headersLF, sheathSf: sheathSf, sheets: Math.ceil(sheathSf / 32), totalLF: totalLF
     };
   };
@@ -130,16 +134,28 @@
     if (Array.isArray(d.wallTypes) && d.wallTypes.length) FR.wallTypes = d.wallTypes;
     if (d.prices) FR.prices = d.prices;
     if (d.layerAssembly) FR.layerAssembly = d.layerAssembly;
+    if (Array.isArray(d.floors)) FR.floors = d.floors;
+    FR.activeFloor = d.activeFloor || (FR.floors[0] && FR.floors[0].id) || null;
     FR.activeWT = d.activeWT || (FR.wallTypes[0] && FR.wallTypes[0].id) || null;
   };
-  F._framingSnapshot = function () { return { wallTypes: FR.wallTypes, prices: FR.prices, activeWT: FR.activeWT, layerAssembly: FR.layerAssembly }; };
+  F._framingSnapshot = function () { return { wallTypes: FR.wallTypes, prices: FR.prices, activeWT: FR.activeWT, layerAssembly: FR.layerAssembly, floors: FR.floors, activeFloor: FR.activeFloor }; };
+
+  // ---- PISOS (cada um com altura) ----
+  function floorById(id) { for (var i = 0; i < FR.floors.length; i++) if (FR.floors[i].id === id) return FR.floors[i]; return null; }
+  F.framingActiveFloorHeight = function () { var f = floorById(FR.activeFloor); return f ? num(f.height) : 0; };
+  F.framingActiveFloorName = function () { var f = floorById(FR.activeFloor); return f ? f.name : ''; };
+  F.framingAddFloor = function (name, height) {
+    var f = { id: uid('fl'), name: name || ('Piso ' + (FR.floors.length + 1)), height: num(height) || 9 };
+    FR.floors.push(f); FR.activeFloor = f.id; persistFraming(); return f;
+  };
+  F.framingSetFloor = function (id) { FR.activeFloor = id; persistFraming(); };
+  F.framingUpdateFloor = function (id, patch) { var f = floorById(id); if (f) { if (patch.name != null) f.name = patch.name; if (patch.height != null) f.height = num(patch.height) || f.height; persistFraming(); } };
 
   // CONFERÊNCIA: a IA pergunta quando tem dúvida (projetos diferem). Retorna os motivos.
   function wallTypeReview(wt) {
     var r = [];
     if (!wt) return r;
     if (wt.materialConfirmed === false) r.push(tr('Material: madeira ou metal?'));
-    if (wt.heightSet === false) r.push(tr('Altura não definida'));
     if (!wt.components || wt.components.length < 3) r.push(tr('Especificação incompleta'));
     return r;
   }
@@ -190,7 +206,7 @@
       var g = byType[ln.wt] = byType[ln.wt] || { lf: 0, qty: 0 };
       g.lf += ftFromMm(ln.mm); g.qty++;
     });
-    FR.segments = lines.filter(function (l) { return l.wt === FR.activeWT; }).map(function (l) { return { id: uid('s'), wtId: FR.activeWT, len: ftFromMm(l.mm), qty: 1 }; });
+    FR.segments = lines.filter(function (l) { return l.wt === FR.activeWT; }).map(function (l) { return { id: uid('s'), wtId: FR.activeWT, len: ftFromMm(l.mm), qty: 1, height: l.height || 0 }; });
     var m = F.framingCompute();
     var lf = function (v) { return v.toFixed(1) + ' LF'; };
 
@@ -229,14 +245,11 @@
     var specHTML = (aw.components && aw.components.length)
       ? card(tr('Especificação (lida da planta)'), aw.components.map(function (c) { return '<div class="ft-part"><span>' + esc(c) + '</span></div>'; }).join(''))
       : '';
-    // LF × altura (da elevação) = SF da parede
-    var wallSF = m.totalLF * (aw.height || 9);
-    var hopts = (FR._heights || []).map(function (h) { return '<option value="' + h.ft + '">' + esc(h.raw) + '</option>'; }).join('');
-    var hpick = hopts ? ('<select id="ftHeightPick" style="margin-left:6px;border:1px solid #d9d7d1;border-radius:6px;padding:2px 4px;font-size:11px"><option value="">📐 ' + tr('da elevação…') + '</option>' + hopts + '</select>') : '';
-    var wallCard = card(tr('Parede · LF × altura = SF'),
+    // LF × altura (do PISO de cada traço) = SF da parede
+    var wallCard = card(tr('Parede · LF × altura do piso = SF'),
       '<div class="ft-part"><span>' + tr('Comprimento') + '</span><b>' + m.totalLF.toFixed(1) + ' LF</b></div>'
-      + '<div class="ft-part" style="align-items:center"><span>' + tr('Altura (ft)') + '</span><span style="display:flex;align-items:center"><input id="ftHeight" type="number" min="1" step="0.01" value="' + (aw.height || 9) + '" style="width:64px;text-align:right;border:1px solid #d9d7d1;border-radius:6px;padding:2px 6px">' + hpick + '</span></div>'
-      + '<div class="ft-part"><span>' + tr('Área de parede') + '</span><b>' + wallSF.toFixed(0) + ' SF</b></div>');
+      + '<div class="ft-part"><span>' + tr('Área de parede (por piso)') + '</span><b>' + m.wallSf.toFixed(0) + ' SF</b></div>'
+      + '<div class="ft-note">' + tr('A altura vem do PISO ativo (FERRAMENTAS). Cada traço guarda a altura do seu piso.') + '</div>');
 
     ov.innerHTML =
       '<div class="ft-top"><span>🏗️ ' + tr('Takeoff de Framing') + '</span><button id="ftClose" class="ft-x">✕</button></div>'

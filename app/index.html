@@ -56,7 +56,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 
-  <link rel="stylesheet" href="css/styles.css?v=111" />
+  <link rel="stylesheet" href="css/styles.css?v=112" />
 </head>
 
 <body class="bg-steel-50 text-steel-900 font-sans min-h-screen">
@@ -1064,6 +1064,14 @@
             <select id="wsWallType" class="flex-1 min-w-0 text-steel-900 text-sm rounded px-2 py-1.5"></select>
           </div>
           <button id="wsApplyType" class="w-full text-left px-3 py-1.5 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="Aplica o tipo selecionado (acima) às PAREDES selecionadas na planta. Selecione as linhas e clique aqui.">↳ Aplicar tipo às linhas selecionadas</button>
+          <div class="flex items-center gap-2 pt-1" title="Piso ATIVO — a parede que você traçar herda a ALTURA deste piso (LF × altura = SF). Pegue a altura na A302.">
+            <span class="text-xs text-steel-300 shrink-0">Piso:</span>
+            <select id="wsFloor" class="flex-1 min-w-0 text-steel-900 text-sm rounded px-2 py-1.5"></select>
+            <input id="wsFloorH" type="number" min="1" step="0.01" title="Altura (ft) do piso" class="text-steel-900 text-sm rounded px-1 py-1.5" style="width:58px">
+            <span class="text-xs text-steel-400 shrink-0">ft</span>
+            <button id="wsFloorAdd" class="shrink-0 text-steel-100 px-2 py-1.5 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Adicionar piso">＋</button>
+          </div>
+          <button id="wsApplyFloor" class="w-full text-left px-3 py-1.5 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="Aplica a altura do piso ativo às PAREDES selecionadas.">↳ Aplicar piso/altura às linhas selecionadas</button>
           <button id="wsDelMeas" class="w-full text-left px-3 py-2 rounded bg-rose-700 hover:bg-rose-600 text-xs" title="Apaga a medida selecionada (clique numa medida; ou tecla Delete)" disabled>🗑 Apagar medida selecionada</button>
           <button id="wsClearMeas" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="Remove todas as medidas desta folha">Limpar todas as medidas</button>
           <p id="wsScaleInfo" class="text-xs text-steel-400">Escala: não calibrada.</p>
@@ -1132,8 +1140,8 @@
   <script src="js/proposal.js?v=200"></script>
   <script src="js/main.js?v=200"></script>
   <script src="js/annotator.js?v=200"></script>
-  <script src="js/workspace.js?v=244"></script>
-  <script src="js/framing.js?v=17"></script>
+  <script src="js/workspace.js?v=245"></script>
+  <script src="js/framing.js?v=18"></script>
   <script src="js/desktop.js?v=219"></script>
   <script src="js/menu.js?v=234"></script>
   <script src="js/cards.js?v=200"></script>

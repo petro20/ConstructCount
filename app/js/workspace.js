@@ -57,8 +57,8 @@
     renderPagesList();
     // carrega as ASSEMBLIES de framing salvas do projeto (não reler toda vez)
     (async () => {
-      try { if (S.prov && S.prov.getFraming) { const d = await S.prov.getFraming(); if (d && d.wallTypes && d.wallTypes.length && F._framingLoad) F._framingLoad(d); } } catch (e) {}
-      populateWallTypeSelect(); renderPagesList();
+      try { if (S.prov && S.prov.getFraming) { const d = await S.prov.getFraming(); if (d && (d.wallTypes || d.floors) && F._framingLoad) F._framingLoad(d); } } catch (e) {}
+      populateWallTypeSelect(); populateFloorSelect(); renderPagesList();
     })();
     const first = S.pages.find(p => p.n_hex > 0) || S.pages[0];
     if (first) loadPage(first.page);
@@ -1071,7 +1071,7 @@
     if (S.linePts.length >= 2 && S.mmPerPx) {
       pushUndo();
       let px = 0; for (let i = 1; i < S.linePts.length; i++) px += Math.hypot(S.linePts[i][0] - S.linePts[i - 1][0], S.linePts[i][1] - S.linePts[i - 1][1]);
-      S.lines.push({ path: S.linePts.slice(), mm: px * S.mmPerPx, layer: S.activeLayer, page: S.page, wt: (F.framing && F.framing.activeWT) || null });
+      S.lines.push({ path: S.linePts.slice(), mm: px * S.mmPerPx, layer: S.activeLayer, page: S.page, wt: (F.framing && F.framing.activeWT) || null, height: (F.framingActiveFloorHeight ? F.framingActiveFloorHeight() : 0) || 0, floor: (F.framingActiveFloorName ? F.framingActiveFloorName() : '') });
       markSaved(F.tr('Linear: {ft}', { ft: mmToFtIn(px * S.mmPerPx) }));
       saveLines();
       if (F._renderFramingPanel) F._renderFramingPanel();
@@ -1140,7 +1140,7 @@
     let added = 0;
     walls.forEach(w => {
       const px = Math.hypot(w[2] - w[0], w[3] - w[1]);
-      S.lines.push({ path: [[w[0], w[1]], [w[2], w[3]]], mm: S.mmPerPx ? px * S.mmPerPx : 0, layer: S.activeLayer, page: S.page, ai: true, wt: (F.framing && F.framing.activeWT) || null });
+      S.lines.push({ path: [[w[0], w[1]], [w[2], w[3]]], mm: S.mmPerPx ? px * S.mmPerPx : 0, layer: S.activeLayer, page: S.page, ai: true, wt: (F.framing && F.framing.activeWT) || null, height: (F.framingActiveFloorHeight ? F.framingActiveFloorHeight() : 0) || 0, floor: (F.framingActiveFloorName ? F.framingActiveFloorName() : '') });
       added++;
     });
     saveLines(); draw(); if (F._renderFramingPanel) F._renderFramingPanel();
@@ -1195,6 +1195,17 @@
     updateWallTypeSwatch();
   }
   F._syncWallTypeSelect = populateWallTypeSelect;
+
+  // ---- PISO ativo (define a ALTURA dos traços) ----
+  function populateFloorSelect() {
+    const sel = $('#wsFloor'); if (!sel) return;
+    const fr = F.framing; let floors = (fr && fr.floors) || [];
+    if (fr && !floors.length) { fr.floors.push({ id: 'fl1', name: F.tr('Piso 1'), height: 9 }); floors = fr.floors; }   // semente
+    if (fr && !fr.activeFloor && floors[0]) fr.activeFloor = floors[0].id;
+    sel.innerHTML = floors.map(f => '<option value="' + f.id + '"' + (fr && f.id === fr.activeFloor ? ' selected' : '') + '>' + (f.name || '').replace(/</g, '&lt;') + '</option>').join('');
+    const hin = $('#wsFloorH'); if (hin) { const af = floors.filter(f => f.id === (fr && fr.activeFloor))[0]; hin.value = af ? af.height : ''; }
+  }
+  F._syncFloorSelect = populateFloorSelect;
 
   function updateSchedUI() {
     const on = S.schedulePages.indexOf(S.page) >= 0;
@@ -1668,6 +1679,17 @@
       }
       if (F._renderFramingPanel) F._renderFramingPanel(); draw(); if (F._saveFraming) F._saveFraming();
     }); populateWallTypeSelect(); }
+    { const fsel = $('#wsFloor'); if (fsel) fsel.addEventListener('change', () => { if (F.framingSetFloor) F.framingSetFloor(fsel.value); populateFloorSelect(); }); populateFloorSelect(); }
+    { const fh = $('#wsFloorH'); if (fh) fh.addEventListener('change', () => { if (F.framing && F.framingUpdateFloor) F.framingUpdateFloor(F.framing.activeFloor, { height: fh.value }); if (F._renderFramingPanel) F._renderFramingPanel(); }); }
+    { const fa = $('#wsFloorAdd'); if (fa) fa.addEventListener('click', () => { const nm = prompt(F.tr('Nome do piso (ex.: 2nd Floor):'), ''); if (nm === null) return; const h = prompt(F.tr('Altura do piso em pés (ex.: 9.1, 10):'), '9'); if (h === null) return; if (F.framingAddFloor) F.framingAddFloor((nm || '').trim(), parseFloat(h)); populateFloorSelect(); }); }
+    { const af2 = $('#wsApplyFloor'); if (af2) af2.addEventListener('click', () => {
+      if (!S.lineSel || !S.lineSel.size) { markSaved(F.tr('Selecione paredes na planta primeiro')); return; }
+      const h = F.framingActiveFloorHeight ? F.framingActiveFloorHeight() : 0;
+      const fn = F.framingActiveFloorName ? F.framingActiveFloorName() : '';
+      pushUndo(); S.lineSel.forEach(l => { l.height = h; l.floor = fn; });
+      saveLines(); draw(); if (F._renderFramingPanel) F._renderFramingPanel();
+      markSaved(F.tr('{n} linha(s) → piso/altura aplicado', { n: S.lineSel.size }));
+    }); }
     { const apt = $('#wsApplyType'); if (apt) apt.addEventListener('click', () => {
       if (!S.lineSel || !S.lineSel.size) { markSaved(F.tr('Selecione uma ou mais paredes na planta primeiro')); return; }
       const wid = (F.framing && F.framing.activeWT) || null;

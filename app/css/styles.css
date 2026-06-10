@@ -378,6 +378,7 @@ button:focus-visible {
 #frTakeoff .ft-h { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #8b887f; margin-bottom: 6px; }
 #frTakeoff .ft-part { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
 #frTakeoff .ft-part b { font-variant-numeric: tabular-nums; }
+#frTakeoff .ft-note { font-size: 11px; color: #a8a499; margin-top: 6px; line-height: 1.35; }
 #frTakeoff .ft-pr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 #frTakeoff .ft-pr label { font-size: 11px; color: #79766d; display: flex; flex-direction: column; gap: 2px; }
 #frTakeoff .ft-pr input { border: 1px solid #d9d7d1; border-radius: 6px; padding: 4px 6px; }
