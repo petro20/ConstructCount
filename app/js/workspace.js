@@ -671,7 +671,8 @@
       ctx.stroke();
       ctx.shadowBlur = 0;
       const mid = ln.path[Math.floor(ln.path.length / 2)], mx = mid[0] * S.scale + S.ox, my = mid[1] * S.scale + S.oy;
-      const txt = mmToFtIn(ln.mm); ctx.font = '700 12px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
+      const tag = (wt && wt.typeId) ? '(' + wt.typeId + ') ' : '';   // tipo da parede antes da medida: (2) 36'-2 3/16"
+      const txt = tag + mmToFtIn(ln.mm); ctx.font = '700 12px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
       ctx.fillStyle = 'rgba(15,14,11,.85)'; ctx.fillRect(mx + 6, my - 16, tw + 8, 15);
       ctx.fillStyle = col; ctx.fillText(txt, mx + 10, my - 4);
     });
