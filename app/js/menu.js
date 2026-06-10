@@ -93,6 +93,7 @@
     const pfr = $('#pkgOpenFraming'); if (pfr) pfr.addEventListener('click', () => { const mo = $('#miOpen'); if (mo) mo.click(); });  // Framing vive no workspace: abre projeto → camada + Linear + 🏗️ Framing
     const pfs = $('#pkgFrSubscribe'); if (pfs) pfs.addEventListener('click', () => { window.open('https://constructcount.com/assinar?pkg=framing', '_blank'); });
     const pfa = $('#pkgFrActivate'); if (pfa) pfa.addEventListener('click', () => { if (F.openLicenseGate) F.openLicenseGate(); else openLic(); });
+    document.querySelectorAll('.pkg-trade-sub').forEach(b => b.addEventListener('click', () => { const t = b.getAttribute('data-trade'); window.open('https://constructcount.com/assinar?pkg=' + t, '_blank'); }));
   }
 
   // ----------------------------------------------------------------- aba Pacote: status da assinatura
@@ -127,6 +128,14 @@
     if (tag) { tag.textContent = owned ? F.tr('🟢 Ativo no seu plano') : F.tr('🏗️ Parede completa'); tag.classList.toggle('pkg-tag--live', owned); tag.classList.toggle('pkg-tag--beta', !owned); }
     if (sub) sub.classList.toggle('hidden', owned);
     if (open) open.classList.toggle('hidden', !owned);
+    // cards à la carte: reflete posse por ofício
+    document.querySelectorAll('.pkg-trade').forEach(card => {
+      const t = card.getAttribute('data-trade');
+      const own = !F.hasPackage || F.hasPackage(t);
+      card.classList.toggle('is-owned', own);
+      const lbl = card.querySelector('.pkg-trade-sub span:last-child');
+      if (lbl) lbl.textContent = own ? F.tr('Ativo') : F.tr('Assinar');
+    });
   }
   F._renderPackage = renderPackage;
   F._renderFramingCard = renderFramingCard;
