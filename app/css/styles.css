@@ -421,7 +421,10 @@ button:focus-visible {
 #frTakeoff .ftt-scope.on { background: #d9a02a; border-color: #e7b53f; color: #2a2208; }
 #frTakeoff .ftt-scope:hover { border-color: #e7b53f; }
 #frTakeoff .ftt-pr { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 9px; font-size: 11px; font-weight: 600; color: #cfcabd; }
-#frTakeoff .ftt-prhint { color: #cfcabd; }
+#frTakeoff .ftt-prhint { color: #cfcabd; font-weight: 700; }
+#frTakeoff .ftt-prhint-lab { color: #6ee7d3; }
+#frTakeoff .ftt-prgrp { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+#frTakeoff .ftt-prgrp-lab { padding-left: 9px; margin-left: 3px; border-left: 1px solid #56524a; }
 #frTakeoff .ftt-pritem { display: inline-flex; align-items: center; gap: 3px; }
 #frTakeoff .ftt-prlb { color: #97938a; font-size: 10.5px; }
 #frTakeoff .ftt-pritem input { width: 48px; border: 1px solid #56524a; border-radius: 6px; padding: 3px 5px; color: #fff; font-size: 12px; font-variant-numeric: tabular-nums; }

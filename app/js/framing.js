@@ -19,7 +19,7 @@
     segments: [],   // { id, wtId, len(ft), qty, path?:[{x,y}img], source:'draw'|'manual' }
     openings: [],   // { id, wtId, width(ft), qty }
     prices: { stud: 0, plateLF: 0, sheet: 0, headerLF: 0, drywallSf: 0, insulSf: 0 },   // MATERIAL (por unidade do item)
-    labor: { stud: 0, plateLF: 0, sheet: 0, headerLF: 0, drywallSf: 0, insulSf: 0 },     // MÃO DE OBRA (por unidade do item)
+    labor: { framing: 0, drywall: 0, insulation: 0 },                                    // MÃO DE OBRA — taxa por OFÍCIO, por SF
     pxPerFt: null,  // escala calibrada (px da imagem por pé)
     floors: [], activeFloor: null,   // PISOS (cada um com altura) — o traço herda a altura do piso ativo
     scope: { framing: true, drywall: true, insulation: true },   // ESCOPO da obra — definido ANTES do levantamento
@@ -147,7 +147,7 @@
     if (!d) return;
     if (Array.isArray(d.wallTypes) && d.wallTypes.length) FR.wallTypes = d.wallTypes;
     if (d.prices) FR.prices = Object.assign({ stud: 0, plateLF: 0, sheet: 0, headerLF: 0, drywallSf: 0, insulSf: 0 }, d.prices);
-    if (d.labor) FR.labor = Object.assign({ stud: 0, plateLF: 0, sheet: 0, headerLF: 0, drywallSf: 0, insulSf: 0 }, d.labor);
+    if (d.labor) FR.labor = Object.assign({ framing: 0, drywall: 0, insulation: 0 }, d.labor);
     if (d.scope) FR.scope = Object.assign({ framing: true, drywall: true, insulation: true }, d.scope);
     if (d.layerAssembly) FR.layerAssembly = d.layerAssembly;
     if (Array.isArray(d.floors)) FR.floors = d.floors;
@@ -223,18 +223,12 @@
     m.floors = {}; lines.forEach(function (l) { if (l.wt === wtId && l.floor) m.floors[l.floor] = true; });
     return m;
   }
-  // separa MATERIAL e MÃO DE OBRA por item (cada item tem preço de material e de MO)
+  // MATERIAL = por item; MÃO DE OBRA = taxa por OFÍCIO × SF (Framing=SF parede, Drywall=SF chapa, Insulation=SF)
   function priceParts(m) {
     var p = FR.prices, l = FR.labor, s = FR.scope, mat = 0, lab = 0;
-    if (s.framing) {
-      mat += m.totalStuds * num(p.stud) + m.totalHorizLF * num(p.plateLF) + m.headersLF * num(p.headerLF);
-      lab += m.totalStuds * num(l.stud) + m.totalHorizLF * num(l.plateLF) + m.headersLF * num(l.headerLF);
-    }
-    if (s.drywall) {
-      mat += (num(p.drywallSf) > 0 ? m.drywallSf * num(p.drywallSf) : m.drywallSheets * num(p.sheet));
-      lab += (num(l.drywallSf) > 0 ? m.drywallSf * num(l.drywallSf) : m.drywallSheets * num(l.sheet));
-    }
-    if (s.insulation) { mat += m.insulationSf * num(p.insulSf); lab += m.insulationSf * num(l.insulSf); }
+    if (s.framing) { mat += m.totalStuds * num(p.stud) + m.totalHorizLF * num(p.plateLF) + m.headersLF * num(p.headerLF); lab += m.wallSf * num(l.framing); }
+    if (s.drywall) { mat += (num(p.drywallSf) > 0 ? m.drywallSf * num(p.drywallSf) : m.drywallSheets * num(p.sheet)); lab += m.drywallSf * num(l.drywall); }
+    if (s.insulation) { mat += m.insulationSf * num(p.insulSf); lab += m.insulationSf * num(l.insulation); }
     return { mat: mat, lab: lab, total: mat + lab };
   }
   function typePrice(m) { return priceParts(m).total; }
@@ -315,16 +309,19 @@
       return tr1;
     }).join('') : ('<tr><td colspan="' + cols.length + '" style="text-align:center;color:#8b887f;padding:18px">' + tr('Trace paredes (📐 Linear) e atribua um tipo para o takeoff aparecer aqui.') + '</td></tr>');
 
-    // cada item: preço de MATERIAL e de MÃO DE OBRA
-    var pin = function (idM, idL, k, lb) {
-      return '<span class="ftt-pritem"><span class="ftt-prlb">' + lb + '</span>'
-        + '<input id="' + idM + '" class="ftt-prmat" type="number" min="0" step="0.01" title="' + tr('Material') + '" placeholder="mat" value="' + (FR.prices[k] || '') + '">'
-        + '<input id="' + idL + '" class="ftt-prlab" type="number" min="0" step="0.01" title="' + tr('Mão de obra') + '" placeholder="MO" value="' + (FR.labor[k] || '') + '"></span>';
-    };
-    var prHTML = '<span class="ftt-prhint">' + tr('Preço (mat / MO) $:') + '</span>';
-    if (sc.framing) prHTML += pin('ftPrStud', 'ftLbStud', 'stud', tr('Stud')) + pin('ftPrPlate', 'ftLbPlate', 'plateLF', 'Plate/LF') + pin('ftPrHeader', 'ftLbHeader', 'headerLF', tr('Verga/LF'));
-    if (sc.drywall) prHTML += pin('ftPrSheet', 'ftLbSheet', 'sheet', tr('Chapa'));
-    if (sc.insulation) prHTML += pin('ftPrInsul', 'ftLbInsul', 'insulSf', 'Insul/SF');
+    // MATERIAL por item
+    var pinM = function (id, k, lb) { return '<span class="ftt-pritem"><span class="ftt-prlb">' + lb + '</span><input id="' + id + '" class="ftt-prmat" type="number" min="0" step="0.01" value="' + (FR.prices[k] || '') + '"></span>'; };
+    // MÃO DE OBRA por ofício (por SF)
+    var pinL = function (id, k, lb) { return '<span class="ftt-pritem"><span class="ftt-prlb">' + lb + '</span><input id="' + id + '" class="ftt-prlab" type="number" min="0" step="0.01" value="' + (FR.labor[k] || '') + '"></span>'; };
+    var matHTML = '<span class="ftt-prhint">' + tr('Material $:') + '</span>';
+    if (sc.framing) matHTML += pinM('ftPrStud', 'stud', tr('Stud')) + pinM('ftPrPlate', 'plateLF', 'Plate/LF') + pinM('ftPrHeader', 'headerLF', tr('Verga/LF'));
+    if (sc.drywall) matHTML += pinM('ftPrSheet', 'sheet', tr('Chapa'));
+    if (sc.insulation) matHTML += pinM('ftPrInsul', 'insulSf', 'Insul/SF');
+    var labHTML = '<span class="ftt-prhint ftt-prhint-lab">' + tr('M.O. $/SF:') + '</span>';
+    if (sc.framing) labHTML += pinL('ftLbFraming', 'framing', '🏗️ Framing');
+    if (sc.drywall) labHTML += pinL('ftLbDrywall', 'drywall', '🧱 Drywall');
+    if (sc.insulation) labHTML += pinL('ftLbInsul', 'insulation', '🧊 Insulation');
+    var prHTML = '<span class="ftt-prgrp">' + matHTML + '</span><span class="ftt-prgrp ftt-prgrp-lab">' + labHTML + '</span>';
     var scopeChips = [['framing', '🏗️ Framing'], ['drywall', '🧱 Drywall'], ['insulation', '🧊 Insulation']]
       .map(function (s) { return '<button class="ftt-scope' + (sc[s[0]] ? ' on' : '') + '" data-scope="' + s[0] + '">' + s[1] + '</button>'; }).join('');
 
@@ -385,7 +382,7 @@
     [['ftPrStud', 'stud'], ['ftPrPlate', 'plateLF'], ['ftPrSheet', 'sheet'], ['ftPrHeader', 'headerLF'], ['ftPrInsul', 'insulSf']].forEach(function (pr) {
       var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('change', function () { FR.prices[pr[1]] = num(inp.value); renderFramingTakeoff(ov); persistFraming(); });
     });
-    [['ftLbStud', 'stud'], ['ftLbPlate', 'plateLF'], ['ftLbSheet', 'sheet'], ['ftLbHeader', 'headerLF'], ['ftLbInsul', 'insulSf']].forEach(function (pr) {
+    [['ftLbFraming', 'framing'], ['ftLbDrywall', 'drywall'], ['ftLbInsul', 'insulation']].forEach(function (pr) {
       var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('change', function () { FR.labor[pr[1]] = num(inp.value); renderFramingTakeoff(ov); persistFraming(); });
     });
     ov.querySelectorAll('.ft-mat').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); var w = wtById(b.getAttribute('data-wt')); if (w) { w.material = b.getAttribute('data-mat'); w.materialConfirmed = true; if (F._wsRedraw) F._wsRedraw(); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); renderFramingTakeoff(ov); persistFraming(); } }); });
