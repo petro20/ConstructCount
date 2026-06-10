@@ -30,16 +30,28 @@ function cc_plan_catalog(): array {
   return array_merge($defaults, $cfg);   // config sobrescreve chaves iguais; novas vêm do default
 }
 
-/** Pacotes exibidos na landing (cards de preço). */
+/** Pacotes exibidos na landing (cards de preço). Multilíngue: name/desc/per
+ *  têm versões _en e _es; o index.php escolhe por idioma (fallback = pt). */
 function cc_portal_packages(): array {
   if (defined('PORTAL_PACKAGES')) return PORTAL_PACKAGES;
+  $pm = ['per' => '/mês', 'per_en' => '/mo', 'per_es' => '/mes'];
   return [
-    ['plan' => 'parede',     'name' => 'Parede completa',  'price' => '$45', 'per' => '/mês', 'desc' => 'Framing + Drywall + Insulation + Paint — a parede inteira, com IA.', 'featured' => true],
-    ['plan' => 'framing',    'name' => 'Framing',          'price' => '$15', 'per' => '/mês', 'desc' => 'Montantes, plates, track, vergas e sheathing.'],
-    ['plan' => 'drywall',    'name' => 'Drywall',          'price' => '$15', 'per' => '/mês', 'desc' => 'Board comum e resistente à água, chapas 4x8.'],
-    ['plan' => 'insulation', 'name' => 'Insulation',       'price' => '$12', 'per' => '/mês', 'desc' => 'Área de cavidade isolada por SF.'],
-    ['plan' => 'paint',      'name' => 'Paint',            'price' => '$12', 'per' => '/mês', 'desc' => 'Pintura de parede por SF.'],
-    ['plan' => 'mensal',     'name' => 'Janelas & Portas', 'price' => '$19', 'per' => '/mês', 'desc' => 'Esquadrias: leitura por IA, takeoff e documentos.'],
-    ['plan' => 'reports',    'name' => 'Relatórios (add-on)', 'price' => '$15', 'per' => '/mês', 'desc' => 'Orçamento, materiais, planta marcada + editores + texto por IA. Liga em qualquer pacote.'],
+    ['plan' => 'parede', 'price' => '$45', 'featured' => true,
+      'name' => 'Parede completa', 'name_en' => 'Complete wall', 'name_es' => 'Pared completa',
+      'desc' => 'Framing + Drywall + Insulation + Paint — a parede inteira, com IA.', 'desc_en' => 'Framing + Drywall + Insulation + Paint — the whole wall, with AI.', 'desc_es' => 'Framing + Drywall + Insulation + Paint — la pared entera, con IA.'] + $pm,
+    ['plan' => 'framing', 'price' => '$15', 'name' => 'Framing',
+      'desc' => 'Montantes, plates, track, vergas e sheathing.', 'desc_en' => 'Studs, plates, track, headers and sheathing.', 'desc_es' => 'Montantes, placas, riel, dinteles y sheathing.'] + $pm,
+    ['plan' => 'drywall', 'price' => '$15', 'name' => 'Drywall',
+      'desc' => 'Board comum e resistente à água, chapas 4x8.', 'desc_en' => 'Regular and water-resistant board, 4x8 sheets.', 'desc_es' => 'Placa común y resistente al agua, hojas 4x8.'] + $pm,
+    ['plan' => 'insulation', 'price' => '$12', 'name' => 'Insulation',
+      'desc' => 'Área de cavidade isolada por SF.', 'desc_en' => 'Insulated cavity area by SF.', 'desc_es' => 'Área de cavidad aislada por SF.'] + $pm,
+    ['plan' => 'paint', 'price' => '$12', 'name' => 'Paint',
+      'desc' => 'Pintura de parede por SF.', 'desc_en' => 'Wall paint by SF.', 'desc_es' => 'Pintura de pared por SF.'] + $pm,
+    ['plan' => 'mensal', 'price' => '$19',
+      'name' => 'Janelas & Portas', 'name_en' => 'Windows & Doors', 'name_es' => 'Ventanas y Puertas',
+      'desc' => 'Esquadrias: leitura por IA, takeoff e documentos.', 'desc_en' => 'Windows & doors: AI reading, takeoff and documents.', 'desc_es' => 'Carpinterías: lectura por IA, cómputo y documentos.'] + $pm,
+    ['plan' => 'reports', 'price' => '$15',
+      'name' => 'Relatórios (add-on)', 'name_en' => 'Reports (add-on)', 'name_es' => 'Informes (add-on)',
+      'desc' => 'Orçamento, materiais, planta marcada + editores + texto por IA. Liga em qualquer pacote.', 'desc_en' => 'Quote, materials, marked plan + editors + AI text. Add to any package.', 'desc_es' => 'Cotización, materiales, plano marcado + editores + texto por IA. En cualquier paquete.'] + $pm,
   ];
 }
