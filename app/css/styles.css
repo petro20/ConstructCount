@@ -474,6 +474,13 @@ button:focus-visible {
 #frTakeoff .ftt-dup:hover { color: #c4881a; }
 #frTakeoff .ftt-table tfoot td { padding: 8px 10px; border-top: 2px solid #c4881a; background: #faf7f0; font-variant-numeric: tabular-nums; }
 
+/* menu de contexto (botão direito) das PÁGINAS */
+.ws-ctxmenu { position: fixed; z-index: 100000; min-width: 184px; background: #1f2937; border: 1px solid #374151; border-radius: 10px; padding: 5px; box-shadow: 0 12px 34px rgba(0,0,0,.5); font: 500 12.5px Inter, system-ui, sans-serif; color: #e5e7eb; }
+.ws-ctxmenu .ws-ctxhdr { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #8b93a3; padding: 6px 9px 3px; }
+.ws-ctxmenu .ws-ctxitem { padding: 6px 9px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+.ws-ctxmenu .ws-ctxitem:hover { background: #374151; color: #fff; }
+.ws-ctxmenu .ws-ctxsep { height: 1px; background: #374151; margin: 5px 4px; }
+
 /* gating de pacote: ferramentas de um ofício só aparecem p/ quem comprou o pacote */
 .pkg-locked { display: none !important; }
 

@@ -236,9 +236,13 @@
 
   // ----------------------------------------------------------------- páginas
   /** ordem das folhas como exibidas (respeita o sort) — base p/ seleção por intervalo */
+  function pageLF(pageNo) { let lf = 0; (S.lines || []).forEach(l => { if (l.page === pageNo) lf += (l.mm || 0) / 304.8; }); return lf; }
   function displayedPages() {
-    let pages = S.pages;
-    if (S.pageSort === 'marks') pages = S.pages.slice().sort((a, b) => (b.n_hex || 0) - (a.n_hex || 0) || a.page - b.page);
+    const s = S.pageSort, pages = S.pages.slice();
+    if (s === 'marks') pages.sort((a, b) => (b.n_hex || 0) - (a.n_hex || 0) || a.page - b.page);
+    else if (s === 'sheet') pages.sort((a, b) => String(a.sheet || '').localeCompare(String(b.sheet || ''), undefined, { numeric: true }) || a.page - b.page);
+    else if (s === 'lf') pages.sort((a, b) => pageLF(b.page) - pageLF(a.page) || a.page - b.page);
+    else pages.sort((a, b) => a.page - b.page);   // 'page' (padrão)
     return pages;
   }
   /** seleção estilo Excel: clique = só esta (e abre); Ctrl = alterna; Shift = intervalo */
@@ -282,6 +286,40 @@
     }).sort((a, b) => b.lf - a.lf);
   }
 
+  // ----- menu de contexto (botão direito) das PÁGINAS -----
+  function closePagesMenu() { const m = document.getElementById('wsPagesMenu'); if (m) m.remove(); document.removeEventListener('click', closePagesMenu); document.removeEventListener('keydown', onMenuKey); }
+  function onMenuKey(e) { if (e.key === 'Escape') closePagesMenu(); }
+  function pagesMenu(x, y, page) {
+    closePagesMenu();
+    const sortLb = { page: F.tr('nº da folha'), sheet: F.tr('código (A→Z)'), marks: F.tr('nº de marcas'), lf: F.tr('LF total') };
+    const items = [];
+    items.push({ hdr: F.tr('Ordenar por') });
+    ['page', 'sheet', 'marks', 'lf'].forEach(k => items.push({ label: sortLb[k], on: S.pageSort === k, act: () => { S.pageSort = k; renderPagesList(); markSaved(F.tr('Ordenado por {by}', { by: sortLb[k] })); } }));
+    items.push({ sep: true });
+    items.push({ label: F.tr('Expandir todas'), act: () => { displayedPages().forEach(p => { if (pageTypeSummary(p.page).length) S.pageExp.add(p.page); }); renderPagesList(); } });
+    items.push({ label: F.tr('Recolher todas'), act: () => { S.pageExp.clear(); renderPagesList(); } });
+    items.push({ sep: true });
+    items.push({ label: F.tr('Mostrar todas as cores'), act: () => { S.hiddenTypes.clear(); draw(); renderPagesList(); } });
+    if (page != null) {
+      items.push({ sep: true });
+      items.push({ label: F.tr('Ir para esta folha'), act: () => { selectPage(page, {}); } });
+      const sel = S.toDelete || (S.toDelete = new Set()), picked = sel.has(page);
+      items.push({ label: picked ? F.tr('Desmarcar p/ apagar') : F.tr('Marcar p/ apagar'), act: () => { picked ? sel.delete(page) : sel.add(page); S.selAnchor = page; renderPagesList(); } });
+    }
+    const m = document.createElement('div'); m.id = 'wsPagesMenu'; m.className = 'ws-ctxmenu';
+    items.forEach(it => {
+      if (it.sep) { const d = document.createElement('div'); d.className = 'ws-ctxsep'; m.appendChild(d); return; }
+      if (it.hdr) { const h = document.createElement('div'); h.className = 'ws-ctxhdr'; h.textContent = it.hdr; m.appendChild(h); return; }
+      const b = document.createElement('div'); b.className = 'ws-ctxitem'; b.textContent = (it.on ? '✓ ' : '') + it.label;
+      b.addEventListener('click', (e) => { e.stopPropagation(); it.act(); closePagesMenu(); });
+      m.appendChild(b);
+    });
+    document.body.appendChild(m);
+    m.style.left = Math.min(x, window.innerWidth - m.offsetWidth - 6) + 'px';
+    m.style.top = Math.min(y, window.innerHeight - m.offsetHeight - 6) + 'px';
+    setTimeout(() => { document.addEventListener('click', closePagesMenu); document.addEventListener('keydown', onMenuKey); }, 0);
+  }
+
   function renderPagesList() {
     const el = $('#wsPages'); if (!el) return;
     el.innerHTML = '';
@@ -291,6 +329,7 @@
       const picked = sel.has(p.page);
       const types = pageTypeSummary(p.page);
       const row = document.createElement('div');
+      row.setAttribute('data-pageno', p.page);
       row.className = 'px-2 py-1.5 cursor-pointer flex items-center gap-1.5 select-none ' +
         (picked ? 'bg-amber-700/60 text-white ring-1 ring-inset ring-amber-400' : (p.page === S.page ? 'bg-steel-700 font-semibold' : 'hover:bg-steel-700'));
       // triângulo de expandir (só quando há tipos levantados)
@@ -1482,6 +1521,7 @@
     pg('#pgNew', () => { const f = F._newProject || F._runLocalEngine; if (f) f(); });
     pg('#pgRefresh', () => { if (S.page != null) loadPage(S.page); });
     pg('#pgSort', () => { S.pageSort = S.pageSort === 'marks' ? 'page' : 'marks'; renderPagesList(); markSaved(F.tr('Ordenado por {by}', { by: S.pageSort === 'marks' ? F.tr('nº de marcas') : F.tr('nº da folha') })); });
+    { const wp = $('#wsPages'); if (wp) wp.addEventListener('contextmenu', (e) => { e.preventDefault(); const row = e.target.closest('[data-pageno]'); const page = row ? Number(row.getAttribute('data-pageno')) : null; pagesMenu(e.clientX, e.clientY, page); }); }
     pg('#pgHires', () => { const b = $('#wsHires'); if (b) b.click(); });
     pg('#pgAuto', () => { const b = $('#wsAuto'); if (b) b.click(); });
     pg('#pgDel', () => { const b = $('#wsDelPages'); if (b && !b.classList.contains('hidden')) b.click(); else markSaved(F.tr('Marque folhas com 🗑 na lista primeiro')); });
