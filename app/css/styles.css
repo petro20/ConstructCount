@@ -420,6 +420,8 @@ button:focus-visible {
 #frTakeoff .ftt-scope { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; border: 1px solid #56524a; background: #34312b; color: #97938a; cursor: pointer; }
 #frTakeoff .ftt-scope.on { background: #d9a02a; border-color: #e7b53f; color: #2a2208; }
 #frTakeoff .ftt-scope:hover { border-color: #e7b53f; }
+#frTakeoff .ftt-scope.locked { opacity: .5; cursor: not-allowed; background: #2b2926; border-color: #4a463f; color: #8b887f; }
+#frTakeoff .ftt-scope.locked:hover { border-color: #4a463f; }
 #frTakeoff .ftt-pr { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 9px; font-size: 11px; font-weight: 600; color: #cfcabd; }
 #frTakeoff .ftt-prhint { color: #cfcabd; font-weight: 700; }
 #frTakeoff .ftt-prhint-lab { color: #6ee7d3; }

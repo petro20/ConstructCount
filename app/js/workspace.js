@@ -1264,9 +1264,13 @@
   function populateScope() {
     const sc = (F.framing && F.framing.scope) || {};
     [['#wsScopeFraming', 'framing'], ['#wsScopeDrywall', 'drywall'], ['#wsScopeInsul', 'insulation'], ['#wsScopePaint', 'paint']].forEach(([sel, k]) => {
-      const b = $(sel); if (!b) return; const on = !!sc[k];
+      const b = $(sel); if (!b) return;
+      const owned = !F.framingHasScope || F.framingHasScope(k);   // nada grátis: ofício não comprado fica travado
+      const on = !!sc[k] && owned;
       b.classList.toggle('bg-amber-600', on); b.classList.toggle('text-white', on); b.classList.toggle('border-amber-500', on);
       b.classList.toggle('bg-steel-700/50', !on); b.classList.toggle('text-steel-400', !on); b.classList.toggle('border-steel-600', !on);
+      b.classList.toggle('opacity-50', !owned); b.style.cursor = owned ? '' : 'not-allowed';
+      b.title = owned ? '' : F.tr('Ofício não incluído no seu plano — compre para liberar');
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
   }

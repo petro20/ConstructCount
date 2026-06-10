@@ -76,11 +76,15 @@
     var pay = payload(localStorage.getItem('fenestra_license_token') || '');
     if (pay && Array.isArray(pay.pkgs)) F.entitlements = pay.pkgs;
   }
+  var WALL_TRADES = ['framing', 'drywall', 'insulation', 'paint'];   // ofícios da parede (combo = wall_combo)
   F.hasPackage = function (id) {
     if (!LICENSING) return true;
     var e = F.entitlements;
-    if (!e || !e.length) return true;                 // sem info de pacote → não bloqueia
-    return e.indexOf(id) >= 0 || e.indexOf('all') >= 0;
+    if (e == null) return true;                       // AINDA não carregou (dev/loading) → libera; lista conhecida (mesmo vazia) → trava: NADA grátis
+    if (e.indexOf('all') >= 0) return true;
+    if (id === 'wall') return e.indexOf('wall_combo') >= 0 || WALL_TRADES.some(function (t) { return e.indexOf(t) >= 0; });   // qualquer ofício de parede
+    if (WALL_TRADES.indexOf(id) >= 0 && e.indexOf('wall_combo') >= 0) return true;   // combo libera os 4 ofícios
+    return e.indexOf(id) >= 0;
   };
   function applyPackageGates() {
     var nodes = document.querySelectorAll('[data-pkg]');

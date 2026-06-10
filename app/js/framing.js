@@ -31,7 +31,9 @@
   };
   // escopo: a mesma parede gera quantidades p/ cada ofício LIGADO
   F.framingScope = function () { return FR.scope; };
-  F.framingToggleScope = function (key) { if (FR.scope[key] == null) return; FR.scope[key] = !FR.scope[key]; persistFraming(); };
+  // o cliente tem direito a este ofício? (combo libera os 4) — NADA grátis: sem entitlement, trava
+  F.framingHasScope = function (key) { return (!F.hasPackage) ? true : F.hasPackage(key); };
+  F.framingToggleScope = function (key) { if (FR.scope[key] == null) return; if (!F.framingHasScope(key)) return; FR.scope[key] = !FR.scope[key]; persistFraming(); };
   F.framingSetScope = function (key, on) { if (FR.scope[key] == null) return; FR.scope[key] = !!on; persistFraming(); };
 
   var uid = (function () { var n = 0; return function (p) { n++; return (p || 'id') + n; }; })();
@@ -289,13 +291,14 @@
   function priceParts(m) {
     var p = FR.prices, w = FR.waste, l = FR.labor, s = FR.scope, mat = 0, lab = 0;
     var wf = function (k) { return 1 + num(w[k]) / 100; };   // fator de sobra do material
-    if (s.framing) {
+    var on = function (k) { return s[k] && F.framingHasScope(k); };   // ligado E comprado (nada grátis)
+    if (on('framing')) {
       mat += m.totalStuds * num(p.stud) * wf('stud') + m.totalHorizLF * num(p.plateLF) * wf('plateLF') + m.headersLF * num(p.headerLF) * wf('headerLF') + m.sheathingSf * num(p.sheathSf) * wf('sheathSf');
       lab += m.wallSf * num(l.framing);
     }
-    if (s.drywall) { mat += m.drywallSf * num(p.drywallSf) * wf('drywallSf') + m.drywallWrSf * num(p.drywallWrSf) * wf('drywallWrSf'); lab += m.drywallTotalSf * num(l.drywall); }
-    if (s.insulation) { mat += m.insulationSf * num(p.insulSf) * wf('insulSf'); lab += m.insulationSf * num(l.insulation); }
-    if (s.paint) { mat += m.paintSf * num(p.paintSf) * wf('paintSf'); lab += m.paintSf * num(l.paint); }
+    if (on('drywall')) { mat += m.drywallSf * num(p.drywallSf) * wf('drywallSf') + m.drywallWrSf * num(p.drywallWrSf) * wf('drywallWrSf'); lab += m.drywallTotalSf * num(l.drywall); }
+    if (on('insulation')) { mat += m.insulationSf * num(p.insulSf) * wf('insulSf'); lab += m.insulationSf * num(l.insulation); }
+    if (on('paint')) { mat += m.paintSf * num(p.paintSf) * wf('paintSf'); lab += m.paintSf * num(l.paint); }
     return { mat: mat, lab: lab, total: mat + lab };
   }
   function typePrice(m) { return priceParts(m).total; }       // CUSTO (material+sobra + MO)
@@ -305,19 +308,19 @@
 
   // materiais ATIVOS (por escopo) — base p/ a IA buscar tamanho + preço regional
   function materialCatalog() {
-    var sc = FR.scope, out = [];
-    if (sc.framing) {
+    var out = [], on = function (k) { return FR.scope[k] && F.framingHasScope(k); };   // só ofícios comprados
+    if (on('framing')) {
       out.push({ key: 'stud', label: 'Wood/metal stud (precut)', unit: 'EA' });
       out.push({ key: 'plateLF', label: 'Plate/track (bottom+top)', unit: 'LF' });
       out.push({ key: 'headerLF', label: 'Header lumber', unit: 'LF' });
       out.push({ key: 'sheathSf', label: 'Exterior sheathing (DensGlass / plywood / OSB)', unit: 'SF' });
     }
-    if (sc.drywall) {
+    if (on('drywall')) {
       out.push({ key: 'drywallSf', label: '5/8" gypsum drywall (Type-X)', unit: 'SF' });
       out.push({ key: 'drywallWrSf', label: 'Water-resistant drywall (mold/moisture)', unit: 'SF' });
     }
-    if (sc.insulation) out.push({ key: 'insulSf', label: 'Batt insulation (fiberglass)', unit: 'SF' });
-    if (sc.paint) out.push({ key: 'paintSf', label: 'Paint + primer (tape/spackle/paint, walls)', unit: 'SF' });
+    if (on('insulation')) out.push({ key: 'insulSf', label: 'Batt insulation (fiberglass)', unit: 'SF' });
+    if (on('paint')) out.push({ key: 'paintSf', label: 'Paint + primer (tape/spackle/paint, walls)', unit: 'SF' });
     return out;
   }
   F.framingMaterialCatalog = materialCatalog;
@@ -381,7 +384,8 @@
   // Takeoff de Framing como TABELA editável no painel INFERIOR (igual ao Resumo) — colunas seguem o ESCOPO
   function renderFramingTakeoff(ov) {
     if ((!FR.activeWT || !wtById(FR.activeWT)) && FR.wallTypes[0]) FR.activeWT = FR.wallTypes[0].id;
-    var sc = FR.scope;
+    var sc = {};   // escopo EFETIVO: ligado E comprado (nada grátis)
+    ['framing', 'drywall', 'insulation', 'paint'].forEach(function (k) { sc[k] = FR.scope[k] && F.framingHasScope(k); });
     var rows = FR.wallTypes.map(function (wt) { return { wt: wt, m: computeType(wt.id) }; })
       .filter(function (x) { return x.m.totalLF > 0 || x.wt.id === FR.activeWT; });
     var T = { lf: 0, sf: 0, studs: 0, horiz: 0, sheets: 0, dwsf: 0, wrsf: 0, shsf: 0, header: 0, insul: 0, paint: 0, mat: 0, lab: 0, price: 0 };
@@ -459,7 +463,10 @@
     var gainHTML = '<span class="ftt-prhint ftt-prhint-gain">💰 ' + tr('Ganho %:') + '</span><input id="ftMarkup" class="ftt-prgain" type="number" min="0" step="1" title="' + tr('% de ganho — custo vira venda') + '" value="' + (FR.markup || '') + '">';
     var prHTML = '<span class="ftt-prgrp">' + matHTML + '</span><span class="ftt-prgrp ftt-prgrp-lab">' + labHTML + '</span><span class="ftt-prgrp ftt-prgrp-gain">' + gainHTML + '</span>';
     var scopeChips = [['framing', '🏗️ Framing'], ['drywall', '🧱 Drywall'], ['insulation', '🧊 Insulation'], ['paint', '🎨 Paint']]
-      .map(function (s) { return '<button class="ftt-scope' + (sc[s[0]] ? ' on' : '') + '" data-scope="' + s[0] + '">' + s[1] + '</button>'; }).join('');
+      .map(function (s) {
+        var owned = F.framingHasScope(s[0]);
+        return '<button class="ftt-scope' + (sc[s[0]] ? ' on' : '') + (owned ? '' : ' locked') + '" data-scope="' + s[0] + '"' + (owned ? '' : ' title="' + tr('Ofício não incluído no seu plano') + '"') + '>' + s[1] + (owned ? '' : ' 🔒') + '</button>';
+      }).join('');
 
     // barra REGIÃO + busca de preços por IA (estimativa → confirmar)
     var anyMeta = null; Object.keys(FR.priceMeta).forEach(function (k) { var pm = FR.priceMeta[k]; if (pm && pm.estimate && !anyMeta) anyMeta = pm; });
