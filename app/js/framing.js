@@ -186,6 +186,12 @@
     var specHTML = (aw.components && aw.components.length)
       ? card(tr('Especificação (lida da planta)'), aw.components.map(function (c) { return '<div class="ft-part"><span>' + esc(c) + '</span></div>'; }).join(''))
       : '';
+    // LF × altura (da elevação) = SF da parede
+    var wallSF = m.totalLF * (aw.height || 9);
+    var wallCard = card(tr('Parede · LF × altura = SF'),
+      '<div class="ft-part"><span>' + tr('Comprimento') + '</span><b>' + m.totalLF.toFixed(1) + ' LF</b></div>'
+      + '<div class="ft-part" style="align-items:center"><span>' + tr('Altura (ft) — da elevação') + '</span><input id="ftHeight" type="number" min="1" step="0.5" value="' + (aw.height || 9) + '" style="width:64px;text-align:right;border:1px solid #d9d7d1;border-radius:6px;padding:2px 6px"></div>'
+      + '<div class="ft-part"><span>' + tr('Área de parede') + '</span><b>' + wallSF.toFixed(0) + ' SF</b></div>');
 
     ov.innerHTML =
       '<div class="ft-top"><span>🏗️ ' + tr('Takeoff de Framing') + '</span><button id="ftClose" class="ft-x">✕</button></div>'
@@ -193,6 +199,7 @@
       + '<div class="ft-sec">' + tr('Tipos — clique p/ ativar e traçar') + '</div>'
       + '<div class="ft-types">' + typesHTML + '</div>'
       + (specHTML ? ('<div class="ft-sec" style="margin-top:14px">' + tr('Especificação · ') + esc(activeName) + '</div>' + specHTML) : '')
+      + '<div class="ft-sec" style="margin-top:14px">' + tr('Área (LF × altura)') + '</div>' + wallCard
       + '<div class="ft-sec" style="margin-top:14px">' + tr('Parts (cálculo)') + '</div>' + partsHTML
       + card(tr('Preço (USD)'),
         '<div class="ft-pr"><label>' + tr('Montante') + '<input id="ftPrStud" type="number" min="0" step="0.01" value="' + (FR.prices.stud || '') + '"></label>'
@@ -216,6 +223,8 @@
     [['ftPrStud', 'stud'], ['ftPrPlate', 'plateLF'], ['ftPrSheet', 'sheet'], ['ftPrHeader', 'headerLF']].forEach(function (pr) {
       var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('input', function () { FR.prices[pr[1]] = num(inp.value); var mm = F.framingCompute(); var t = ov.querySelector('#ftTotal'); if (t) t.textContent = money(priceTotal(mm)); persistFraming(); });
     });
+    var hin = ov.querySelector('#ftHeight');
+    if (hin) hin.addEventListener('change', function () { var w = wtById(FR.activeWT); if (w) { w.height = num(hin.value) || 9; renderFramingTakeoff(ov); persistFraming(); } });
   }
 
   /* =======================================================================
