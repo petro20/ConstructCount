@@ -266,15 +266,33 @@
     markSaved(F.tr('Marcas restauradas: {n}', { n: (r && r.n) || 0 }));
   }
 
+  // resumo dos TIPOS de parede levantados numa folha (cor + LF + qtd) — p/ árvore PlanSwift
+  function pageTypeSummary(pageNo) {
+    const fr = F.framing, by = {};
+    (S.lines || []).forEach(l => { if (l.page !== pageNo || !l.wt) return; const g = by[l.wt] = by[l.wt] || { lf: 0, qty: 0 }; g.lf += (l.mm || 0) / 304.8; g.qty++; });
+    return Object.keys(by).map(wid => {
+      const wt = (fr && fr.wallTypes || []).filter(w => w.id === wid)[0];
+      return { id: wid, name: wt ? wt.name : F.tr('(tipo)'), color: wt ? wt.color : '#999', lf: by[wid].lf, qty: by[wid].qty };
+    }).sort((a, b) => b.lf - a.lf);
+  }
+
   function renderPagesList() {
     const el = $('#wsPages'); if (!el) return;
     el.innerHTML = '';
     const sel = S.toDelete || (S.toDelete = new Set());
+    if (!S.pageExp) S.pageExp = new Set();
     displayedPages().forEach(p => {
       const picked = sel.has(p.page);
+      const types = pageTypeSummary(p.page);
       const row = document.createElement('div');
-      row.className = 'px-3 py-1.5 cursor-pointer flex items-center gap-2 select-none ' +
+      row.className = 'px-2 py-1.5 cursor-pointer flex items-center gap-1.5 select-none ' +
         (picked ? 'bg-amber-700/60 text-white ring-1 ring-inset ring-amber-400' : (p.page === S.page ? 'bg-steel-700 font-semibold' : 'hover:bg-steel-700'));
+      // triângulo de expandir (só quando há tipos levantados)
+      const tri = document.createElement('span');
+      tri.className = 'w-3 text-xs text-steel-400 shrink-0 text-center';
+      tri.textContent = types.length ? (S.pageExp.has(p.page) ? '▾' : '▸') : '';
+      if (types.length) tri.addEventListener('click', (ev) => { ev.stopPropagation(); S.pageExp.has(p.page) ? S.pageExp.delete(p.page) : S.pageExp.add(p.page); renderPagesList(); });
+      row.appendChild(tri);
       const badge = p.n_hex
         ? '<span class="text-xs bg-emerald-600 text-white rounded px-1.5">' + p.n_hex + '</span>'
         : '<span class="text-xs text-steel-500">—</span>';
@@ -291,6 +309,19 @@
       row.appendChild(trash);
       row.addEventListener('click', (ev) => selectPage(p.page, ev));   // Ctrl/Shift/clique = Excel
       el.appendChild(row);
+      // FILHOS: tipos de parede levantados nesta folha (cor + LF) — clique ativa o tipo
+      if (types.length && S.pageExp.has(p.page)) {
+        types.forEach(t => {
+          const c = document.createElement('div');
+          c.className = 'pl-8 pr-2 py-1 flex items-center gap-2 text-sm cursor-pointer hover:bg-steel-700/60';
+          const sw = document.createElement('span'); sw.style.cssText = 'width:12px;height:12px;border-radius:3px;flex:0 0 auto;background:' + t.color;
+          const nm = document.createElement('span'); nm.className = 'flex-1 truncate text-steel-200'; nm.textContent = t.name;
+          const q = document.createElement('span'); q.className = 'text-steel-300 tabular-nums text-xs'; q.textContent = t.lf.toFixed(1) + ' LF';
+          c.appendChild(sw); c.appendChild(nm); c.appendChild(q);
+          c.addEventListener('click', () => { if (F.framing) F.framing.activeWT = t.id; if (F._syncWallTypeSelect) F._syncWallTypeSelect(); if (p.page !== S.page) selectPage(p.page, {}); else if (F._wsRedraw) F._wsRedraw(); });
+          el.appendChild(c);
+        });
+      }
     });
     const btn = $('#wsDelPages');
     if (btn) { btn.textContent = F.tr('🗑 Apagar ({n})', { n: sel.size }); btn.classList.toggle('hidden', sel.size === 0); }
@@ -905,6 +936,8 @@
   // persiste os traços do Linear DESTA folha (lines-NNN.json no projeto)
   function saveLines() {
     if (S.prov && S.prov.saveLines) { try { S.prov.saveLines(S.page, (S.lines || []).filter(l => l.page === S.page)); } catch (e) {} }
+    if (S.pageExp) S.pageExp.add(S.page);    // abre a folha atual na árvore
+    renderPagesList();                        // atualiza o resumo por tipo na PÁGINAS (ao vivo)
   }
   function saveMeasures() {
     if (S.prov.saveMeasures) { try { S.prov.saveMeasures(S.page, S.measures); } catch (e) {} }
