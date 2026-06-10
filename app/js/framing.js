@@ -348,6 +348,25 @@
         return j;
       });
   };
+  // dados consolidados para os RELATÓRIOS (orçamento, pedido, resumo)
+  F.framingReportData = function () {
+    var rows = FR.wallTypes.map(function (wt) { return { wt: wt, m: computeType(wt.id) }; }).filter(function (x) { return x.m.totalLF > 0; });
+    var T = { lf: 0, sf: 0, studs: 0, horiz: 0, sheets: 0, dwsf: 0, wrsf: 0, shsf: 0, header: 0, insul: 0, paint: 0, mat: 0, tax: 0, lab: 0, cost: 0, sale: 0 };
+    var studsBySize = {};
+    var types = rows.map(function (x) {
+      var wt = x.wt, m = x.m, pp = priceParts(m), sale = saleOf(pp.total);
+      Object.keys(m.studs).forEach(function (sz) { studsBySize[sz] = (studsBySize[sz] || 0) + m.studs[sz]; });
+      T.lf += m.totalLF; T.sf += m.wallSf; T.studs += m.totalStuds; T.horiz += m.totalHorizLF; T.sheets += m.drywallSheets; T.dwsf += m.drywallSf; T.wrsf += m.drywallWrSf; T.shsf += m.sheathingSf; T.header += m.headersLF; T.insul += m.insulationSf; T.paint += m.paintSf; T.mat += pp.mat; T.tax += pp.tax; T.lab += pp.lab; T.cost += pp.total; T.sale += sale;
+      return { id: wt.id, typeId: wt.typeId || '', name: wt.name, color: wt.color, material: wt.material, studSize: wt.studSize, spacing: wt.spacing, sides: wallSidesLabel(wt), components: wt.components || [], floors: Object.keys(m.floors), m: m, mat: pp.mat, tax: pp.tax, lab: pp.lab, cost: pp.total, sale: sale };
+    });
+    return { region: FR.region || '', scope: FR.scope, prices: FR.prices, waste: FR.waste, labor: FR.labor, markup: FR.markup, taxMaterial: FR.taxMaterial, sizes: FR.sizes || {}, types: types, totals: T, studsBySize: studsBySize, generatedAtNote: '' };
+  };
+  function wallSidesLabel(wt) {
+    var lbl = { '': '—', gyp: 'Drywall', gypWR: 'Drywall WR', densglass: 'DensGlass', plywood: 'Plywood', osb: 'OSB' };
+    var s = (F.framingWallSides ? F.framingWallSides(wt) : ['', '']);
+    return (lbl[s[0]] || s[0] || '—') + ' / ' + (lbl[s[1]] || s[1] || '—');
+  }
+
   F.framingHasEstimates = function () { return Object.keys(FR.priceMeta || {}).some(function (k) { return FR.priceMeta[k] && FR.priceMeta[k].estimate; }); };
   F.framingConfirmPrices = function () { Object.keys(FR.priceMeta || {}).forEach(function (k) { if (FR.priceMeta[k]) FR.priceMeta[k].estimate = false; }); persistFraming(); };
 
@@ -382,6 +401,24 @@
       + '<label class="ftt-edcomp">' + tr('Componentes (1 por linha — o que está no desenho/nota)') + '<textarea class="fe-comp" rows="4">' + esc(comps) + '</textarea></label>'
       + '<div class="ftt-edactions"><button class="fe-ok">✓ ' + tr('Marcar spec como conferida') + '</button><button class="fe-close">' + tr('Fechar editor') + '</button></div>'
       + '</div>';
+  }
+
+  // dropdown dos relatórios (ancorado no botão Relatórios)
+  function openReportsMenu(anchor) {
+    var old = document.getElementById('ftReportsMenu'); if (old) { old.remove(); return; }
+    var reps = F.framingReports || [];
+    var menu = document.createElement('div'); menu.id = 'ftReportsMenu'; menu.className = 'ftt-repmenu';
+    reps.forEach(function (r) {
+      var b = document.createElement('div'); b.className = 'ftt-repitem'; b.textContent = tr(r.label);
+      b.addEventListener('click', function (e) { e.stopPropagation(); close(); try { r.fn(); } catch (err) { if (F.flashExport) F.flashExport('⚠️ ' + (err && err.message ? err.message : 'erro')); } });
+      menu.appendChild(b);
+    });
+    document.body.appendChild(menu);
+    var rc = anchor.getBoundingClientRect();
+    menu.style.left = Math.min(rc.left, window.innerWidth - menu.offsetWidth - 6) + 'px';
+    menu.style.top = (rc.bottom + 4) + 'px';
+    function close() { menu.remove(); document.removeEventListener('click', close); }
+    setTimeout(function () { document.addEventListener('click', close); }, 0);
   }
 
   // Takeoff de Framing como TABELA editável no painel INFERIOR (igual ao Resumo) — colunas seguem o ESCOPO
@@ -489,6 +526,7 @@
       + '<div class="ftt-top"><span>🏗️ ' + tr('Takeoff de Framing') + '</span>'
       + '<span class="ftt-scopes" title="' + tr('Escopo da obra — quais ofícios o takeoff cobre') + '">' + scopeChips + '</span>'
       + '<span class="ftt-pr">' + prHTML + '</span>'
+      + '<button id="ftReports" class="ftt-reportsbtn" title="' + tr('Gerar relatórios deste levantamento') + '">📄 ' + tr('Relatórios') + ' ▾</button>'
       + '<button id="ftClose" class="ft-x">✕</button></div>'
       + regionHTML
       + confHTML
@@ -500,6 +538,7 @@
 
     ov.querySelectorAll('.ftt-scope').forEach(function (b) { b.addEventListener('click', function () { F.framingToggleScope(b.getAttribute('data-scope')); if (F._syncScope) F._syncScope(); renderFramingTakeoff(ov); }); });
     ov.querySelector('#ftClose').addEventListener('click', function () { ov.style.display = 'none'; });
+    { var rb = ov.querySelector('#ftReports'); if (rb) rb.addEventListener('click', function (e) { e.stopPropagation(); openReportsMenu(rb); }); }
 
     // ALÇA: arrastar p/ aumentar/diminuir a tabela
     var grip = ov.querySelector('.ftt-grip');

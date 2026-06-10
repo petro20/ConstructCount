@@ -1233,6 +1233,30 @@
     S.linePts = []; draw();
   }
   F._framingLines = () => S.lines;   // o pacote Framing lê os traços daqui
+  // folhas que têm paredes traçadas (p/ a planta marcada)
+  F._framingPagesWithLines = () => {
+    const set = new Set((S.lines || []).filter(l => l.wt).map(l => l.page));
+    return [...set].sort((a, b) => a - b).map(pn => { const p = S.pages.find(pp => pp.page === pn) || {}; return { page: pn, sheet: p.sheet || ('Folha ' + pn) }; });
+  };
+  // renderiza a folha (imagem + paredes coloridas por tipo) num dataURL — p/ embutir no PDF
+  F._framingPageRender = async (page) => {
+    let data; try { data = await S.prov.getPage(page); } catch (e) { return null; }
+    if (!data || !data.image_b64) return null;
+    const src = data.image_b64.startsWith('data:') ? data.image_b64 : ('data:image/png;base64,' + data.image_b64);
+    const img = new Image();
+    await new Promise(res => { img.onload = res; img.onerror = res; img.src = src; });
+    if (!img.width) return null;
+    const oc = document.createElement('canvas'); oc.width = img.width; oc.height = img.height;
+    const c = oc.getContext('2d'); c.drawImage(img, 0, 0);
+    const fr = F.framing, lw = Math.max(3, img.width / 700);
+    (S.lines || []).forEach(ln => {
+      if (ln.page !== page || !ln.wt) return;
+      const wt = (fr && fr.wallTypes || []).filter(w => w.id === ln.wt)[0];
+      c.strokeStyle = (wt && wt.color) || '#e3b653'; c.lineWidth = lw; c.lineJoin = 'round'; c.lineCap = 'round';
+      c.beginPath(); (ln.path || []).forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke();
+    });
+    return { dataUrl: oc.toDataURL('image/jpeg', 0.82), w: img.width, h: img.height };
+  };
   F._wsRedraw = () => { try { draw(); } catch (e) {} };   // o painel de Framing pede redraw (cor por tipo)
 
   // seleção de traços Linear (igual às marcas do Contar): clicar seleciona, Del apaga

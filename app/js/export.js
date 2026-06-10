@@ -120,6 +120,7 @@ window.ConstructCount = window.ConstructCount || {};
     if (b.line2) { doc.setFontSize(8); doc.setFont(undefined, 'normal'); doc.text(b.line2, W - 14, 12, { align: 'right' }); }
     doc.setFont(undefined, 'normal');
   }
+  F._pdfBrandHeader = pdfBrandHeader; F._brAccentRGB = brAccentRGB;   // reuso pelos relatórios do Framing
   /** rodapé opcional (texto centralizado no rodapé de cada página) */
   function pdfBrandFooterAll(doc) {
     const b = F.reportBrand();
@@ -131,6 +132,7 @@ window.ConstructCount = window.ConstructCount || {};
       doc.text(b.footer, W / 2, Hh - 6, { align: 'center' });
     }
   }
+  F._pdfBrandFooterAll = pdfBrandFooterAll;
 
   /* ----- Orçamento Cliente (PDF) — detalhado, conforme o projeto ----- */
   F.exportClientPDF = async function () {

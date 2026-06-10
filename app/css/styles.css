@@ -422,6 +422,11 @@ button:focus-visible {
 #frTakeoff .ftt-scope:hover { border-color: #e7b53f; }
 #frTakeoff .ftt-scope.locked { opacity: .5; cursor: not-allowed; background: #2b2926; border-color: #4a463f; color: #8b887f; }
 #frTakeoff .ftt-scope.locked:hover { border-color: #4a463f; }
+#frTakeoff .ftt-reportsbtn { flex: 0 0 auto; margin-left: 10px; font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 8px; border: 1px solid #56524a; background: #34312b; color: #f0d98a; cursor: pointer; white-space: nowrap; }
+#frTakeoff .ftt-reportsbtn:hover { border-color: #d9a02a; background: #3f3a2a; }
+.ftt-repmenu { position: fixed; z-index: 100001; min-width: 250px; background: #1f2937; border: 1px solid #374151; border-radius: 10px; padding: 5px; box-shadow: 0 12px 34px rgba(0,0,0,.5); font: 600 12.5px Inter, system-ui, sans-serif; color: #e5e7eb; }
+.ftt-repmenu .ftt-repitem { padding: 8px 10px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+.ftt-repmenu .ftt-repitem:hover { background: #374151; color: #fff; }
 #frTakeoff .ftt-pr { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 9px; font-size: 11px; font-weight: 600; color: #cfcabd; }
 #frTakeoff .ftt-prhint { color: #cfcabd; font-weight: 700; }
 #frTakeoff .ftt-prhint-lab { color: #6ee7d3; }
