@@ -1600,7 +1600,22 @@
     { const wl = $('#wsLinear'); if (wl) wl.addEventListener('click', () => setMode('linear')); }
     { const dwb = $('#wsDetectWalls'); if (dwb) dwb.addEventListener('click', detectWallsAI); }
     { const rwb = $('#wsReadWalls'); if (rwb) rwb.addEventListener('click', readWallTypesAI); }
-    { const wts = $('#wsWallType'); if (wts) wts.addEventListener('change', () => { if (F.framing) F.framing.activeWT = wts.value; updateWallTypeSwatch(); if (F._renderFramingPanel) F._renderFramingPanel(); draw(); if (F._saveFraming) F._saveFraming(); }); populateWallTypeSelect(); }
+    { const wts = $('#wsWallType'); if (wts) wts.addEventListener('change', () => {
+      if (F.framing) F.framing.activeWT = wts.value; updateWallTypeSwatch();
+      if (S.lineSel && S.lineSel.size) {                 // há traços selecionados → ATRIBUI o tipo a eles
+        S.lineSel.forEach(l => { l.wt = wts.value; });
+        saveLines(); markSaved(F.tr('{n} linha(s) → tipo aplicado', { n: S.lineSel.size }));
+      }
+      if (F._renderFramingPanel) F._renderFramingPanel(); draw(); if (F._saveFraming) F._saveFraming();
+    }); populateWallTypeSelect(); }
+    { const apt = $('#wsApplyType'); if (apt) apt.addEventListener('click', () => {
+      if (!S.lineSel || !S.lineSel.size) { markSaved(F.tr('Selecione uma ou mais paredes na planta primeiro')); return; }
+      const wid = (F.framing && F.framing.activeWT) || null;
+      if (!wid) { markSaved(F.tr('Escolha um tipo na caixa Tipo: primeiro')); return; }
+      S.lineSel.forEach(l => { l.wt = wid; });
+      saveLines(); draw(); if (F._renderFramingPanel) F._renderFramingPanel();
+      markSaved(F.tr('{n} linha(s) → tipo aplicado', { n: S.lineSel.size }));
+    }); }
     $('#wsAuto').addEventListener('click', () => setMode('auto'));
     $('#wsDelete').addEventListener('click', () => setMode('del'));
     const wcal = $('#wsCalib'); if (wcal) wcal.addEventListener('click', () => setMode('calib'));
