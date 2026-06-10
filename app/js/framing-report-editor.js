@@ -24,14 +24,34 @@
     { type: 'summaryTable', label: tr('Resumo técnico (LF/SF)') },
     { type: 'totals', label: tr('Totais (custo → venda)') },
     { type: 'terms', label: tr('Condições de pagamento') },
+    { type: 'image', label: tr('Imagem / Foto / logo') },
     { type: 'notes', label: tr('Observações') },
     { type: 'signature', label: tr('Assinatura') }
   ];
+  // redimensiona a imagem escolhida (mantém leve p/ salvar/imprimir)
+  function downscaleImg(file, cb) {
+    var rd = new FileReader();
+    rd.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var maxW = 1280, sc = Math.min(1, maxW / (img.width || 1));
+        var w = Math.round(img.width * sc), h = Math.round(img.height * sc);
+        var c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        var fmt = /png/i.test(file.type) ? 'image/png' : 'image/jpeg';
+        try { cb(c.toDataURL(fmt, 0.78)); } catch (e) { cb(rd.result); }
+      };
+      img.onerror = function () { cb(rd.result); };
+      img.src = rd.result;
+    };
+    rd.readAsDataURL(file);
+  }
+  function pickImage(cb) { var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.addEventListener('change', function () { var f = inp.files && inp.files[0]; if (f) downscaleImg(f, cb); }); inp.click(); }
   function defaultTpl() {
     return { blocks: [{ type: 'logo' }, { type: 'title', text: tr('Proposta — Framing') }, { type: 'client' }, { type: 'region' }, { type: 'quoteTable' }, { type: 'totals' }, { type: 'terms' }, { type: 'signature' }] };
   }
   function loadTpl() { try { var t = JSON.parse(localStorage.getItem(TPL_KEY) || 'null'); if (t && Array.isArray(t.blocks)) return t; } catch (e) {} return defaultTpl(); }
-  function saveTpl(t) { try { localStorage.setItem(TPL_KEY, JSON.stringify(t)); } catch (e) {} }
+  function saveTpl(t) { try { localStorage.setItem(TPL_KEY, JSON.stringify(t)); return true; } catch (e) { return false; } }
 
   // ---- renderização de cada bloco (conteúdo HTML; o doc inteiro é contenteditable) ----
   function blockBody(b, d) {
@@ -67,6 +87,10 @@
       case 'terms': return '<div class="fre-terms"><h3>' + tr('Condições de pagamento') + '</h3>' + (b.text || tr('• 50% na aprovação · 50% na entrega.<br>• Validade da proposta: 15 dias.<br>• Valores em USD.')) + '</div>';
       case 'notes': return '<div class="fre-notes"><h3>' + tr('Observações') + '</h3><div>' + (b.text || '&nbsp;') + '</div></div>';
       case 'signature': return '<div class="fre-sign"><div>______________________________<br>' + tr('Empresa') + '</div><div>______________________________<br>' + tr('Cliente') + '</div></div>';
+      case 'image':
+        if (b.src) return '<div class="fre-imgwrap" style="text-align:' + (b.align || 'center') + '"><img class="fre-img" src="' + b.src + '" style="width:' + (b.w || 60) + '%">'
+          + '<div class="fre-imgctl no-print" contenteditable="false"><button data-act="rep">' + tr('Trocar') + '</button><button data-act="sm">– ' + tr('menor') + '</button><button data-act="lg">+ ' + tr('maior') + '</button><button data-act="al">⇄ ' + tr('alinhar') + '</button></div></div>';
+        return '<div class="fre-imgph no-print" contenteditable="false"><button data-act="add">📷 ' + tr('Adicionar imagem / logo') + '</button></div>';
       default: return '';
     }
   }
@@ -92,6 +116,19 @@
       // texto editável → guarda de volta no bloco (título/termos/notas)
       if (b.type === 'title' || b.type === 'terms' || b.type === 'notes') {
         content.addEventListener('input', function () { if (b.type === 'title') b.text = content.textContent; else b.text = content.querySelector('div') ? content.querySelector('div').innerHTML : content.innerHTML; });
+      }
+      // bloco de IMAGEM: upload, trocar, tamanho, alinhar
+      if (b.type === 'image') {
+        content.querySelectorAll('button[data-act]').forEach(function (btn) {
+          btn.addEventListener('click', function (e) {
+            e.preventDefault(); e.stopPropagation();
+            var a = btn.getAttribute('data-act');
+            if (a === 'add' || a === 'rep') { pickImage(function (url) { b.src = url; if (!b.w) b.w = 60; renderDoc(doc, d); }); }
+            else if (a === 'sm') { b.w = Math.max(15, (b.w || 60) - 10); renderDoc(doc, d); }
+            else if (a === 'lg') { b.w = Math.min(100, (b.w || 60) + 10); renderDoc(doc, d); }
+            else if (a === 'al') { b.align = b.align === 'left' ? 'center' : (b.align === 'center' ? 'right' : 'left'); renderDoc(doc, d); }
+          });
+        });
       }
       doc.appendChild(wrap);
     });
@@ -123,7 +160,7 @@
     CATALOG.forEach(function (c) { var b = document.createElement('button'); b.className = 'fre-pal-item'; b.textContent = '+ ' + c.label; b.addEventListener('click', function () { st.tpl.blocks.push({ type: c.type }); renderDoc(doc, d); doc.scrollTop = doc.scrollHeight; }); pal.appendChild(b); });
     renderDoc(doc, d);
     modal.querySelector('#freClose').addEventListener('click', function () { modal.remove(); });
-    modal.querySelector('#freSave').addEventListener('click', function () { saveTpl(st.tpl); if (F.flashExport) F.flashExport('✓ ' + tr('Modelo salvo')); });
+    modal.querySelector('#freSave').addEventListener('click', function () { var ok = saveTpl(st.tpl); if (F.flashExport) F.flashExport(ok ? ('✓ ' + tr('Modelo salvo')) : ('⚠️ ' + tr('Modelo grande demais p/ salvar — reduza/retire fotos (o documento atual segue ok p/ imprimir).'))); });
     modal.querySelector('#freReset').addEventListener('click', function () { st.tpl = defaultTpl(); renderDoc(doc, d); });
     modal.querySelector('#frePrint').addEventListener('click', function () { document.body.classList.add('fre-printing'); window.print(); setTimeout(function () { document.body.classList.remove('fre-printing'); }, 500); });
   };

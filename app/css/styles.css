@@ -525,6 +525,14 @@ button:focus-visible {
 .fre-terms h3, .fre-notes h3 { font-size: 13px; margin: 12px 0 4px; }
 .fre-terms, .fre-notes { font-size: 12px; color: #374151; }
 .fre-sign { display: flex; gap: 40px; margin-top: 40px; font-size: 12px; color: #4b5563; }
+.fre-imgwrap { margin: 8px 0; }
+.fre-img { max-width: 100%; border-radius: 4px; display: inline-block; }
+.fre-imgctl { margin-top: 4px; display: flex; gap: 6px; }
+.fre-imgctl button { font: 600 11px Inter, system-ui; padding: 3px 9px; border-radius: 6px; border: 1px solid #d5d7dd; background: #fff; color: #374151; cursor: pointer; }
+.fre-imgctl button:hover { border-color: #c4881a; background: #fffaf0; }
+.fre-imgph { border: 2px dashed #c9cdd6; border-radius: 10px; padding: 22px; text-align: center; margin: 8px 0; background: #fafbfc; }
+.fre-imgph button { font: 600 13px Inter, system-ui; padding: 9px 16px; border-radius: 8px; border: 1px solid #c4881a; background: #fffaf0; color: #92600c; cursor: pointer; }
+.fre-imgph button:hover { background: #fff3dc; }
 body.fre-printing > *:not(#freModal) { display: none !important; }
 @media print {
   .no-print { display: none !important; }
