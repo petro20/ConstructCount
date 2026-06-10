@@ -7,6 +7,7 @@ function cfg_loaded(): void {
   $c = __DIR__ . '/../config.php';
   if (!is_file($c)) { http_response_code(500); exit('Portal não configurado (config.php).'); }
   require $c;
+  require_once __DIR__ . '/catalog.php';   // catálogo de pacotes no código (config pode sobrescrever)
   $l = true;
 }
 

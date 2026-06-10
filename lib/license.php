@@ -133,7 +133,7 @@ function lic_packages(array $l): array {
   $m = trim((string) ($l['modules'] ?? ''));
   if ($m !== '') return array_values(array_filter(array_map('trim', explode(',', $m))));
   cfg_loaded();
-  $cat = defined('DITE_PLAN_CATALOG') ? DITE_PLAN_CATALOG : [];
+  $cat = function_exists('cc_plan_catalog') ? cc_plan_catalog() : (defined('DITE_PLAN_CATALOG') ? DITE_PLAN_CATALOG : []);
   $def = $cat[$l['plan'] ?? ''] ?? null;
   if ($def && !empty($def['modules'])) return array_values((array) $def['modules']);
   return ['windows_doors'];

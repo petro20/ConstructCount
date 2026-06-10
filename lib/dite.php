@@ -48,7 +48,7 @@ function _dite_data(array $r): array { return isset($r['data']) && is_array($r['
  */
 function dite_plan_def(string $plan): ?array {
   cfg_loaded();
-  $cat = defined('DITE_PLAN_CATALOG') ? DITE_PLAN_CATALOG : [];
+  $cat = function_exists('cc_plan_catalog') ? cc_plan_catalog() : (defined('DITE_PLAN_CATALOG') ? DITE_PLAN_CATALOG : []);
   return $cat[$plan] ?? null;
 }
 

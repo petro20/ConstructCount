@@ -122,7 +122,7 @@ layout_top(t('app_name'));
 
 <section class="sec reveal" id="planos">
   <h2 class="sec-title"><?= h(t('pricing_title')) ?></h2>
-  <?php $pkgs = defined('PORTAL_PACKAGES') ? PORTAL_PACKAGES : null; if ($pkgs): ?>
+  <?php $pkgs = function_exists('cc_portal_packages') ? cc_portal_packages() : null; if ($pkgs): ?>
     <div class="grid">
       <?php foreach ($pkgs as $p): $per = $p['per_' . $L] ?? ($p['per'] ?? ''); ?>
         <div class="card plan center<?= !empty($p['featured']) ? ' hot' : '' ?>">
