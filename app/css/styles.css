@@ -429,6 +429,7 @@ button:focus-visible {
 #frTakeoff .ftt-prlb { color: #97938a; font-size: 10.5px; }
 #frTakeoff .ftt-pritem input { width: 48px; border: 1px solid #56524a; border-radius: 6px; padding: 3px 5px; color: #fff; font-size: 12px; font-variant-numeric: tabular-nums; }
 #frTakeoff .ftt-prmat { background: #34312b; }
+#frTakeoff .ftt-prwaste { width: 38px !important; background: #3a3320; border-color: #6b5a2e !important; color: #f0d98a; }
 #frTakeoff .ftt-prlab { background: #2b3530; border-color: #3f5249 !important; }
 #frTakeoff .ftt-pr label { display: inline-flex; align-items: center; gap: 4px; }
 #frTakeoff .ftt-pr input { width: 64px; border: 1px solid #56524a; border-radius: 6px; padding: 3px 6px; background: #34312b; color: #fff; font-size: 12px; font-variant-numeric: tabular-nums; }
