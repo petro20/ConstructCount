@@ -210,6 +210,7 @@
       detectWalls: (page) => api.detect_walls(slug, page),
       readWallTypes: (page) => api.read_wall_types(slug, page),
       readWallTypesAll: () => api.read_wall_types_all(slug),
+      readHeights: () => api.read_ceiling_heights(slug),
       readCodes: (page, boxes) => api.read_marks_codes(slug, page, boxes),
       prewarmAutoCount: (page) => api.prewarm_autocount(slug, page),
       setSchedulePage: (page, on) => api.set_schedule_page(slug, page, on),

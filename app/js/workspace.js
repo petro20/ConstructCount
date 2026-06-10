@@ -1407,7 +1407,13 @@
     pg('#pgRestore', restoreCurrentMarks);
     pg('#pgLegend', () => { S.legend = !S.legend; draw(); markSaved(S.legend ? F.tr('Legenda: ligada') : F.tr('Legenda: oculta')); });
     { const stl = $('#stLegend'); if (stl) stl.addEventListener('click', () => { S.legend = !S.legend; draw(); markSaved(S.legend ? F.tr('Legenda: ligada') : F.tr('Legenda: oculta')); }); }
-    { const sf = $('#stFraming'); if (sf) sf.addEventListener('click', () => { if (F.toggleFramingTakeoff) F.toggleFramingTakeoff(S.lines, S.layers); else alert(F.tr('Takeoff de Framing indisponível.')); }); }
+    { const sf = $('#stFraming'); if (sf) sf.addEventListener('click', async () => {
+      if (!F.toggleFramingTakeoff) { alert(F.tr('Takeoff de Framing indisponível.')); return; }
+      if (F.framing && !F.framing._heights && S.prov && S.prov.readHeights) {   // lê as alturas (CLG HT) 1x
+        try { const r = await S.prov.readHeights(); F.framing._heights = (r && r.heights) || []; } catch (e) { F.framing._heights = []; }
+      }
+      F.toggleFramingTakeoff(S.lines, S.layers);
+    }); }
 
     // seções (grupos de takeoff)
     const sec = $('#wsSection'); if (sec) sec.addEventListener('change', async () => {

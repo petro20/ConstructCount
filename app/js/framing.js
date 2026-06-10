@@ -188,9 +188,11 @@
       : '';
     // LF × altura (da elevação) = SF da parede
     var wallSF = m.totalLF * (aw.height || 9);
+    var hopts = (FR._heights || []).map(function (h) { return '<option value="' + h.ft + '">' + esc(h.raw) + '</option>'; }).join('');
+    var hpick = hopts ? ('<select id="ftHeightPick" style="margin-left:6px;border:1px solid #d9d7d1;border-radius:6px;padding:2px 4px;font-size:11px"><option value="">📐 ' + tr('da elevação…') + '</option>' + hopts + '</select>') : '';
     var wallCard = card(tr('Parede · LF × altura = SF'),
       '<div class="ft-part"><span>' + tr('Comprimento') + '</span><b>' + m.totalLF.toFixed(1) + ' LF</b></div>'
-      + '<div class="ft-part" style="align-items:center"><span>' + tr('Altura (ft) — da elevação') + '</span><input id="ftHeight" type="number" min="1" step="0.5" value="' + (aw.height || 9) + '" style="width:64px;text-align:right;border:1px solid #d9d7d1;border-radius:6px;padding:2px 6px"></div>'
+      + '<div class="ft-part" style="align-items:center"><span>' + tr('Altura (ft)') + '</span><span style="display:flex;align-items:center"><input id="ftHeight" type="number" min="1" step="0.01" value="' + (aw.height || 9) + '" style="width:64px;text-align:right;border:1px solid #d9d7d1;border-radius:6px;padding:2px 6px">' + hpick + '</span></div>'
       + '<div class="ft-part"><span>' + tr('Área de parede') + '</span><b>' + wallSF.toFixed(0) + ' SF</b></div>');
 
     ov.innerHTML =
@@ -225,6 +227,8 @@
     });
     var hin = ov.querySelector('#ftHeight');
     if (hin) hin.addEventListener('change', function () { var w = wtById(FR.activeWT); if (w) { w.height = num(hin.value) || 9; renderFramingTakeoff(ov); persistFraming(); } });
+    var hpk = ov.querySelector('#ftHeightPick');
+    if (hpk) hpk.addEventListener('change', function () { var v = parseFloat(hpk.value); var w = wtById(FR.activeWT); if (w && v > 0) { w.height = Math.round(v * 100) / 100; renderFramingTakeoff(ov); persistFraming(); } });
   }
 
   /* =======================================================================
