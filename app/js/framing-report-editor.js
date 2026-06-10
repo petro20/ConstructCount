@@ -59,9 +59,11 @@
     switch (b.type) {
       case 'logo': {
         var br = F.reportBrand ? F.reportBrand() : { company: 'ConstructCount', accent: '#2c476a', line2: '' };
+        var logo = b.logo || br.logo;
         return '<div class="fre-logo" style="border-left:6px solid ' + esc(br.accent) + '">'
-          + (br.logo ? '<img src="' + br.logo + '" alt="">' : '')
-          + '<div><div class="fre-co">' + esc(br.company) + '</div>' + (br.line2 ? '<div class="fre-co2">' + esc(br.line2) + '</div>' : '') + '</div></div>';
+          + (logo ? '<img src="' + logo + '" alt="">' : '')
+          + '<div><div class="fre-co">' + esc(br.company) + '</div>' + (br.line2 ? '<div class="fre-co2">' + esc(br.line2) + '</div>' : '') + '</div>'
+          + '<button class="fre-logobtn no-print" data-act="logo" contenteditable="false">📷 ' + (logo ? tr('Trocar logo') : tr('Adicionar logo')) + '</button></div>';
       }
       case 'title': return '<h1 class="fre-h1">' + esc(b.text || tr('Proposta')) + '</h1>';
       case 'client': return '<table class="fre-client"><tr><td>' + tr('Cliente') + ':</td><td>&nbsp;</td><td>' + tr('Data') + ':</td><td>&nbsp;</td></tr>'
@@ -116,6 +118,11 @@
       // texto editável → guarda de volta no bloco (título/termos/notas)
       if (b.type === 'title' || b.type === 'terms' || b.type === 'notes') {
         content.addEventListener('input', function () { if (b.type === 'title') b.text = content.textContent; else b.text = content.querySelector('div') ? content.querySelector('div').innerHTML : content.innerHTML; });
+      }
+      // bloco LOGO: upload do logo inline
+      if (b.type === 'logo') {
+        var lb = content.querySelector('button[data-act="logo"]');
+        if (lb) lb.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); pickImage(function (url) { b.logo = url; renderDoc(doc, d); }); });
       }
       // bloco de IMAGEM: upload, trocar, tamanho, alinhar
       if (b.type === 'image') {

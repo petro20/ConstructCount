@@ -509,6 +509,8 @@ button:focus-visible {
 .fre-content:focus { outline: none; }
 .fre-logo { display: flex; align-items: center; gap: 12px; padding: 6px 0 6px 12px; }
 .fre-logo img { height: 40px; }
+.fre-logobtn { margin-left: auto; font: 600 11px Inter, system-ui; padding: 5px 10px; border-radius: 7px; border: 1px solid #c4881a; background: #fffaf0; color: #92600c; cursor: pointer; }
+.fre-logobtn:hover { background: #fff3dc; }
 .fre-co { font-size: 18px; font-weight: 700; }
 .fre-co2 { font-size: 11px; color: #6b7280; }
 .fre-h1 { font-size: 22px; font-weight: 700; margin: 10px 0; }
