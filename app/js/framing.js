@@ -18,10 +18,15 @@
     wallTypes: [],   // vazio: só os tipos LIDOS pela IA (ou criados) — sem padrões poluindo
     segments: [],   // { id, wtId, len(ft), qty, path?:[{x,y}img], source:'draw'|'manual' }
     openings: [],   // { id, wtId, width(ft), qty }
-    prices: { stud: 0, plateLF: 0, sheet: 0, headerLF: 0 },
+    prices: { stud: 0, plateLF: 0, sheet: 0, headerLF: 0, drywallSf: 0, insulSf: 0 },
     pxPerFt: null,  // escala calibrada (px da imagem por pé)
     floors: [], activeFloor: null,   // PISOS (cada um com altura) — o traço herda a altura do piso ativo
+    scope: { framing: true, drywall: true, insulation: true },   // ESCOPO da obra — definido ANTES do levantamento
   };
+  // escopo: a mesma parede gera quantidades p/ cada ofício LIGADO
+  F.framingScope = function () { return FR.scope; };
+  F.framingToggleScope = function (key) { if (FR.scope[key] == null) return; FR.scope[key] = !FR.scope[key]; persistFraming(); };
+  F.framingSetScope = function (key, on) { if (FR.scope[key] == null) return; FR.scope[key] = !!on; persistFraming(); };
 
   var uid = (function () { var n = 0; return function (p) { n++; return (p || 'id') + n; }; })();
   function wtById(id) { for (var i = 0; i < FR.wallTypes.length; i++) if (FR.wallTypes[i].id === id) return FR.wallTypes[i]; return null; }
@@ -35,7 +40,7 @@
     var studs = {}, track = {}, plates = {}, sheath = {};
     var bridgingLF = 0, blockingLF = 0, headersLF = 0, totalLF = 0, openExtraStuds = {};
 
-    var wallSf = 0;
+    var wallSf = 0, insulationSf = 0;
     FR.segments.forEach(function (s) {
       var wt = wtById(s.wtId); if (!wt) return;
       var qty = num(s.qty, 1), L = num(s.len);
@@ -47,7 +52,8 @@
       var horizLF = L * (wt.plates || 2) * qty, brLF = L * (wt.bracingRows || 0) * qty;
       if (wt.material === 'metal') { track[wt.studSize] = (track[wt.studSize] || 0) + horizLF; bridgingLF += brLF; }
       else { plates[wt.studSize] = (plates[wt.studSize] || 0) + horizLF; blockingLF += brLF; }
-      sheath[wt.material] = (sheath[wt.material] || 0) + L * H * (wt.sheathSides || 0) * qty;
+      sheath[wt.material] = (sheath[wt.material] || 0) + L * H * (wt.sheathSides || 0) * qty;   // drywall/board (por lados)
+      if (wtHasInsulation(wt)) insulationSf += L * H * qty;                                     // cavidade isolada (1 camada)
     });
     FR.openings.forEach(function (o) {
       var wt = wtById(o.wtId), qty = num(o.qty, 1), W = num(o.width);
@@ -67,9 +73,16 @@
       bridgingLF: bridgingLF, blockingLF: blockingLF,
       totalStuds: totalStuds, totalTrackLF: totalTrackLF, totalPlateLF: totalPlateLF,
       totalHorizLF: totalTrackLF + totalPlateLF, wallSf: wallSf,
-      headersLF: headersLF, sheathSf: sheathSf, sheets: Math.ceil(sheathSf / 32), totalLF: totalLF
+      headersLF: headersLF, sheathSf: sheathSf, sheets: Math.ceil(sheathSf / 32), totalLF: totalLF,
+      drywallSf: sheathSf, drywallSheets: Math.ceil(sheathSf / 32), insulationSf: insulationSf
     };
   };
+  // a parede tem isolamento? (lido da planta: campo insulation ou componente "isol")
+  function wtHasInsulation(wt) {
+    if (wt && wt.insulation && String(wt.insulation).trim()) return true;
+    return !!(wt && Array.isArray(wt.components) && wt.components.some(function (c) { return /isol|insul/i.test(c); }));
+  }
+  F.framingWtHasInsulation = wtHasInsulation;
   function money(n) { try { return (F.money ? F.money(n) : ('$ ' + (Number(n) || 0).toFixed(2))); } catch (e) { return '$ ' + (Number(n) || 0).toFixed(2); } }
   function priceTotal(m) {
     var p = FR.prices;
@@ -132,13 +145,14 @@
   F._framingLoad = function (d) {
     if (!d) return;
     if (Array.isArray(d.wallTypes) && d.wallTypes.length) FR.wallTypes = d.wallTypes;
-    if (d.prices) FR.prices = d.prices;
+    if (d.prices) FR.prices = Object.assign({ stud: 0, plateLF: 0, sheet: 0, headerLF: 0, drywallSf: 0, insulSf: 0 }, d.prices);
+    if (d.scope) FR.scope = Object.assign({ framing: true, drywall: true, insulation: true }, d.scope);
     if (d.layerAssembly) FR.layerAssembly = d.layerAssembly;
     if (Array.isArray(d.floors)) FR.floors = d.floors;
     FR.activeFloor = d.activeFloor || (FR.floors[0] && FR.floors[0].id) || null;
     FR.activeWT = d.activeWT || (FR.wallTypes[0] && FR.wallTypes[0].id) || null;
   };
-  F._framingSnapshot = function () { return { wallTypes: FR.wallTypes, prices: FR.prices, activeWT: FR.activeWT, layerAssembly: FR.layerAssembly, floors: FR.floors, activeFloor: FR.activeFloor }; };
+  F._framingSnapshot = function () { return { wallTypes: FR.wallTypes, prices: FR.prices, scope: FR.scope, activeWT: FR.activeWT, layerAssembly: FR.layerAssembly, floors: FR.floors, activeFloor: FR.activeFloor }; };
 
   // ---- PISOS (cada um com altura) ----
   function floorById(id) { for (var i = 0; i < FR.floors.length; i++) if (FR.floors[i].id === id) return FR.floors[i]; return null; }
@@ -206,15 +220,44 @@
     m.floors = {}; lines.forEach(function (l) { if (l.wt === wtId && l.floor) m.floors[l.floor] = true; });
     return m;
   }
-  function typePrice(m) { return m.totalStuds * num(FR.prices.stud) + m.totalHorizLF * num(FR.prices.plateLF) + m.sheets * num(FR.prices.sheet) + m.headersLF * num(FR.prices.headerLF); }
+  function typePrice(m) {
+    var p = FR.prices, s = FR.scope, t = 0;
+    if (s.framing) t += m.totalStuds * num(p.stud) + m.totalHorizLF * num(p.plateLF) + m.headersLF * num(p.headerLF);
+    if (s.drywall) t += (num(p.drywallSf) > 0 ? m.drywallSf * num(p.drywallSf) : m.drywallSheets * num(p.sheet));
+    if (s.insulation) t += m.insulationSf * num(p.insulSf);
+    return t;
+  }
 
-  // Takeoff de Framing como TABELA editável no painel INFERIOR (igual ao Resumo)
+  // Takeoff de Framing como TABELA editável no painel INFERIOR (igual ao Resumo) — colunas seguem o ESCOPO
   function renderFramingTakeoff(ov) {
     if ((!FR.activeWT || !wtById(FR.activeWT)) && FR.wallTypes[0]) FR.activeWT = FR.wallTypes[0].id;
+    var sc = FR.scope;
     var rows = FR.wallTypes.map(function (wt) { return { wt: wt, m: computeType(wt.id) }; })
       .filter(function (x) { return x.m.totalLF > 0 || x.wt.id === FR.activeWT; });
-    var grand = 0, gLF = 0, gSF = 0, gStuds = 0;
-    rows.forEach(function (x) { grand += typePrice(x.m); gLF += x.m.totalLF; gSF += x.m.wallSf; gStuds += x.m.totalStuds; });
+    var T = { lf: 0, sf: 0, studs: 0, horiz: 0, sheets: 0, dwsf: 0, header: 0, insul: 0, price: 0 };
+    rows.forEach(function (x) { var m = x.m; T.lf += m.totalLF; T.sf += m.wallSf; T.studs += m.totalStuds; T.horiz += m.totalHorizLF; T.sheets += m.drywallSheets; T.dwsf += m.drywallSf; T.header += m.headersLF; T.insul += m.insulationSf; T.price += typePrice(m); });
+
+    // colunas dinâmicas: fixas + grupos por escopo ligado
+    var cols = [];
+    cols.push({ h: '', body: function (wt, m) { return '<td><input class="ft-color" type="color" value="' + (wt.color || '#3b82f6') + '"></td>'; }, foot: '<td></td>' });
+    cols.push({ h: tr('Tipo'), body: function (wt, m, warn) { return '<td class="ftt-name">' + esc(wt.name) + warn + '</td>'; }, foot: '<td><b>' + tr('Total') + '</b></td>' });
+    cols.push({ h: tr('Pisos'), body: function (wt, m) { return '<td class="ftt-fl">' + esc(Object.keys(m.floors).join(', ')) + '</td>'; }, foot: '<td></td>' });
+    cols.push({ h: 'LF', n: 1, body: function (wt, m) { return '<td class="num">' + m.totalLF.toFixed(1) + '</td>'; }, foot: '<td class="num"><b>' + T.lf.toFixed(1) + '</b></td>' });
+    cols.push({ h: 'SF', n: 1, body: function (wt, m) { return '<td class="num">' + m.wallSf.toFixed(0) + '</td>'; }, foot: '<td class="num"><b>' + T.sf.toFixed(0) + '</b></td>' });
+    if (sc.framing) {
+      cols.push({ h: tr('Studs'), n: 1, sc: 'framing', body: function (wt, m) { return '<td class="num">' + m.totalStuds + '</td>'; }, foot: '<td class="num"><b>' + T.studs + '</b></td>' });
+      cols.push({ h: 'Plate/Track LF', n: 1, sc: 'framing', body: function (wt, m) { return '<td class="num">' + m.totalHorizLF.toFixed(0) + '</td>'; }, foot: '<td class="num"><b>' + T.horiz.toFixed(0) + '</b></td>' });
+      cols.push({ h: tr('Vergas') + ' LF', n: 1, sc: 'framing', body: function (wt, m) { return '<td class="num">' + m.headersLF.toFixed(0) + '</td>'; }, foot: '<td class="num"><b>' + T.header.toFixed(0) + '</b></td>' });
+    }
+    if (sc.drywall) {
+      cols.push({ h: 'Drywall SF', n: 1, sc: 'drywall', body: function (wt, m) { return '<td class="num">' + m.drywallSf.toFixed(0) + '</td>'; }, foot: '<td class="num"><b>' + T.dwsf.toFixed(0) + '</b></td>' });
+      cols.push({ h: tr('Chapas'), n: 1, sc: 'drywall', body: function (wt, m) { return '<td class="num">' + m.drywallSheets + '</td>'; }, foot: '<td class="num"><b>' + T.sheets + '</b></td>' });
+    }
+    if (sc.insulation) {
+      cols.push({ h: 'Insul SF', n: 1, sc: 'insulation', body: function (wt, m) { return '<td class="num">' + m.insulationSf.toFixed(0) + '</td>'; }, foot: '<td class="num"><b>' + T.insul.toFixed(0) + '</b></td>' });
+    }
+    cols.push({ h: '$', n: 1, body: function (wt, m) { return '<td class="num">' + money(typePrice(m)) + '</td>'; }, foot: '<td class="num"><b>' + money(T.price) + '</b></td>' });
+    cols.push({ h: '', body: function (wt, m) { return '<td><button class="ftt-dup" data-wt="' + wt.id + '" title="' + tr('Duplicar (outro piso)') + '">⧉</button></td>'; }, foot: '<td></td>' });
 
     var flagged = FR.wallTypes.map(function (wt) { return { wt: wt, reasons: wallTypeReview(wt) }; }).filter(function (x) { return x.reasons.length; });
     var confHTML = '';
@@ -230,32 +273,30 @@
       var wt = x.wt, m = x.m, act = (wt.id === FR.activeWT);
       var warn = wallTypeReview(wt).length ? ' ⚠️' : '';
       return '<tr class="ftt-row' + (act ? ' is-active' : '') + '" data-wt="' + wt.id + '" title="' + esc((wt.components || []).join(' · ')) + '">'
-        + '<td><input class="ft-color" type="color" value="' + (wt.color || '#3b82f6') + '"></td>'
-        + '<td class="ftt-name">' + esc(wt.name) + warn + '</td>'
-        + '<td class="ftt-fl">' + esc(Object.keys(m.floors).join(', ')) + '</td>'
-        + '<td class="num">' + m.totalLF.toFixed(1) + '</td>'
-        + '<td class="num">' + m.wallSf.toFixed(0) + '</td>'
-        + '<td class="num">' + m.totalStuds + '</td>'
-        + '<td class="num">' + m.totalHorizLF.toFixed(0) + '</td>'
-        + '<td class="num">' + m.sheets + '</td>'
-        + '<td class="num">' + m.headersLF.toFixed(0) + '</td>'
-        + '<td class="num">' + money(typePrice(m)) + '</td>'
-        + '<td><button class="ftt-dup" data-wt="' + wt.id + '" title="' + tr('Duplicar (outro piso)') + '">⧉</button></td></tr>';
-    }).join('') : ('<tr><td colspan="11" style="text-align:center;color:#8b887f;padding:18px">' + tr('Trace paredes (📐 Linear) e atribua um tipo para o takeoff aparecer aqui.') + '</td></tr>');
+        + cols.map(function (c) { return c.body(wt, m, warn); }).join('') + '</tr>';
+    }).join('') : ('<tr><td colspan="' + cols.length + '" style="text-align:center;color:#8b887f;padding:18px">' + tr('Trace paredes (📐 Linear) e atribua um tipo para o takeoff aparecer aqui.') + '</td></tr>');
 
     var pin = function (id, k, lb) { return '<label>' + lb + '<input id="' + id + '" type="number" min="0" step="0.01" value="' + (FR.prices[k] || '') + '"></label>'; };
+    var prHTML = tr('Preços $:');
+    if (sc.framing) prHTML += pin('ftPrStud', 'stud', tr('Stud')) + pin('ftPrPlate', 'plateLF', 'Plate/LF') + pin('ftPrHeader', 'headerLF', 'Verga/LF');
+    if (sc.drywall) prHTML += pin('ftPrSheet', 'sheet', tr('Chapa'));
+    if (sc.insulation) prHTML += pin('ftPrInsul', 'insulSf', 'Insul/SF');
+    var scopeChips = [['framing', '🏗️ Framing'], ['drywall', '🧱 Drywall'], ['insulation', '🧊 Insulation']]
+      .map(function (s) { return '<button class="ftt-scope' + (sc[s[0]] ? ' on' : '') + '" data-scope="' + s[0] + '">' + s[1] + '</button>'; }).join('');
 
     ov.innerHTML =
       '<div class="ftt-top"><span>🏗️ ' + tr('Takeoff de Framing') + '</span>'
-      + '<span class="ftt-pr">' + tr('Preços $:') + pin('ftPrStud', 'stud', tr('Stud')) + pin('ftPrPlate', 'plateLF', 'Plate/LF') + pin('ftPrSheet', 'sheet', tr('Chapa')) + pin('ftPrHeader', 'headerLF', 'Verga/LF') + '</span>'
+      + '<span class="ftt-scopes" title="' + tr('Escopo da obra — quais ofícios o takeoff cobre') + '">' + scopeChips + '</span>'
+      + '<span class="ftt-pr">' + prHTML + '</span>'
       + '<button id="ftClose" class="ft-x">✕</button></div>'
       + confHTML
       + '<div class="ftt-tablewrap"><table class="ftt-table"><thead><tr>'
-      + '<th></th><th>' + tr('Tipo') + '</th><th>' + tr('Pisos') + '</th><th class="num">LF</th><th class="num">SF</th><th class="num">' + tr('Studs') + '</th><th class="num">Plate/Track LF</th><th class="num">' + tr('Chapas') + '</th><th class="num">' + tr('Vergas') + ' LF</th><th class="num">$</th><th></th></tr></thead>'
+      + cols.map(function (c) { return '<th' + (c.n ? ' class="num"' : '') + '>' + c.h + '</th>'; }).join('') + '</tr></thead>'
       + '<tbody>' + body + '</tbody>'
-      + '<tfoot><tr><td></td><td><b>' + tr('Total') + '</b></td><td></td><td class="num"><b>' + gLF.toFixed(1) + '</b></td><td class="num"><b>' + gSF.toFixed(0) + '</b></td><td class="num"><b>' + gStuds + '</b></td><td></td><td></td><td></td><td class="num"><b>' + money(grand) + '</b></td><td></td></tr></tfoot>'
+      + '<tfoot><tr>' + cols.map(function (c) { return c.foot; }).join('') + '</tr></tfoot>'
       + '</table></div>';
 
+    ov.querySelectorAll('.ftt-scope').forEach(function (b) { b.addEventListener('click', function () { F.framingToggleScope(b.getAttribute('data-scope')); if (F._syncScope) F._syncScope(); renderFramingTakeoff(ov); }); });
     ov.querySelector('#ftClose').addEventListener('click', function () { ov.style.display = 'none'; });
     ov.querySelectorAll('.ftt-row').forEach(function (row) {
       var wid = row.getAttribute('data-wt');
@@ -263,7 +304,7 @@
       var ci = row.querySelector('input.ft-color'); if (ci) ci.addEventListener('input', function (e) { var wt = wtById(wid); if (wt) { wt.color = e.target.value; if (F._wsRedraw) F._wsRedraw(); renderFramingTakeoff(ov); persistFraming(); } });
     });
     ov.querySelectorAll('.ftt-dup').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); cloneWallType(b.getAttribute('data-wt')); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); renderFramingTakeoff(ov); }); });
-    [['ftPrStud', 'stud'], ['ftPrPlate', 'plateLF'], ['ftPrSheet', 'sheet'], ['ftPrHeader', 'headerLF']].forEach(function (pr) {
+    [['ftPrStud', 'stud'], ['ftPrPlate', 'plateLF'], ['ftPrSheet', 'sheet'], ['ftPrHeader', 'headerLF'], ['ftPrInsul', 'insulSf']].forEach(function (pr) {
       var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('change', function () { FR.prices[pr[1]] = num(inp.value); renderFramingTakeoff(ov); persistFraming(); });
     });
     ov.querySelectorAll('.ft-mat').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); var w = wtById(b.getAttribute('data-wt')); if (w) { w.material = b.getAttribute('data-mat'); w.materialConfirmed = true; if (F._wsRedraw) F._wsRedraw(); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); renderFramingTakeoff(ov); persistFraming(); } }); });
