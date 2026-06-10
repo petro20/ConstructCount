@@ -954,6 +954,48 @@
     if (S.pageExp) S.pageExp.add(S.page);    // abre a folha atual na árvore
     renderPagesList();                        // atualiza o resumo por tipo na PÁGINAS (ao vivo)
   }
+  // ---- Desfazer (Ctrl+Z) / Copiar (Ctrl+C) / Colar (Ctrl+V) / Salvar (Ctrl+S) ----
+  // snapshot UNIFICADO: traços Linear + marcas + medidas
+  function pushUndo() {
+    if (!S.undoStack) S.undoStack = [];
+    S.undoStack.push(JSON.stringify({ lines: S.lines || [], marks: S.marks || [], measures: S.measures || [] }));
+    if (S.undoStack.length > 50) S.undoStack.shift();
+  }
+  function undo() {
+    if (!S.undoStack || !S.undoStack.length) { markSaved(F.tr('Nada para desfazer')); return; }
+    let snap; try { snap = JSON.parse(S.undoStack.pop()); } catch (e) { return; }
+    S.lines = snap.lines || []; S.marks = snap.marks || []; S.measures = snap.measures || [];
+    if (S.lineSel) S.lineSel.clear(); clearSel();
+    saveLines(); saveMeasures(); S.dirty = true; scheduleSave();
+    renderItems(); renderPagesList(); updateMeasSel(); draw();
+    if (F._renderFramingPanel) F._renderFramingPanel();
+    markSaved(F.tr('Desfeito ↶'));
+  }
+  function copyLines() {
+    if (!S.lineSel || !S.lineSel.size) return;
+    S.lineClip = [...S.lineSel].map(l => JSON.parse(JSON.stringify(l)));
+    markSaved(F.tr('{n} item(ns) copiado(s)', { n: S.lineClip.length }));
+  }
+  function pasteLines() {
+    if (!S.lineClip || !S.lineClip.length) return;
+    pushUndo();
+    if (S.lineSel) S.lineSel.clear();
+    const off = 18;
+    S.lineClip.forEach(src => {
+      const nl = JSON.parse(JSON.stringify(src));
+      nl.path = (nl.path || []).map(pt => [pt[0] + off, pt[1] + off]);
+      nl.page = S.page;
+      S.lines.push(nl); if (S.lineSel) S.lineSel.add(nl);
+    });
+    saveLines(); draw(); if (F._renderFramingPanel) F._renderFramingPanel();
+    markSaved(F.tr('{n} item(ns) colado(s)', { n: S.lineClip.length }));
+  }
+  async function saveAll() {
+    try { await flushSave(); } catch (e) {}
+    saveLines(); saveMeasures();
+    if (F._saveFraming) F._saveFraming();
+    markSaved(F.tr('Salvo ✓'));
+  }
   function saveMeasures() {
     if (S.prov.saveMeasures) { try { S.prov.saveMeasures(S.page, S.measures); } catch (e) {} }
   }
@@ -1004,6 +1046,7 @@
     } else {
       if (!S.mmPerPx) { alert(F.tr('Calibre a escala primeiro (📏 Calibrar escala).')); return; }
       const mm = px * S.mmPerPx;
+      pushUndo();
       S.measures.push({ a, b, mm });           // ADICIONA mais uma medida
       S.lastMeas = mm;                         // guarda p/ atribuir a uma janela
       updateSelWindow();
@@ -1026,6 +1069,7 @@
       if (Math.abs(a[0] - b[0]) < 1 && Math.abs(a[1] - b[1]) < 1) S.linePts.pop(); else break;
     }
     if (S.linePts.length >= 2 && S.mmPerPx) {
+      pushUndo();
       let px = 0; for (let i = 1; i < S.linePts.length; i++) px += Math.hypot(S.linePts[i][0] - S.linePts[i - 1][0], S.linePts[i][1] - S.linePts[i - 1][1]);
       S.lines.push({ path: S.linePts.slice(), mm: px * S.mmPerPx, layer: S.activeLayer, page: S.page, wt: (F.framing && F.framing.activeWT) || null });
       markSaved(F.tr('Linear: {ft}', { ft: mmToFtIn(px * S.mmPerPx) }));
@@ -1092,6 +1136,7 @@
     S.busy = false;
     const walls = (r && r.walls) || [];
     if (!walls.length) { markSaved(F.tr('IA: nenhuma parede detectada nesta folha')); return; }
+    pushUndo();
     let added = 0;
     walls.forEach(w => {
       const px = Math.hypot(w[2] - w[0], w[3] - w[1]);
@@ -1518,6 +1563,7 @@
         (S.lines || []).forEach(ln => { if (lineInRect(ln, S.marquee, crossing)) S.lineSel.add(ln); });   // traços Linear
         S.maybeMarquee = false; S.marquee = null;
         if (crossing) {                              // ARRASTE P/ ESQUERDA = apagar tudo que tocou
+          pushUndo();
           const nL = S.lineSel.size;
           if (nL) { S.lines = S.lines.filter(l => !S.lineSel.has(l)); S.lineSel.clear(); saveLines(); }
           const n = selCount();
@@ -1554,6 +1600,7 @@
       if (S.delMode) { if (m) { S.marks.splice(S.marks.indexOf(m), 1); changed(); } return; }
       if (S.autoMode) { doAutoCount(e.offsetX, e.offsetY, m); return; }
       if (S.countMode) {
+        pushUndo();
         if (m) { m.confirmed = !m.confirmed; }
         else {
           const [ix, iy] = toImg(e.offsetX, e.offsetY); const sz = 24;
@@ -1609,6 +1656,7 @@
     { const wts = $('#wsWallType'); if (wts) wts.addEventListener('change', () => {
       if (F.framing) F.framing.activeWT = wts.value; updateWallTypeSwatch();
       if (S.lineSel && S.lineSel.size) {                 // há traços selecionados → ATRIBUI o tipo a eles
+        pushUndo();
         S.lineSel.forEach(l => { l.wt = wts.value; });
         saveLines(); markSaved(F.tr('{n} linha(s) → tipo aplicado', { n: S.lineSel.size }));
       }
@@ -1618,6 +1666,7 @@
       if (!S.lineSel || !S.lineSel.size) { markSaved(F.tr('Selecione uma ou mais paredes na planta primeiro')); return; }
       const wid = (F.framing && F.framing.activeWT) || null;
       if (!wid) { markSaved(F.tr('Escolha um tipo na caixa Tipo: primeiro')); return; }
+      pushUndo();
       S.lineSel.forEach(l => { l.wt = wid; });
       saveLines(); draw(); if (F._renderFramingPanel) F._renderFramingPanel();
       markSaved(F.tr('{n} linha(s) → tipo aplicado', { n: S.lineSel.size }));
@@ -1740,6 +1789,14 @@
     window.addEventListener('keydown', (e) => {
       if ($('#workspace').classList.contains('hidden')) return;
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '');
+      const mod = e.ctrlKey || e.metaKey;
+      if (mod && !typing) {
+        const k = (e.key || '').toLowerCase();
+        if (k === 's') { e.preventDefault(); saveAll(); return; }
+        if (k === 'z') { e.preventDefault(); undo(); return; }
+        if (k === 'c' && S.lineSel && S.lineSel.size) { e.preventDefault(); copyLines(); return; }
+        if (k === 'v' && S.lineClip && S.lineClip.length) { e.preventDefault(); pasteLines(); return; }
+      }
       if (e.key === 'Escape') {                        // Linear: finaliza; senão cancela ponto/arraste/seleção
         if (S.lineMode && S.linePts.length) { finishLine(); return; }
         if (S.lineSel && S.lineSel.size) { S.lineSel.clear(); draw(); }
@@ -1749,9 +1806,9 @@
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.lineMode && S.linePts.length) {
         e.preventDefault(); S.linePts.pop(); draw();    // desfaz último ponto do Linear
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.lineSel && S.lineSel.size) {
-        e.preventDefault(); S.lines = S.lines.filter(l => !S.lineSel.has(l)); S.lineSel.clear(); saveLines(); draw(); markSaved(F.tr('Linha(s) apagada(s)'));   // apaga traço(s) Linear selecionado(s)
+        e.preventDefault(); pushUndo(); S.lines = S.lines.filter(l => !S.lineSel.has(l)); S.lineSel.clear(); saveLines(); draw(); markSaved(F.tr('Linha(s) apagada(s)'));   // apaga traço(s) Linear selecionado(s)
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && selCount()) {
-        e.preventDefault(); deleteSelMeas();           // apaga a medida selecionada
+        e.preventDefault(); pushUndo(); deleteSelMeas();   // apaga a medida selecionada
       }
     });
   }
