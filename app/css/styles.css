@@ -390,6 +390,30 @@ button:focus-visible {
 #frTakeoff .ft-total b { font-size: 18px; }
 
 /* Takeoff de Framing — TABELA no painel inferior (estilo Resumo) */
+#frTakeoff .ftt-grip { flex: 0 0 7px; cursor: ns-resize; background: #c4881a; background-image: linear-gradient(#d9a02a, #b97d18); position: relative; }
+#frTakeoff .ftt-grip::after { content: ""; position: absolute; left: 50%; top: 2px; width: 46px; height: 3px; margin-left: -23px; border-radius: 3px; background: rgba(255,255,255,.55); }
+#frTakeoff .ftt-grip:hover { background-image: linear-gradient(#e7b53f, #c4881a); }
+#frTakeoff .ftt-acts { white-space: nowrap; }
+#frTakeoff .ftt-editbtn, #frTakeoff .ftt-dup { border: 0; background: transparent; cursor: pointer; font-size: 14px; color: #8b887f; padding: 0 3px; }
+#frTakeoff .ftt-editbtn:hover, #frTakeoff .ftt-dup:hover { color: #c4881a; }
+#frTakeoff .ftt-warn { border: 0; background: transparent; cursor: pointer; font: inherit; padding: 0; }
+#frTakeoff .ftt-cedit { font-weight: 700; color: #8a6d10; }
+#frTakeoff .ftt-cedit:hover { text-decoration: underline; }
+#frTakeoff .ftt-editrow > td { background: #fbf7ee; border-bottom: 2px solid #e3c889; padding: 0; }
+#frTakeoff .ftt-edit { padding: 12px 14px; }
+#frTakeoff .ftt-edhead { font-size: 12.5px; font-weight: 800; color: #2a2822; margin-bottom: 9px; }
+#frTakeoff .ftt-edwarn { color: #a06b12; font-weight: 700; margin-left: 6px; }
+#frTakeoff .ftt-edok { color: #157347; font-weight: 700; margin-left: 6px; }
+#frTakeoff .ftt-edgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 12px; }
+#frTakeoff .ftt-edgrid label, #frTakeoff .ftt-edcomp { display: flex; flex-direction: column; gap: 3px; font-size: 11px; font-weight: 600; color: #79766d; }
+#frTakeoff .ftt-edgrid input, #frTakeoff .ftt-edgrid select, #frTakeoff .ftt-edcomp textarea { border: 1px solid #d9d7d1; border-radius: 7px; padding: 5px 8px; font-size: 12.5px; color: #262420; font-weight: 500; }
+#frTakeoff .ftt-edcomp { margin-top: 10px; }
+#frTakeoff .ftt-edcomp textarea { resize: vertical; font-family: inherit; line-height: 1.4; }
+#frTakeoff .ftt-edactions { display: flex; gap: 8px; margin-top: 10px; }
+#frTakeoff .fe-ok { font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 8px; border: 1px solid #bfe3c9; background: #eafaef; color: #157347; cursor: pointer; }
+#frTakeoff .fe-ok:hover { background: #d7f3df; }
+#frTakeoff .fe-close { font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 8px; border: 1px solid #d9d7d1; background: #faf9f6; color: #46433c; cursor: pointer; }
+#frTakeoff .fe-close:hover { background: #f1ede3; }
 #frTakeoff .ftt-top { display: flex; align-items: center; gap: 14px; padding: 8px 14px; background: #262420; color: #fff; font-weight: 700; flex: 0 0 auto; }
 #frTakeoff .ftt-top > span:first-child { font-size: 13.5px; }
 #frTakeoff .ftt-scopes { display: inline-flex; align-items: center; gap: 5px; }

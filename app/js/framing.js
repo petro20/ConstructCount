@@ -205,6 +205,7 @@
       ws.appendChild(ov);
     }
     ov.style.display = 'flex';
+    ov.style.height = (FR._takeoffH || 272) + 'px';   // altura redimensionável (arrastar a alça do topo)
     if (F._positionFraming) F._positionFraming();
     renderFramingTakeoff(ov);
   };
@@ -226,6 +227,29 @@
     if (s.drywall) t += (num(p.drywallSf) > 0 ? m.drywallSf * num(p.drywallSf) : m.drywallSheets * num(p.sheet));
     if (s.insulation) t += m.insulationSf * num(p.insulSf);
     return t;
+  }
+
+  // editor inline do TIPO — completa a spec e resolve a dúvida (⚠️)
+  function editorHTML(wt) {
+    var comps = (wt.components || []).join('\n');
+    var matSel = function (v) { return '<select class="fe-mat">'
+      + '<option value="wood"' + (wt.material === 'wood' ? ' selected' : '') + '>🪵 Wood</option>'
+      + '<option value="metal"' + (wt.material === 'metal' ? ' selected' : '') + '>🔩 Metal</option></select>'; };
+    var rev = wallTypeReview(wt);
+    return '<div class="ftt-edit">'
+      + '<div class="ftt-edhead">✎ ' + tr('Editar') + ' · ' + esc(wt.name) + (rev.length ? ' <span class="ftt-edwarn">⚠️ ' + rev.map(esc).join(' · ') + '</span>' : ' <span class="ftt-edok">✓ ' + tr('sem pendências') + '</span>') + '</div>'
+      + '<div class="ftt-edgrid">'
+      + '<label>' + tr('Nome') + '<input class="fe-name" value="' + esc(wt.name) + '"></label>'
+      + '<label>' + tr('Material') + matSel() + '</label>'
+      + '<label>' + tr('Bitola (stud)') + '<input class="fe-size" value="' + esc(wt.studSize || '') + '"></label>'
+      + '<label>' + tr('Espaç. (in)') + '<input class="fe-sp" type="number" min="1" step="1" value="' + (wt.spacing || '') + '"></label>'
+      + '<label>' + tr('Plates/Track') + '<input class="fe-pl" type="number" min="0" step="1" value="' + (wt.plates || '') + '"></label>'
+      + '<label>' + tr('Lados de chapa') + '<input class="fe-sh" type="number" min="0" max="2" step="1" value="' + (wt.sheathSides != null ? wt.sheathSides : '') + '"></label>'
+      + '<label>' + tr('Isolamento') + '<input class="fe-ins" value="' + esc(wt.insulation || '') + '" placeholder="' + tr('ex.: R-13 / 3½\" fiberglass') + '"></label>'
+      + '</div>'
+      + '<label class="ftt-edcomp">' + tr('Componentes (1 por linha — o que está no desenho/nota)') + '<textarea class="fe-comp" rows="4">' + esc(comps) + '</textarea></label>'
+      + '<div class="ftt-edactions"><button class="fe-ok">✓ ' + tr('Marcar spec como conferida') + '</button><button class="fe-close">' + tr('Fechar editor') + '</button></div>'
+      + '</div>';
   }
 
   // Takeoff de Framing como TABELA editável no painel INFERIOR (igual ao Resumo) — colunas seguem o ESCOPO
@@ -257,7 +281,7 @@
       cols.push({ h: 'Insul SF', n: 1, sc: 'insulation', body: function (wt, m) { return '<td class="num">' + m.insulationSf.toFixed(0) + '</td>'; }, foot: '<td class="num"><b>' + T.insul.toFixed(0) + '</b></td>' });
     }
     cols.push({ h: '$', n: 1, body: function (wt, m) { return '<td class="num">' + money(typePrice(m)) + '</td>'; }, foot: '<td class="num"><b>' + money(T.price) + '</b></td>' });
-    cols.push({ h: '', body: function (wt, m) { return '<td><button class="ftt-dup" data-wt="' + wt.id + '" title="' + tr('Duplicar (outro piso)') + '">⧉</button></td>'; }, foot: '<td></td>' });
+    cols.push({ h: '', body: function (wt, m) { return '<td class="ftt-acts"><button class="ftt-editbtn" data-wt="' + wt.id + '" title="' + tr('Editar tipo / completar especificação') + '">✎</button><button class="ftt-dup" data-wt="' + wt.id + '" title="' + tr('Duplicar (outro piso)') + '">⧉</button></td>'; }, foot: '<td></td>' });
 
     var flagged = FR.wallTypes.map(function (wt) { return { wt: wt, reasons: wallTypeReview(wt) }; }).filter(function (x) { return x.reasons.length; });
     var confHTML = '';
@@ -265,15 +289,17 @@
       confHTML = '<div class="ftt-conf"><b>⚠️ ' + tr('Conferência') + ' (' + flagged.length + '):</b> '
         + flagged.map(function (x) {
           var mat = (x.wt.materialConfirmed === false) ? ' <button class="ft-mat" data-wt="' + x.wt.id + '" data-mat="wood">Wood</button><button class="ft-mat" data-wt="' + x.wt.id + '" data-mat="metal">Metal</button>' : '';
-          return '<span class="ftt-cflag">' + esc('Tipo ' + (x.wt.typeId || '')) + ': ' + x.reasons.map(esc).join(', ') + mat + ' <button class="ft-conf" data-wt="' + x.wt.id + '" title="OK">✓</button></span>';
+          return '<span class="ftt-cflag"><button class="ftt-warn ftt-cedit" data-wt="' + x.wt.id + '" title="' + tr('Editar p/ resolver') + '">✎ ' + esc('Tipo ' + (x.wt.typeId || '')) + '</button>: ' + x.reasons.map(esc).join(', ') + mat + ' <button class="ft-conf" data-wt="' + x.wt.id + '" title="OK">✓</button></span>';
         }).join('') + ' <button id="ftConfAll" class="ft-confall">✓ ' + tr('todos') + '</button></div>';
     }
 
     var body = rows.length ? rows.map(function (x) {
       var wt = x.wt, m = x.m, act = (wt.id === FR.activeWT);
-      var warn = wallTypeReview(wt).length ? ' ⚠️' : '';
-      return '<tr class="ftt-row' + (act ? ' is-active' : '') + '" data-wt="' + wt.id + '" title="' + esc((wt.components || []).join(' · ')) + '">'
+      var warn = wallTypeReview(wt).length ? ' <span class="ftt-warn" data-wt="' + wt.id + '" title="' + tr('Editar p/ resolver') + '">⚠️</span>' : '';
+      var tr1 = '<tr class="ftt-row' + (act ? ' is-active' : '') + '" data-wt="' + wt.id + '" title="' + esc((wt.components || []).join(' · ')) + '">'
         + cols.map(function (c) { return c.body(wt, m, warn); }).join('') + '</tr>';
+      if (FR._editWT === wt.id) tr1 += '<tr class="ftt-editrow"><td colspan="' + cols.length + '">' + editorHTML(wt) + '</td></tr>';
+      return tr1;
     }).join('') : ('<tr><td colspan="' + cols.length + '" style="text-align:center;color:#8b887f;padding:18px">' + tr('Trace paredes (📐 Linear) e atribua um tipo para o takeoff aparecer aqui.') + '</td></tr>');
 
     var pin = function (id, k, lb) { return '<label>' + lb + '<input id="' + id + '" type="number" min="0" step="0.01" value="' + (FR.prices[k] || '') + '"></label>'; };
@@ -285,7 +311,8 @@
       .map(function (s) { return '<button class="ftt-scope' + (sc[s[0]] ? ' on' : '') + '" data-scope="' + s[0] + '">' + s[1] + '</button>'; }).join('');
 
     ov.innerHTML =
-      '<div class="ftt-top"><span>🏗️ ' + tr('Takeoff de Framing') + '</span>'
+      '<div class="ftt-grip" title="' + tr('Arraste para aumentar/diminuir a tabela') + '"></div>'
+      + '<div class="ftt-top"><span>🏗️ ' + tr('Takeoff de Framing') + '</span>'
       + '<span class="ftt-scopes" title="' + tr('Escopo da obra — quais ofícios o takeoff cobre') + '">' + scopeChips + '</span>'
       + '<span class="ftt-pr">' + prHTML + '</span>'
       + '<button id="ftClose" class="ft-x">✕</button></div>'
@@ -298,6 +325,39 @@
 
     ov.querySelectorAll('.ftt-scope').forEach(function (b) { b.addEventListener('click', function () { F.framingToggleScope(b.getAttribute('data-scope')); if (F._syncScope) F._syncScope(); renderFramingTakeoff(ov); }); });
     ov.querySelector('#ftClose').addEventListener('click', function () { ov.style.display = 'none'; });
+
+    // ALÇA: arrastar p/ aumentar/diminuir a tabela
+    var grip = ov.querySelector('.ftt-grip');
+    if (grip) grip.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+      var startY = e.clientY, startH = ov.offsetHeight;
+      document.body.style.userSelect = 'none';
+      function mv(ev) { var h = startH + (startY - ev.clientY); h = Math.max(140, Math.min((window.innerHeight || 800) - 90, h)); ov.style.height = h + 'px'; FR._takeoffH = h; }
+      function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); document.body.style.userSelect = ''; }
+      document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+    });
+
+    // EDITAR tipo (✎ ou ⚠️) — abre/fecha a linha-editor
+    function openEdit(id) { FR._editWT = (FR._editWT === id) ? null : id; if (FR._editWT) FR.activeWT = id; renderFramingTakeoff(ov); }
+    ov.querySelectorAll('.ftt-editbtn').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); openEdit(b.getAttribute('data-wt')); }); });
+    ov.querySelectorAll('.ftt-warn').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); openEdit(b.getAttribute('data-wt')); }); });
+
+    // campos do editor inline
+    var ew = wtById(FR._editWT);
+    if (ew) {
+      var save = function () { if (F._wsRedraw) F._wsRedraw(); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); persistFraming(); renderFramingTakeoff(ov); };
+      var bind = function (selr, fn) { var el = ov.querySelector(selr); if (el) el.addEventListener('change', function () { fn(el.value); save(); }); };
+      bind('.fe-name', function (v) { ew.name = v || ew.name; });
+      bind('.fe-mat', function (v) { ew.material = v; ew.materialConfirmed = true; });
+      bind('.fe-size', function (v) { ew.studSize = v; });
+      bind('.fe-sp', function (v) { ew.spacing = num(v) || ew.spacing; });
+      bind('.fe-pl', function (v) { ew.plates = num(v); });
+      bind('.fe-sh', function (v) { ew.sheathSides = Math.max(0, Math.min(2, parseInt(v, 10) || 0)); });
+      bind('.fe-ins', function (v) { ew.insulation = v; });
+      bind('.fe-comp', function (v) { ew.components = v.split('\n').map(function (s) { return s.trim(); }).filter(Boolean); });
+      var ok = ov.querySelector('.fe-ok'); if (ok) ok.addEventListener('click', function () { ew.specConfirmed = true; save(); });
+      var cl = ov.querySelector('.fe-close'); if (cl) cl.addEventListener('click', function () { FR._editWT = null; renderFramingTakeoff(ov); });
+    }
     ov.querySelectorAll('.ftt-row').forEach(function (row) {
       var wid = row.getAttribute('data-wt');
       row.addEventListener('click', function (e) { if (e.target && (e.target.tagName === 'INPUT' || e.target.classList.contains('ftt-dup'))) return; FR.activeWT = wid; if (F._syncWallTypeSelect) F._syncWallTypeSelect(); if (F._wsRedraw) F._wsRedraw(); renderFramingTakeoff(ov); persistFraming(); });
