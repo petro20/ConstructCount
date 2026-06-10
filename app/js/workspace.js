@@ -1073,6 +1073,9 @@
       S.snapData = octx.getImageData(0, 0, S.img.width, S.img.height);
     } catch (e) { S.snapData = null; }
   }
+  // ---- Snap / Ortho (botão E tecla) ----
+  function toggleSnap() { S.snap = !S.snap; const b = $('#stSnap'); if (b) { b.classList.toggle('bg-cyan-600', S.snap); b.classList.toggle('text-white', S.snap); } markSaved(S.snap ? F.tr('Snap: ligado') : F.tr('Snap: desligado')); draw(); }
+  function toggleOrtho() { S.ortho = !S.ortho; const b = $('#stOrtho'); if (b) { b.classList.toggle('bg-cyan-600', S.ortho); b.classList.toggle('text-white', S.ortho); } markSaved(S.ortho ? F.tr('Ortho: ligado') : F.tr('Ortho: desligado')); draw(); }
   // persiste os traços do Linear DESTA folha (lines-NNN.json no projeto)
   function saveLines() {
     if (S.prov && S.prov.saveLines) { try { S.prov.saveLines(S.page, (S.lines || []).filter(l => l.page === S.page)); } catch (e) {} }
@@ -1923,12 +1926,8 @@
       renderItems(); updateSelWindow();
       markSaved(F.tr('Medida salva para {c}', { c: S.highlight }));
     });
-    const stsn = $('#stSnap'); if (stsn) stsn.addEventListener('click', () => {
-      S.snap = !S.snap; stsn.classList.toggle('bg-cyan-600', S.snap); stsn.classList.toggle('text-white', S.snap);
-    });
-    const stor = $('#stOrtho'); if (stor) stor.addEventListener('click', () => {
-      S.ortho = !S.ortho; stor.classList.toggle('bg-cyan-600', S.ortho); stor.classList.toggle('text-white', S.ortho);
-    });
+    const stsn = $('#stSnap'); if (stsn) stsn.addEventListener('click', toggleSnap);
+    const stor = $('#stOrtho'); if (stor) stor.addEventListener('click', toggleOrtho);
     const wds = $('#wsDelSel'); if (wds) wds.addEventListener('click', () => {
       if (!S.highlight) { alert(F.tr('Primeiro clique num código na lista "Marcas desta folha" para selecioná-lo.')); return; }
       const lab = S.highlight;
@@ -2032,6 +2031,10 @@
         e.preventDefault(); pushUndo(); S.lines = S.lines.filter(l => !S.lineSel.has(l)); S.lineSel.clear(); saveLines(); draw(); markSaved(F.tr('Linha(s) apagada(s)'));   // apaga traço(s) Linear selecionado(s)
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && selCount()) {
         e.preventDefault(); pushUndo(); deleteSelMeas();   // apaga a medida selecionada
+      } else if (!typing && !mod && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault(); toggleSnap();                  // tecla S → Snap
+      } else if (!typing && !mod && (e.key === 'o' || e.key === 'O')) {
+        e.preventDefault(); toggleOrtho();                 // tecla O → Ortho
       }
     });
   }
