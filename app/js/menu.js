@@ -124,7 +124,7 @@
   function renderFramingCard() {
     const owned = !F.hasPackage || F.hasPackage('framing');   // sem servidor de pacotes → libera (dev)
     const tag = $('#pkgFrTag'), sub = $('#pkgFrSubscribe'), open = $('#pkgOpenFraming');
-    if (tag) { tag.textContent = owned ? F.tr('🟢 Ativo no seu plano') : F.tr('🏗️ Pacote estrutural'); tag.classList.toggle('pkg-tag--live', owned); tag.classList.toggle('pkg-tag--beta', !owned); }
+    if (tag) { tag.textContent = owned ? F.tr('🟢 Ativo no seu plano') : F.tr('🏗️ Parede completa'); tag.classList.toggle('pkg-tag--live', owned); tag.classList.toggle('pkg-tag--beta', !owned); }
     if (sub) sub.classList.toggle('hidden', owned);
     if (open) open.classList.toggle('hidden', !owned);
   }
