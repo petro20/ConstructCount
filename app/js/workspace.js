@@ -313,6 +313,10 @@
       layer: m.layer || 'default',
     }));
     S.measures = Array.isArray(data.measures) ? data.measures : [];   // medidas salvas
+    // traços do Linear salvos desta folha → substituem os desta página em memória
+    S.lines = (S.lines || []).filter(l => l.page !== S.page);
+    (Array.isArray(data.lines) ? data.lines : []).forEach(l => { l.page = S.page; S.lines.push(l); });
+    if (S.lineSel) S.lineSel.clear();
     clearSel(); updateMeasSel();
     S.snapData = null; S.hover = null;
     S.img = new Image();
@@ -897,6 +901,10 @@
       S.snapData = octx.getImageData(0, 0, S.img.width, S.img.height);
     } catch (e) { S.snapData = null; }
   }
+  // persiste os traços do Linear DESTA folha (lines-NNN.json no projeto)
+  function saveLines() {
+    if (S.prov && S.prov.saveLines) { try { S.prov.saveLines(S.page, (S.lines || []).filter(l => l.page === S.page)); } catch (e) {} }
+  }
   function saveMeasures() {
     if (S.prov.saveMeasures) { try { S.prov.saveMeasures(S.page, S.measures); } catch (e) {} }
   }
@@ -972,6 +980,7 @@
       let px = 0; for (let i = 1; i < S.linePts.length; i++) px += Math.hypot(S.linePts[i][0] - S.linePts[i - 1][0], S.linePts[i][1] - S.linePts[i - 1][1]);
       S.lines.push({ path: S.linePts.slice(), mm: px * S.mmPerPx, layer: S.activeLayer, page: S.page });
       markSaved(F.tr('Linear: {ft}', { ft: mmToFtIn(px * S.mmPerPx) }));
+      saveLines();
     }
     S.linePts = []; draw();
   }
@@ -1038,7 +1047,7 @@
       S.lines.push({ path: [[w[0], w[1]], [w[2], w[3]]], mm: S.mmPerPx ? px * S.mmPerPx : 0, layer: S.activeLayer, page: S.page, ai: true });
       added++;
     });
-    draw();
+    saveLines(); draw();
     markSaved(F.tr('✨ IA: +{n} paredes na camada ativa — revise: desligue o Linear, clique na linha e Del p/ apagar as erradas', { n: added }));
   }
 
@@ -1439,7 +1448,7 @@
         S.maybeMarquee = false; S.marquee = null;
         if (crossing) {                              // ARRASTE P/ ESQUERDA = apagar tudo que tocou
           const nL = S.lineSel.size;
-          if (nL) { S.lines = S.lines.filter(l => !S.lineSel.has(l)); S.lineSel.clear(); }
+          if (nL) { S.lines = S.lines.filter(l => !S.lineSel.has(l)); S.lineSel.clear(); saveLines(); }
           const n = selCount();
           if (n) { deleteSelMeas(); }
           const tot = n + nL;
@@ -1653,7 +1662,7 @@
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.lineMode && S.linePts.length) {
         e.preventDefault(); S.linePts.pop(); draw();    // desfaz último ponto do Linear
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.lineSel && S.lineSel.size) {
-        e.preventDefault(); S.lines = S.lines.filter(l => !S.lineSel.has(l)); S.lineSel.clear(); draw(); markSaved(F.tr('Linha(s) apagada(s)'));   // apaga traço(s) Linear selecionado(s)
+        e.preventDefault(); S.lines = S.lines.filter(l => !S.lineSel.has(l)); S.lineSel.clear(); saveLines(); draw(); markSaved(F.tr('Linha(s) apagada(s)'));   // apaga traço(s) Linear selecionado(s)
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && selCount()) {
         e.preventDefault(); deleteSelMeas();           // apaga a medida selecionada
       }
