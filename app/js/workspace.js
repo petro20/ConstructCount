@@ -1263,7 +1263,7 @@
   // ESCOPO da obra (Framing / Drywall / Insulation) — definido ANTES do levantamento
   function populateScope() {
     const sc = (F.framing && F.framing.scope) || {};
-    [['#wsScopeFraming', 'framing'], ['#wsScopeDrywall', 'drywall'], ['#wsScopeInsul', 'insulation']].forEach(([sel, k]) => {
+    [['#wsScopeFraming', 'framing'], ['#wsScopeDrywall', 'drywall'], ['#wsScopeInsul', 'insulation'], ['#wsScopePaint', 'paint']].forEach(([sel, k]) => {
       const b = $(sel); if (!b) return; const on = !!sc[k];
       b.classList.toggle('bg-amber-600', on); b.classList.toggle('text-white', on); b.classList.toggle('border-amber-500', on);
       b.classList.toggle('bg-steel-700/50', !on); b.classList.toggle('text-steel-400', !on); b.classList.toggle('border-steel-600', !on);
@@ -1746,7 +1746,7 @@
       }
       if (F._renderFramingPanel) F._renderFramingPanel(); draw(); if (F._saveFraming) F._saveFraming();
     }); populateWallTypeSelect(); }
-    [['#wsScopeFraming', 'framing'], ['#wsScopeDrywall', 'drywall'], ['#wsScopeInsul', 'insulation']].forEach(([sel, k]) => { const b = $(sel); if (b) b.addEventListener('click', () => { if (F.framingToggleScope) F.framingToggleScope(k); populateScope(); if (F._renderFramingPanel) F._renderFramingPanel(); }); }); populateScope();
+    [['#wsScopeFraming', 'framing'], ['#wsScopeDrywall', 'drywall'], ['#wsScopeInsul', 'insulation'], ['#wsScopePaint', 'paint']].forEach(([sel, k]) => { const b = $(sel); if (b) b.addEventListener('click', () => { if (F.framingToggleScope) F.framingToggleScope(k); populateScope(); if (F._renderFramingPanel) F._renderFramingPanel(); }); }); populateScope();
     { const fsel = $('#wsFloor'); if (fsel) fsel.addEventListener('change', () => { if (F.framingSetFloor) F.framingSetFloor(fsel.value); populateFloorSelect(); }); populateFloorSelect(); }
     { const fh = $('#wsFloorH'); if (fh) fh.addEventListener('change', () => {
       let v = fh.value;
