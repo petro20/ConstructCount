@@ -187,7 +187,7 @@
       row.addEventListener('click', function (e) {
         if (e.target && e.target.classList && e.target.classList.contains('ft-color')) return;
         if (!wid) return;
-        FR.activeWT = wid; renderFramingTakeoff(ov);
+        FR.activeWT = wid; renderFramingTakeoff(ov); if (F._syncWallTypeSelect) F._syncWallTypeSelect();
       });
       var ci = row.querySelector('input.ft-color');
       if (ci) ci.addEventListener('input', function (e) { var wt = wtById(wid); if (wt) { wt.color = e.target.value; if (F._wsRedraw) F._wsRedraw(); renderFramingTakeoff(ov); } });

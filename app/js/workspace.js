@@ -1079,9 +1079,25 @@
     const walls = (r && r.walls) || [];
     if (!walls.length) { markSaved(F.tr('IA: nenhum tipo de parede encontrado nesta folha (use a folha de partições/wall types)')); return; }
     const n = F.framingAddWallTypes ? F.framingAddWallTypes(walls) : 0;
-    markSaved(F.tr('🧠 IA: {n} tipo(s) de parede lido(s) — abra o 🏗️ Framing pra usar', { n: n }));
-    alert(F.tr('A IA leu {n} tipo(s) de parede e criou as assemblies. Abra o 🏗️ Framing e escolha a assembly de cada camada (revise/ajuste se precisar).', { n: n }));
+    populateWallTypeSelect();
+    markSaved(F.tr('🧠 IA: {n} tipo(s) de parede lido(s) — escolha o tipo em FERRAMENTAS e traçe', { n: n }));
+    alert(F.tr('A IA leu {n} tipo(s) de parede. Escolha o TIPO na caixa de seleção (FERRAMENTAS) e trace — a parede entra nesse tipo, com a cor dele.', { n: n }));
   }
+
+  // ---- caixa de seleção do TIPO de framing ativo (FERRAMENTAS) ----
+  function updateWallTypeSwatch() {
+    const fr = F.framing, sw = $('#wsWallTypeSwatch'); if (!sw || !fr) return;
+    const t = (fr.wallTypes || []).filter(x => x.id === fr.activeWT)[0];
+    sw.style.background = (t && t.color) || '#999';
+  }
+  function populateWallTypeSelect() {
+    const sel = $('#wsWallType'); if (!sel) return;
+    const fr = F.framing; const types = (fr && fr.wallTypes) || [];
+    if (fr && !fr.activeWT && types[0]) fr.activeWT = types[0].id;
+    sel.innerHTML = types.map(t => '<option value="' + t.id + '"' + (fr && t.id === fr.activeWT ? ' selected' : '') + '>' + (t.name || '').replace(/</g, '&lt;') + '</option>').join('');
+    updateWallTypeSwatch();
+  }
+  F._syncWallTypeSelect = populateWallTypeSelect;
 
   function updateSchedUI() {
     const on = S.schedulePages.indexOf(S.page) >= 0;
@@ -1538,6 +1554,7 @@
     { const wl = $('#wsLinear'); if (wl) wl.addEventListener('click', () => setMode('linear')); }
     { const dwb = $('#wsDetectWalls'); if (dwb) dwb.addEventListener('click', detectWallsAI); }
     { const rwb = $('#wsReadWalls'); if (rwb) rwb.addEventListener('click', readWallTypesAI); }
+    { const wts = $('#wsWallType'); if (wts) wts.addEventListener('change', () => { if (F.framing) F.framing.activeWT = wts.value; updateWallTypeSwatch(); if (F._renderFramingPanel) F._renderFramingPanel(); }); populateWallTypeSelect(); }
     $('#wsAuto').addEventListener('click', () => setMode('auto'));
     $('#wsDelete').addEventListener('click', () => setMode('del'));
     const wcal = $('#wsCalib'); if (wcal) wcal.addEventListener('click', () => setMode('calib'));
