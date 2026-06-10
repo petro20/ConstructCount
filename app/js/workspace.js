@@ -303,15 +303,48 @@
     if (page != null) {
       items.push({ sep: true });
       items.push({ label: F.tr('Ir para esta folha'), act: () => { selectPage(page, {}); } });
+      items.push({ label: F.tr('Atualizar folha'), act: () => { loadPage(page); } });
+      items.push({ sep: true });
+      const pageLines = (S.lines || []).filter(l => l.page === page);
+      items.push({ label: F.tr('Copiar paredes') + (pageLines.length ? ' (' + pageLines.length + ')' : ''), dis: !pageLines.length, act: () => { S.lineClip = pageLines.map(l => JSON.parse(JSON.stringify(l))); markSaved(F.tr('{n} parede(s) copiada(s)', { n: S.lineClip.length })); } });
+      items.push({ label: F.tr('Colar paredes') + (S.lineClip && S.lineClip.length ? ' (' + S.lineClip.length + ')' : ''), dis: !(S.lineClip && S.lineClip.length), act: () => { pasteLinesToPage(page); } });
+      items.push({ label: F.tr('Duplicar paredes'), dis: !pageLines.length, act: () => { S.lineClip = pageLines.map(l => JSON.parse(JSON.stringify(l))); pasteLinesToPage(page); } });
+      items.push({ sep: true });
       const sel = S.toDelete || (S.toDelete = new Set()), picked = sel.has(page);
       items.push({ label: picked ? F.tr('Desmarcar p/ apagar') : F.tr('Marcar p/ apagar'), act: () => { picked ? sel.delete(page) : sel.add(page); S.selAnchor = page; renderPagesList(); } });
+      items.push({ label: F.tr('Deletar folha'), danger: true, act: () => { if (confirm(F.tr('Apagar esta folha e tudo nela?'))) doDeletePages([page]); } });
     }
+    showCtxMenu(x, y, items);
+  }
+  // menu de contexto de um TIPO de parede (filho da folha)
+  function typesMenu(x, y, wtId, page) {
+    const wt = (F.framing && F.framing.wallTypes || []).filter(w => w.id === wtId)[0];
+    const tname = wt ? wt.name : F.tr('(tipo)');
+    const typeLines = (S.lines || []).filter(l => l.page === page && l.wt === wtId);
+    const hidden = S.hiddenTypes && S.hiddenTypes.has(wtId);
+    const items = [];
+    items.push({ hdr: tname });
+    items.push({ label: F.tr('Ativar este tipo'), on: F.framing && F.framing.activeWT === wtId, act: () => { if (F.framing) F.framing.activeWT = wtId; if (F._syncWallTypeSelect) F._syncWallTypeSelect(); if (page !== S.page) selectPage(page, {}); else draw(); renderPagesList(); } });
+    items.push({ label: hidden ? F.tr('Mostrar (cor)') : F.tr('Ocultar (cor)'), act: () => { hidden ? S.hiddenTypes.delete(wtId) : S.hiddenTypes.add(wtId); draw(); renderPagesList(); if (F._renderFramingPanel) F._renderFramingPanel(); } });
+    items.push({ sep: true });
+    items.push({ label: F.tr('Copiar paredes') + (typeLines.length ? ' (' + typeLines.length + ')' : ''), dis: !typeLines.length, act: () => { S.lineClip = typeLines.map(l => JSON.parse(JSON.stringify(l))); markSaved(F.tr('{n} parede(s) copiada(s)', { n: S.lineClip.length })); } });
+    items.push({ label: F.tr('Colar como este tipo') + (S.lineClip && S.lineClip.length ? ' (' + S.lineClip.length + ')' : ''), dis: !(S.lineClip && S.lineClip.length), act: () => { pasteLinesToPage(page, wtId); } });
+    items.push({ label: F.tr('Duplicar paredes'), dis: !typeLines.length, act: () => { S.lineClip = typeLines.map(l => JSON.parse(JSON.stringify(l))); pasteLinesToPage(page, wtId); } });
+    items.push({ label: F.tr('Deletar paredes deste tipo'), danger: true, dis: !typeLines.length, act: () => { if (!confirm(F.tr('Apagar as {n} parede(s) deste tipo nesta folha?', { n: typeLines.length }))) return; pushUndo(); const del = new Set(typeLines); S.lines = S.lines.filter(l => !del.has(l)); if (S.prov && S.prov.saveLines) { try { S.prov.saveLines(page, S.lines.filter(l => l.page === page)); } catch (e) {} } draw(); renderPagesList(); if (F._renderFramingPanel) F._renderFramingPanel(); markSaved(F.tr('Paredes apagadas')); } });
+    items.push({ sep: true });
+    items.push({ label: F.tr('Editar tipo…'), act: () => { if (F.framing) { F.framing.activeWT = wtId; F.framing._editWT = wtId; } const ov = document.getElementById('frTakeoff'); if (!ov || ov.style.display === 'none') { const b = $('#stFraming'); if (b) b.click(); } else if (F._renderFramingPanel) F._renderFramingPanel(); } });
+    items.push({ label: F.tr('Renomear tipo'), dis: !wt, act: () => { const nm = prompt(F.tr('Novo nome do tipo:'), tname); if (nm == null) return; wt.name = nm.trim() || wt.name; if (F._saveFraming) F._saveFraming(); if (F._syncWallTypeSelect) F._syncWallTypeSelect(); renderPagesList(); if (F._renderFramingPanel) F._renderFramingPanel(); } });
+    showCtxMenu(x, y, items);
+  }
+  // renderiza um menu de contexto (lista de itens) na posição do cursor
+  function showCtxMenu(x, y, items) {
+    closePagesMenu();
     const m = document.createElement('div'); m.id = 'wsPagesMenu'; m.className = 'ws-ctxmenu';
     items.forEach(it => {
       if (it.sep) { const d = document.createElement('div'); d.className = 'ws-ctxsep'; m.appendChild(d); return; }
       if (it.hdr) { const h = document.createElement('div'); h.className = 'ws-ctxhdr'; h.textContent = it.hdr; m.appendChild(h); return; }
-      const b = document.createElement('div'); b.className = 'ws-ctxitem'; b.textContent = (it.on ? '✓ ' : '') + it.label;
-      b.addEventListener('click', (e) => { e.stopPropagation(); it.act(); closePagesMenu(); });
+      const b = document.createElement('div'); b.className = 'ws-ctxitem' + (it.dis ? ' is-dis' : '') + (it.danger ? ' is-danger' : ''); b.textContent = (it.on ? '✓ ' : '') + it.label;
+      if (!it.dis) b.addEventListener('click', (e) => { e.stopPropagation(); it.act(); closePagesMenu(); });
       m.appendChild(b);
     });
     document.body.appendChild(m);
@@ -374,6 +407,7 @@
         types.forEach(t => {
           const hidden = t.id && S.hiddenTypes && S.hiddenTypes.has(t.id);
           const c = document.createElement('div');
+          if (t.id) { c.setAttribute('data-wt', t.id); c.setAttribute('data-pageno', p.page); }
           c.className = 'pl-8 pr-2 py-1 flex items-center gap-2 text-sm cursor-pointer hover:bg-steel-700/60' + (hidden ? ' opacity-40' : '');
           const sw = document.createElement('span');
           sw.title = F.tr('Duplo-clique p/ ocultar/mostrar este tipo');
@@ -1065,6 +1099,32 @@
     saveLines(); draw(); if (F._renderFramingPanel) F._renderFramingPanel();
     markSaved(F.tr('{n} item(ns) colado(s)', { n: S.lineClip.length }));
   }
+  // cola as paredes do clipboard numa FOLHA específica (mesma ou outra) — usado no menu de contexto.
+  // retagWt: se informado, as paredes coladas viram esse TIPO.
+  function pasteLinesToPage(page, retagWt) {
+    if (!S.lineClip || !S.lineClip.length) return;
+    pushUndo();
+    const off = 18, added = [];
+    S.lineClip.forEach(src => { const nl = JSON.parse(JSON.stringify(src)); nl.path = (nl.path || []).map(pt => [pt[0] + off, pt[1] + off]); nl.page = page; if (retagWt) nl.wt = retagWt; S.lines.push(nl); added.push(nl); });
+    if (page === S.page) { if (S.lineSel) { S.lineSel.clear(); added.forEach(l => S.lineSel.add(l)); } draw(); }
+    if (S.prov && S.prov.saveLines) { try { S.prov.saveLines(page, S.lines.filter(l => l.page === page)); } catch (e) {} }   // salva a folha-alvo
+    renderPagesList(); if (F._renderFramingPanel) F._renderFramingPanel();
+    markSaved(F.tr('{n} parede(s) coladas na folha {p}', { n: added.length, p: page }));
+  }
+  // apaga folhas (reusado pelo botão 🗑 e pelo menu de contexto)
+  async function doDeletePages(pages) {
+    if (!pages || !pages.length) return;
+    if (!(S.prov && S.prov.deletePages)) { alert(F.tr('Disponível no app de desktop.')); return; }
+    let r; try { r = await S.prov.deletePages(pages); } catch (e) { markSaved(F.tr('Falha ao apagar folhas')); return; }
+    if (r && r.error) { markSaved(F.tr('Erro: {e}', { e: r.error })); return; }
+    const del = new Set(pages);
+    S.pages = (r && r.pages) || S.pages.filter(p => !del.has(p.page));
+    S.schedulePages = (r && r.schedule_pages) || S.schedulePages;
+    if (S.toDelete) pages.forEach(p => S.toDelete.delete(p));
+    if (!S.pages.find(p => p.page === S.page)) { const next = S.pages.find(p => p.n_hex > 0) || S.pages[0]; if (next) loadPage(next.page); else renderPagesList(); }
+    else renderPagesList();
+    markSaved(F.tr('Folhas apagadas: {n}', { n: pages.length }));
+  }
   async function saveAll() {
     try { await flushSave(); } catch (e) {}
     saveLines(); saveMeasures();
@@ -1365,6 +1425,7 @@
     S.busy = false;
 
     let added = 0, skipped = 0;
+    const undoLen = (S.undoStack || []).length; pushUndo();   // snapshot ANTES (Auto Count é desfazível)
     matches.forEach((mt, i) => {
       const code = labels[i] || '';
       if (target && code && code !== target) { skipped++; return; }   // não é o que você clicou → ignora
@@ -1373,7 +1434,7 @@
       const dup = S.marks.some(m => Math.abs((m.x + m.w / 2) - cx) < mt.w * 0.6 && Math.abs((m.y + m.h / 2) - cy) < mt.h * 0.6);
       if (!dup) { S.marks.push({ x: mt.x, y: mt.y, w: mt.w, h: mt.h, label: lab, confirmed: true, cv: false, auto: true, section: S.activeSection, layer: S.activeLayer }); added++; }
     });
-    if (added) { S.dirty = true; scheduleSave(); }
+    if (added) { S.dirty = true; scheduleSave(); } else if ((S.undoStack || []).length > undoLen) S.undoStack.pop();   // nada mudou → descarta snapshot
     renderItems(); draw();
     if (target) markSaved(F.tr('Auto Count: +{a} "{t}" · ignoradas {s} de outro código', { a: added, t: target, s: skipped }));
     else markSaved(F.tr('Auto Count: +{a} de {m}', { a: added, m: matches.length }));
@@ -1521,7 +1582,13 @@
     pg('#pgNew', () => { const f = F._newProject || F._runLocalEngine; if (f) f(); });
     pg('#pgRefresh', () => { if (S.page != null) loadPage(S.page); });
     pg('#pgSort', () => { S.pageSort = S.pageSort === 'marks' ? 'page' : 'marks'; renderPagesList(); markSaved(F.tr('Ordenado por {by}', { by: S.pageSort === 'marks' ? F.tr('nº de marcas') : F.tr('nº da folha') })); });
-    { const wp = $('#wsPages'); if (wp) wp.addEventListener('contextmenu', (e) => { e.preventDefault(); const row = e.target.closest('[data-pageno]'); const page = row ? Number(row.getAttribute('data-pageno')) : null; pagesMenu(e.clientX, e.clientY, page); }); }
+    { const wp = $('#wsPages'); if (wp) wp.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const tEl = e.target.closest('[data-wt]');
+      if (tEl) { typesMenu(e.clientX, e.clientY, tEl.getAttribute('data-wt'), Number(tEl.getAttribute('data-pageno'))); return; }   // botão direito num TIPO
+      const row = e.target.closest('[data-pageno]');
+      pagesMenu(e.clientX, e.clientY, row ? Number(row.getAttribute('data-pageno')) : null);   // botão direito numa FOLHA / área
+    }); }
     pg('#pgHires', () => { const b = $('#wsHires'); if (b) b.click(); });
     pg('#pgAuto', () => { const b = $('#wsAuto'); if (b) b.click(); });
     pg('#pgDel', () => { const b = $('#wsDelPages'); if (b && !b.classList.contains('hidden')) b.click(); else markSaved(F.tr('Marque folhas com 🗑 na lista primeiro')); });
@@ -1726,7 +1793,7 @@
       if (S.lineMode) { handleLine(e.offsetX, e.offsetY); return; }
       if (S.calibMode || S.measMode) { handleRuler(e.offsetX, e.offsetY); return; }
       const m = hit(e.offsetX, e.offsetY);
-      if (S.delMode) { if (m) { S.marks.splice(S.marks.indexOf(m), 1); changed(); } return; }
+      if (S.delMode) { if (m) { pushUndo(); S.marks.splice(S.marks.indexOf(m), 1); changed(); } return; }
       if (S.autoMode) { doAutoCount(e.offsetX, e.offsetY, m); return; }
       if (S.countMode) {
         pushUndo();
@@ -1861,16 +1928,7 @@
       if (!pages.length) return;
       if (!S.prov.deletePages) { alert(F.tr('Disponível no app de desktop.')); return; }
       if (!confirm(F.tr('Apagar {n} folha(s) marcada(s)? Isso remove as imagens e marcas dessas folhas (libera espaço).', { n: pages.length }))) return;
-      let r; try { r = await S.prov.deletePages(pages); } catch (e) { markSaved(F.tr('Falha ao apagar folhas')); return; }
-      if (r && r.error) { markSaved(F.tr('Erro: {e}', { e: r.error })); return; }
-      S.pages = (r && r.pages) || S.pages.filter(p => !S.toDelete.has(p.page));
-      S.schedulePages = (r && r.schedule_pages) || S.schedulePages;
-      S.toDelete = new Set();
-      if (!S.pages.find(p => p.page === S.page)) {       // folha atual foi apagada → abre outra
-        const next = S.pages.find(p => p.n_hex > 0) || S.pages[0];
-        if (next) { loadPage(next.page); } else { renderPagesList(); }
-      } else { renderPagesList(); }
-      markSaved(F.tr('Folhas apagadas: {n}', { n: pages.length }));
+      await doDeletePages(pages);
     });
     const wsp = $('#wsSchedPage'); if (wsp) wsp.addEventListener('click', async () => {
       if (S.page == null || !S.prov.setSchedulePage) { alert(F.tr('Disponível no app de desktop.')); return; }
@@ -1935,14 +1993,16 @@
     window.addEventListener('fenestra:lang', () => { if (!$('#workspace').classList.contains('hidden')) { renderItems(); renderPagesList(); draw(); } });   // legenda/itens no novo idioma
     window.addEventListener('keydown', (e) => {
       if ($('#workspace').classList.contains('hidden')) return;
-      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '');
+      const tag = (e.target && e.target.tagName) || '';
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(tag);
+      const textEditing = tag === 'TEXTAREA' || (tag === 'INPUT' && /^(|text|search|email|url|tel|password)$/.test(((e.target && e.target.type) || '').toLowerCase()));
       const mod = e.ctrlKey || e.metaKey;
-      if (mod && !typing) {
+      if (mod) {
         const k = (e.key || '').toLowerCase();
+        if (k === 'z' && !textEditing) { e.preventDefault(); undo(); return; }   // DESFAZER em qualquer momento (só não rouba o undo de texto)
         if (k === 's') { e.preventDefault(); saveAll(); return; }
-        if (k === 'z') { e.preventDefault(); undo(); return; }
-        if (k === 'c' && S.lineSel && S.lineSel.size) { e.preventDefault(); copyLines(); return; }
-        if (k === 'v' && S.lineClip && S.lineClip.length) { e.preventDefault(); pasteLines(); return; }
+        if (!typing && k === 'c' && S.lineSel && S.lineSel.size) { e.preventDefault(); copyLines(); return; }
+        if (!typing && k === 'v' && S.lineClip && S.lineClip.length) { e.preventDefault(); pasteLines(); return; }
       }
       if (e.key === 'Escape') {                        // Linear: finaliza; senão cancela ponto/arraste/seleção
         if (S.lineMode && S.linePts.length) { finishLine(); return; }

@@ -479,6 +479,10 @@ button:focus-visible {
 .ws-ctxmenu .ws-ctxhdr { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #8b93a3; padding: 6px 9px 3px; }
 .ws-ctxmenu .ws-ctxitem { padding: 6px 9px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
 .ws-ctxmenu .ws-ctxitem:hover { background: #374151; color: #fff; }
+.ws-ctxmenu .ws-ctxitem.is-dis { opacity: .4; cursor: default; }
+.ws-ctxmenu .ws-ctxitem.is-dis:hover { background: transparent; color: #e5e7eb; }
+.ws-ctxmenu .ws-ctxitem.is-danger { color: #f87171; }
+.ws-ctxmenu .ws-ctxitem.is-danger:hover { background: #7f1d1d; color: #fff; }
 .ws-ctxmenu .ws-ctxsep { height: 1px; background: #374151; margin: 5px 4px; }
 
 /* gating de pacote: ferramentas de um ofício só aparecem p/ quem comprou o pacote */
