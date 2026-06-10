@@ -425,6 +425,11 @@ button:focus-visible {
 #frTakeoff .ftt-prhint-lab { color: #6ee7d3; }
 #frTakeoff .ftt-prgrp { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 #frTakeoff .ftt-prgrp-lab { padding-left: 9px; margin-left: 3px; border-left: 1px solid #56524a; }
+#frTakeoff .ftt-prgrp-gain { padding-left: 9px; margin-left: 3px; border-left: 1px solid #56524a; }
+#frTakeoff .ftt-prhint-gain { color: #fbbf24; }
+#frTakeoff .ftt-prgain { width: 52px; border: 1px solid #b07e1f; border-radius: 6px; padding: 3px 6px; background: #4a3a14; color: #fde68a; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+#frTakeoff .ftt-table .ftt-sale { color: #157347; font-weight: 700; }
+#frTakeoff .ftt-table tfoot .ftt-sale { color: #157347; }
 #frTakeoff .ftt-pritem { display: inline-flex; align-items: center; gap: 3px; }
 #frTakeoff .ftt-prlb { color: #97938a; font-size: 10.5px; }
 #frTakeoff .ftt-pritem input { width: 48px; border: 1px solid #56524a; border-radius: 6px; padding: 3px 5px; color: #fff; font-size: 12px; font-variant-numeric: tabular-nums; }

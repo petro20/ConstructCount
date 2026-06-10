@@ -21,6 +21,7 @@
     prices: { stud: 0, plateLF: 0, sheet: 0, headerLF: 0, sheathSf: 0, drywallSf: 0, drywallWrSf: 0, insulSf: 0 },   // MATERIAL (por unidade do item)
     waste: { stud: 0, plateLF: 0, sheet: 0, headerLF: 0, sheathSf: 0, drywallSf: 0, drywallWrSf: 0, insulSf: 0 },    // SOBRA/perda de material (%)
     labor: { framing: 0, drywall: 0, insulation: 0 },                                    // MÃO DE OBRA — taxa por OFÍCIO, por SF
+    markup: 0,                                                                            // % de GANHO (custo → venda)
     pxPerFt: null,  // escala calibrada (px da imagem por pé)
     floors: [], activeFloor: null,   // PISOS (cada um com altura) — o traço herda a altura do piso ativo
     scope: { framing: true, drywall: true, insulation: true },   // ESCOPO da obra — definido ANTES do levantamento
@@ -200,6 +201,7 @@
     if (Array.isArray(d.wallTypes) && d.wallTypes.length) FR.wallTypes = d.wallTypes;
     if (d.prices) FR.prices = Object.assign({ stud: 0, plateLF: 0, sheet: 0, headerLF: 0, sheathSf: 0, drywallSf: 0, drywallWrSf: 0, insulSf: 0 }, d.prices);
     if (d.waste) FR.waste = Object.assign({ stud: 0, plateLF: 0, sheet: 0, headerLF: 0, sheathSf: 0, drywallSf: 0, drywallWrSf: 0, insulSf: 0 }, d.waste);
+    if (d.markup != null) FR.markup = num(d.markup);
     if (d.labor) FR.labor = Object.assign({ framing: 0, drywall: 0, insulation: 0 }, d.labor);
     if (d.scope) FR.scope = Object.assign({ framing: true, drywall: true, insulation: true }, d.scope);
     if (d.layerAssembly) FR.layerAssembly = d.layerAssembly;
@@ -207,7 +209,7 @@
     FR.activeFloor = d.activeFloor || (FR.floors[0] && FR.floors[0].id) || null;
     FR.activeWT = d.activeWT || (FR.wallTypes[0] && FR.wallTypes[0].id) || null;
   };
-  F._framingSnapshot = function () { return { wallTypes: FR.wallTypes, prices: FR.prices, waste: FR.waste, labor: FR.labor, scope: FR.scope, activeWT: FR.activeWT, layerAssembly: FR.layerAssembly, floors: FR.floors, activeFloor: FR.activeFloor }; };
+  F._framingSnapshot = function () { return { wallTypes: FR.wallTypes, prices: FR.prices, waste: FR.waste, labor: FR.labor, markup: FR.markup, scope: FR.scope, activeWT: FR.activeWT, layerAssembly: FR.layerAssembly, floors: FR.floors, activeFloor: FR.activeFloor }; };
 
   // ---- PISOS (cada um com altura) ----
   function floorById(id) { for (var i = 0; i < FR.floors.length; i++) if (FR.floors[i].id === id) return FR.floors[i]; return null; }
@@ -288,8 +290,10 @@
     if (s.insulation) { mat += m.insulationSf * num(p.insulSf) * wf('insulSf'); lab += m.insulationSf * num(l.insulation); }
     return { mat: mat, lab: lab, total: mat + lab };
   }
-  function typePrice(m) { return priceParts(m).total; }
+  function typePrice(m) { return priceParts(m).total; }       // CUSTO (material+sobra + MO)
+  function saleOf(cost) { return cost * (1 + num(FR.markup) / 100); }   // VENDA = custo × (1 + ganho%)
   F.framingPriceParts = priceParts;
+  F.framingSaleOf = saleOf;
 
   // select de MATERIAL por LADO da parede (mesmas opções dos dois lados)
   function sideSel(cls, val) {
@@ -356,7 +360,8 @@
     }
     cols.push({ h: tr('Material') + ' $', n: 1, body: function (wt, m) { return '<td class="num ftt-mat">' + money(priceParts(m).mat) + '</td>'; }, foot: '<td class="num ftt-mat"><b>' + money(T.mat) + '</b></td>' });
     cols.push({ h: tr('M.O.') + ' $', n: 1, body: function (wt, m) { return '<td class="num ftt-lab">' + money(priceParts(m).lab) + '</td>'; }, foot: '<td class="num ftt-lab"><b>' + money(T.lab) + '</b></td>' });
-    cols.push({ h: tr('Total') + ' $', n: 1, body: function (wt, m) { return '<td class="num ftt-tot">' + money(priceParts(m).total) + '</td>'; }, foot: '<td class="num ftt-tot"><b>' + money(T.price) + '</b></td>' });
+    cols.push({ h: tr('Custo') + ' $', n: 1, body: function (wt, m) { return '<td class="num ftt-tot">' + money(priceParts(m).total) + '</td>'; }, foot: '<td class="num ftt-tot"><b>' + money(T.price) + '</b></td>' });
+    cols.push({ h: tr('Venda') + ' $', n: 1, body: function (wt, m) { return '<td class="num ftt-sale">' + money(saleOf(priceParts(m).total)) + '</td>'; }, foot: '<td class="num ftt-sale"><b>' + money(saleOf(T.price)) + '</b></td>' });
     cols.push({ h: '', body: function (wt, m) { return '<td class="ftt-acts"><button class="ftt-editbtn" data-wt="' + wt.id + '" title="' + tr('Editar tipo / completar especificação') + '">✎</button><button class="ftt-dup" data-wt="' + wt.id + '" title="' + tr('Duplicar (outro piso)') + '">⧉</button></td>'; }, foot: '<td></td>' });
 
     var flagged = FR.wallTypes.map(function (wt) { return { wt: wt, reasons: wallTypeReview(wt) }; }).filter(function (x) { return x.reasons.length; });
@@ -394,7 +399,8 @@
     if (sc.framing) labHTML += pinL('ftLbFraming', 'framing', '🏗️ Framing');
     if (sc.drywall) labHTML += pinL('ftLbDrywall', 'drywall', '🧱 Drywall');
     if (sc.insulation) labHTML += pinL('ftLbInsul', 'insulation', '🧊 Insulation');
-    var prHTML = '<span class="ftt-prgrp">' + matHTML + '</span><span class="ftt-prgrp ftt-prgrp-lab">' + labHTML + '</span>';
+    var gainHTML = '<span class="ftt-prhint ftt-prhint-gain">💰 ' + tr('Ganho %:') + '</span><input id="ftMarkup" class="ftt-prgain" type="number" min="0" step="1" title="' + tr('% de ganho — custo vira venda') + '" value="' + (FR.markup || '') + '">';
+    var prHTML = '<span class="ftt-prgrp">' + matHTML + '</span><span class="ftt-prgrp ftt-prgrp-lab">' + labHTML + '</span><span class="ftt-prgrp ftt-prgrp-gain">' + gainHTML + '</span>';
     var scopeChips = [['framing', '🏗️ Framing'], ['drywall', '🧱 Drywall'], ['insulation', '🧊 Insulation']]
       .map(function (s) { return '<button class="ftt-scope' + (sc[s[0]] ? ' on' : '') + '" data-scope="' + s[0] + '">' + s[1] + '</button>'; }).join('');
 
@@ -459,6 +465,7 @@
     [['ftWsStud', 'stud'], ['ftWsPlate', 'plateLF'], ['ftWsSheath', 'sheathSf'], ['ftWsDry', 'drywallSf'], ['ftWsDryWr', 'drywallWrSf'], ['ftWsHeader', 'headerLF'], ['ftWsInsul', 'insulSf']].forEach(function (pr) {
       var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('change', function () { FR.waste[pr[1]] = num(inp.value); renderFramingTakeoff(ov); persistFraming(); });
     });
+    { var mk = ov.querySelector('#ftMarkup'); if (mk) mk.addEventListener('change', function () { FR.markup = num(mk.value); renderFramingTakeoff(ov); persistFraming(); }); }
     [['ftLbFraming', 'framing'], ['ftLbDrywall', 'drywall'], ['ftLbInsul', 'insulation']].forEach(function (pr) {
       var inp = ov.querySelector('#' + pr[0]); if (inp) inp.addEventListener('change', function () { FR.labor[pr[1]] = num(inp.value); renderFramingTakeoff(ov); persistFraming(); });
     });
