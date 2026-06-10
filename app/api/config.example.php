@@ -17,6 +17,11 @@ define('CONSTRUCTCOUNT_MODEL', 'claude-opus-4-8');
 // Ex.: 5 arredonda para o múltiplo de 5mm mais próximo conforme a tolerância da fábrica.
 define('CONSTRUCTCOUNT_ROUND_MM', 1);
 
+// (Opcional) DeepSeek — usado SÓ p/ gerar o TEXTO dos relatórios (proposta).
+// API compatível com OpenAI; baratíssimo. Pegue a chave em platform.deepseek.com
+// define('DEEPSEEK_API_KEY', 'sk-xxxxxxxxxxxxxxxxxxxx');
+// define('DEEPSEEK_MODEL', 'deepseek-chat');   // padrão; 'deepseek-reasoner' p/ R1
+
 // (Opcional) Licenciamento: se definido, a IA só roda com licença válida —
 // valida no PORTAL da M2PB. Deixe comentado p/ não exigir licença na IA.
 // define('CONSTRUCTCOUNT_LICENSE_VALIDATE_URL', 'https://constructcount.com/api/validate.php');

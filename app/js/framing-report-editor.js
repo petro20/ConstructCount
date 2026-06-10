@@ -88,6 +88,7 @@
       case 'totals': return '<div class="fre-totals"><div><span>' + tr('Custo') + '</span><b>' + money(T.cost) + '</b></div><div class="fre-sale"><span>' + tr('VENDA') + '</span><b>' + money(T.sale) + '</b></div></div>';
       case 'terms': return '<div class="fre-terms"><h3>' + tr('Condições de pagamento') + '</h3>' + (b.text || tr('• 50% na aprovação · 50% na entrega.<br>• Validade da proposta: 15 dias.<br>• Valores em USD.')) + '</div>';
       case 'notes': return '<div class="fre-notes"><h3>' + tr('Observações') + '</h3><div>' + (b.text || '&nbsp;') + '</div></div>';
+      case 'textsec': return '<div class="fre-notes"><h3>' + esc(b.title || tr('Texto')) + '</h3><div>' + (b.text || '&nbsp;') + '</div></div>';
       case 'signature': return '<div class="fre-sign"><div>______________________________<br>' + tr('Empresa') + '</div><div>______________________________<br>' + tr('Cliente') + '</div></div>';
       case 'image':
         if (b.src) return '<div class="fre-imgwrap" style="text-align:' + (b.align || 'center') + '"><img class="fre-img" src="' + b.src + '" style="width:' + (b.w || 60) + '%">'
@@ -117,7 +118,7 @@
       wrap.addEventListener('dragleave', function () { wrap.classList.remove('fre-over'); });
       wrap.addEventListener('drop', function (e) { e.preventDefault(); wrap.classList.remove('fre-over'); var from = st.dragIx, to = ix; if (from < 0 || from === to) return; var mv = st.tpl.blocks.splice(from, 1)[0]; st.tpl.blocks.splice(to, 0, mv); renderDoc(doc, d); });
       // texto editável → guarda de volta no bloco (título/termos/notas)
-      if (b.type === 'title' || b.type === 'terms' || b.type === 'notes') {
+      if (b.type === 'title' || b.type === 'terms' || b.type === 'notes' || b.type === 'textsec') {
         content.addEventListener('input', function () { if (b.type === 'title') b.text = content.textContent; else b.text = content.querySelector('div') ? content.querySelector('div').innerHTML : content.innerHTML; });
       }
       // bloco LOGO: upload do logo inline
@@ -177,6 +178,30 @@
     if (shell && body) shell.insertBefore(bar, body);
   }
 
+  // IA (DeepSeek) escreve SÓ o texto da proposta — números vêm do takeoff
+  F.framingGenerateReportText = function (extra) {
+    var d = F.framingReportData();
+    var br = F.reportBrand ? F.reportBrand() : {};
+    var li = F.licenseInfo ? F.licenseInfo() : { key: '', device: '' };
+    var L = F.getLang ? F.getLang() : 'pt';
+    var body = { lang: L, company: br.company || '', client: (extra && extra.client) || '', project: (extra && extra.project) || '', region: d.region || '',
+      scopes: Object.keys(d.scope).filter(function (k) { return d.scope[k]; }), types: d.types.map(function (t) { return { name: t.name }; }),
+      totals: { lf: d.totals.lf, sf: d.totals.sf }, license_key: li.key || '', device: li.device || '', device_label: 'app' };
+    return fetch('https://constructcount.com/app/api/report_text.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j && j.error ? j.error : ('HTTP ' + r.status)); return j; }); });
+  };
+  function insertAITexts(ai) {
+    var nl = function (s) { return String(s || '').replace(/\n/g, '<br>'); };
+    var mk = function (title, key) { return { type: 'textsec', title: title, text: nl(ai[key]) }; };
+    var blocks = st.tpl.blocks;
+    var ti = -1; for (var i = 0; i < blocks.length; i++) { if (/quoteTable|materialsTable|summaryTable/.test(blocks[i].type)) { ti = i; break; } }
+    if (ti < 0) ti = blocks.length;
+    if (ai.escopo) blocks.splice(ti, 0, mk(tr('Escopo do serviço'), 'escopo'));
+    if (ai.apresentacao) blocks.splice(ti, 0, mk(tr('Apresentação'), 'apresentacao'));
+    if (ai.condicoes) blocks.push(mk(tr('Condições comerciais'), 'condicoes'));
+    if (ai.encerramento) blocks.push(mk(tr('Encerramento'), 'encerramento'));
+  }
+
   // orientação da página (retrato/paisagem) — preview + @page na impressão
   function applyOrient(doc, modal) {
     var land = st.tpl.orient === 'landscape';
@@ -197,6 +222,7 @@
       '<div class="fre-shell">'
       + '<div class="fre-bar no-print"><b>✏️ ' + tr('Editor de relatório') + '</b>'
       + '<span class="fre-spacer"></span>'
+      + '<button id="freAI" class="fre-btn fre-btn-primary">✨ ' + tr('Texto com IA') + '</button>'
       + '<button id="freOrient" class="fre-btn">🔄 ' + tr('Paisagem') + '</button>'
       + '<button id="freSave" class="fre-btn">💾 ' + tr('Salvar modelo') + '</button>'
       + '<button id="freReset" class="fre-btn">↺ ' + tr('Padrão') + '</button>'
@@ -214,6 +240,13 @@
     buildToolbar(modal, doc);
     applyOrient(doc, modal);
     modal.querySelector('#freOrient').addEventListener('click', function () { st.tpl.orient = (st.tpl.orient === 'landscape') ? 'portrait' : 'landscape'; applyOrient(doc, modal); });
+    { var ai = modal.querySelector('#freAI'); if (ai) ai.addEventListener('click', function () {
+      ai.disabled = true; if (F.flashExport) F.flashExport('✨ ' + tr('IA escrevendo o texto da proposta…'));
+      F.framingGenerateReportText().then(function (t) {
+        insertAITexts(t); renderDoc(doc, d); ai.disabled = false;
+        if (F.flashExport) F.flashExport('✓ ' + tr('Texto gerado — revise e edite à vontade.'));
+      }).catch(function (e) { ai.disabled = false; if (F.flashExport) F.flashExport('⚠️ ' + tr('IA: ') + (e && e.message ? e.message : '')); });
+    }); }
     modal.querySelector('#freClose').addEventListener('click', function () { modal.remove(); });
     modal.querySelector('#freSave').addEventListener('click', function () { var ok = saveTpl(st.tpl); if (F.flashExport) F.flashExport(ok ? ('✓ ' + tr('Modelo salvo')) : ('⚠️ ' + tr('Modelo grande demais p/ salvar — reduza/retire fotos (o documento atual segue ok p/ imprimir).'))); });
     modal.querySelector('#freReset').addEventListener('click', function () { st.tpl = defaultTpl(); renderDoc(doc, d); });
