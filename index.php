@@ -122,21 +122,35 @@ layout_top(t('app_name'));
 
 <section class="sec reveal" id="planos">
   <h2 class="sec-title"><?= h(t('pricing_title')) ?></h2>
-  <div class="grid">
-    <div class="card plan center">
-      <h3><?= h(t('monthly')) ?></h3>
-      <div class="price"><?= h($mPrice) ?><small><?= h($mPer) ?></small></div>
-      <ul class="plist"><li><?= h(t('feat_inc')) ?></li><li>1 <?= h(t('per_dev')) ?></li></ul>
-      <a class="btn block" href="<?= h(url('checkout.php?plan=mensal')) ?>"><?= h(t('subscribe')) ?></a>
+  <?php $pkgs = defined('PORTAL_PACKAGES') ? PORTAL_PACKAGES : null; if ($pkgs): ?>
+    <div class="grid">
+      <?php foreach ($pkgs as $p): $per = $p['per_' . $L] ?? ($p['per'] ?? ''); ?>
+        <div class="card plan center<?= !empty($p['featured']) ? ' hot' : '' ?>">
+          <?php if (!empty($p['featured'])): ?><span class="ribbon"><?= h(t('best')) ?></span><?php endif; ?>
+          <h3><?= h($p['name']) ?></h3>
+          <div class="price"><?= h($p['price']) ?><small><?= h($per) ?></small></div>
+          <?php if (!empty($p['desc'])): ?><ul class="plist"><li><?= h($p['desc']) ?></li></ul><?php endif; ?>
+          <a class="btn block" href="<?= h(url('checkout.php?plan=' . urlencode($p['plan']))) ?>"><?= h(t('subscribe')) ?></a>
+        </div>
+      <?php endforeach; ?>
     </div>
-    <div class="card plan center hot">
-      <span class="ribbon"><?= h(t('best')) ?></span>
-      <h3><?= h(t('annual')) ?></h3>
-      <div class="price"><?= h($aPrice) ?><small><?= h($aPer) ?></small></div>
-      <ul class="plist"><li><?= h(t('feat_inc')) ?></li><li>1 <?= h(t('per_dev')) ?></li></ul>
-      <a class="btn block" href="<?= h(url('checkout.php?plan=anual')) ?>"><?= h(t('subscribe')) ?></a>
+  <?php else: ?>
+    <div class="grid">
+      <div class="card plan center">
+        <h3><?= h(t('monthly')) ?></h3>
+        <div class="price"><?= h($mPrice) ?><small><?= h($mPer) ?></small></div>
+        <ul class="plist"><li><?= h(t('feat_inc')) ?></li><li>1 <?= h(t('per_dev')) ?></li></ul>
+        <a class="btn block" href="<?= h(url('checkout.php?plan=mensal')) ?>"><?= h(t('subscribe')) ?></a>
+      </div>
+      <div class="card plan center hot">
+        <span class="ribbon"><?= h(t('best')) ?></span>
+        <h3><?= h(t('annual')) ?></h3>
+        <div class="price"><?= h($aPrice) ?><small><?= h($aPer) ?></small></div>
+        <ul class="plist"><li><?= h(t('feat_inc')) ?></li><li>1 <?= h(t('per_dev')) ?></li></ul>
+        <a class="btn block" href="<?= h(url('checkout.php?plan=anual')) ?>"><?= h(t('subscribe')) ?></a>
+      </div>
     </div>
-  </div>
+  <?php endif; ?>
 </section>
 
 <section class="sec">

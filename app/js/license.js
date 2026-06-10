@@ -46,14 +46,14 @@
       if (pay && pay.grace_exp > now && pay.sub_exp > now) return { state: 'grace', grace_days_left: Math.max(0, Math.floor((pay.grace_exp - now) / 86400)) };
       return { state: 'invalid', reason: tr('sem conexão e carência expirada') };
     }
-    if (r.valid) { localStorage.setItem('fenestra_license_token', r.token || ''); return { state: 'valid', plan: r.plan, expires_at: r.expires_at }; }
+    if (r.valid) { localStorage.setItem('fenestra_license_token', r.token || ''); if (Array.isArray(r.modules)) F.entitlements = r.modules; return { state: 'valid', plan: r.plan, expires_at: r.expires_at }; }
     return { state: 'invalid', reason: r.reason };
   }
   async function activateWeb(key) {
     var r = await validateWeb(key);
     if (r === null) return { state: 'invalid', reason: tr('sem conexão com o servidor de licença') };
     if (!r.valid) return { state: 'invalid', reason: r.reason };
-    localStorage.setItem('fenestra_license_key', key); localStorage.setItem('fenestra_license_token', r.token || '');
+    localStorage.setItem('fenestra_license_key', key); localStorage.setItem('fenestra_license_token', r.token || ''); if (Array.isArray(r.modules)) F.entitlements = r.modules;
     return { state: 'valid', plan: r.plan, expires_at: r.expires_at };
   }
 
@@ -74,7 +74,8 @@
   F.entitlements = null;
   function setEntFromToken() {
     var pay = payload(localStorage.getItem('fenestra_license_token') || '');
-    if (pay && Array.isArray(pay.pkgs)) F.entitlements = pay.pkgs;
+    if (pay && Array.isArray(pay.modules)) F.entitlements = pay.modules;        // portal assina 'modules'
+    else if (pay && Array.isArray(pay.pkgs)) F.entitlements = pay.pkgs;
   }
   var WALL_TRADES = ['framing', 'drywall', 'insulation', 'paint'];   // ofícios da parede (combo = wall_combo)
   F.hasPackage = function (id) {
@@ -143,7 +144,8 @@
   async function refreshInfo() {
     if (isDesktop()) {
       try { F._licInfo = await window.pywebview.api.license_info(); } catch (e) {}
-      if (F._licInfo && Array.isArray(F._licInfo.packages)) F.entitlements = F._licInfo.packages;
+      if (F._licInfo && Array.isArray(F._licInfo.modules)) F.entitlements = F._licInfo.modules;
+      else if (F._licInfo && Array.isArray(F._licInfo.packages)) F.entitlements = F._licInfo.packages;
     } else { setEntFromToken(); }
   }
 
