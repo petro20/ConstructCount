@@ -60,8 +60,10 @@ $schema = [
       'type' => 'array',
       'items' => [
         'type' => 'object', 'additionalProperties' => false,
-        'required' => ['name', 'material', 'stud_size', 'spacing_in', 'bottom_plates', 'top_plates', 'sheathing', 'sheathing_sides', 'insulation', 'notes'],
+        'required' => ['type_id', 'name', 'material', 'stud_size', 'spacing_in', 'bottom_plates', 'top_plates', 'sheathing', 'sheathing_sides', 'insulation', 'components', 'notes'],
         'properties' => [
+          'type_id'         => ['type' => 'string'],   // id do tipo no desenho: "1", "2A", "A", "B1" ("" se não houver)
+          'components'      => ['type' => 'array', 'items' => ['type' => 'string']],   // TODAS as camadas/itens lidos (1 string por item)
           'name'            => ['type' => 'string'],   // ex.: "Interior Partition (Type 1)"
           'material'        => ['type' => 'string', 'enum' => ['wood', 'metal', 'both']],
           'stud_size'       => ['type' => 'string'],   // "2x4", "2x6", "3-5/8\" 20ga"
@@ -81,7 +83,11 @@ $schema = [
 $system = "Você lê DETALHES DE TIPO DE PAREDE e notas de partição (wall type details, "
         . "partition schedules, framing notes) de plantas de construção (EUA). Extraia CADA tipo "
         . "de parede/assembly com sua composição.\n\n"
+        . "ATENÇÃO: cada projeto desenha os tipos de um jeito — notas numeradas, detalhes de seção com "
+        . "callouts e título embaixo ('A - WALL TYPE'), tabelas… Leia o formato que estiver na folha.\n\n"
         . "Para cada tipo retorne:\n"
+        . "  • type_id: o id do tipo COMO ESTÁ NO DESENHO ('1', '2A', 'A', 'B1'); '' se não houver.\n"
+        . "  • components: TODAS as camadas/itens da parede, 1 string por item, na ordem (ex.: '2x6 wood studs @ 16\\\" O.C.', '5/8\\\" Type-X gypsum ea. side', 'R-21 batt insulation', '3/4\\\" plywood sheathing', 'Tyvek wrap', 'vinyl siding'). NÃO invente: só o que estiver escrito.\n"
         . "  • name: identificação do tipo (ex.: 'Interior Partition', 'Type 1', 'Exterior Wall').\n"
         . "  • material: 'wood', 'metal' ou 'both' (se a nota disser 'wood or metal framing').\n"
         . "  • stud_size: bitola do montante como no desenho ('2x4', '2x6', '3-5/8\\\" 20ga').\n"

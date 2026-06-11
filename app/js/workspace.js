@@ -1327,6 +1327,17 @@
 
   // 🧠 IA: lê os TIPOS DE PAREDE desta folha → cria as assemblies.
   // DESKTOP: leitura LOCAL do texto do PDF (sem chave). WEB: Claude na nuvem (read_assembly.php).
+  // IA de VISÃO na nuvem lê a folha ATUAL (qualquer formato de wall type detail)
+  async function cloudReadWalls() {
+    if (!S.img || !(S.img.naturalWidth || S.img.width)) return null;
+    const c = document.createElement('canvas');
+    c.width = S.img.naturalWidth || S.img.width; c.height = S.img.naturalHeight || S.img.height;
+    c.getContext('2d').drawImage(S.img, 0, 0);
+    const b64 = c.toDataURL('image/png').split(',')[1];
+    const lic = F.licenseInfo ? F.licenseInfo() : { key: '', device: '' };
+    const resp = await fetch('api/read_assembly.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_base64: b64, license_key: lic.key, device: lic.device }) });
+    return await resp.json();
+  }
   async function readWallTypesAI() {
     if (S.busy) return;
     S.busy = true; markSaved(F.tr('🧠 IA: lendo os tipos de parede desta folha…'));
@@ -1336,15 +1347,14 @@
         r = await S.prov.readWallTypesAll();
       } else if (S.prov && S.prov.readWallTypes) {
         r = await S.prov.readWallTypes(S.page);
-      } else {                                              // WEB — Claude na nuvem (folha atual)
-        if (!S.img || !(S.img.naturalWidth || S.img.width)) { S.busy = false; alert(F.tr('Abra uma folha primeiro.')); return; }
-        const c = document.createElement('canvas');
-        c.width = S.img.naturalWidth || S.img.width; c.height = S.img.naturalHeight || S.img.height;
-        c.getContext('2d').drawImage(S.img, 0, 0);
-        const b64 = c.toDataURL('image/png').split(',')[1];
-        const lic = F.licenseInfo ? F.licenseInfo() : { key: '', device: '' };
-        const resp = await fetch('api/read_assembly.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_base64: b64, license_key: lic.key, device: lic.device }) });
-        r = await resp.json();
+      }
+      // cada projeto desenha os tipos de um jeito — parser local não reconheceu →
+      // FALLBACK: IA de visão na nuvem lê a folha ABERTA (abra a folha dos wall types)
+      if (!r || !(r.walls || []).length) {
+        markSaved(F.tr('Formato não reconhecido — lendo com IA de visão (nuvem)…'));
+        const r2 = await cloudReadWalls();
+        if (r2 && (r2.walls || []).length) r = r2;
+        else if (r2 && r2.error && !(r && r.walls && r.walls.length)) r = r2;
       }
     } catch (e) { S.busy = false; markSaved(F.tr('Falha na leitura dos tipos de parede')); return; }
     S.busy = false;

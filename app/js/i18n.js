@@ -1189,6 +1189,7 @@ window.ConstructCount = window.ConstructCount || {};
     '🗑 Apagar selecionada': { en: '🗑 Delete selected', es: '🗑 Borrar seleccionada' },
     '✨ IA: detectando paredes…': { en: '✨ AI: detecting walls…', es: '✨ IA: detectando paredes…' },
     '🧠 IA: lendo os tipos de parede desta folha…': { en: '🧠 AI: reading the wall types on this sheet…', es: '🧠 IA: leyendo los tipos de pared de esta hoja…' },
+    'Formato não reconhecido — lendo com IA de visão (nuvem)…': { en: 'Format not recognized — reading with vision AI (cloud)…', es: 'Formato no reconocido — leyendo con IA de visión (nube)…' },
     '📐 ✓ Folha de medidas': { en: '📐 ✓ Measure sheet', es: '📐 ✓ Hoja de medidas' }
   });
 
