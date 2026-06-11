@@ -160,23 +160,9 @@
           </div>
           <div class="rb-group">
             <div class="rb-row">
-              <button id="miDocQuote"    class="rb-btn"><span class="ico">📄</span><span>Orçamento Cliente</span></button>
-              <button id="miDocProposal" class="rb-btn"><span class="ico">📝</span><span>Proposta Cliente</span></button>
+              <button id="miReportsHub" class="rb-btn"><span class="ico">📄</span><span>Central de relatórios</span></button>
             </div>
-            <div class="rb-label">Cliente</div>
-          </div>
-          <div class="rb-group">
-            <div class="rb-row">
-              <button id="miDocSupplier" class="rb-btn"><span class="ico">📊</span><span>Pedido Fornecedor</span></button>
-            </div>
-            <div class="rb-label">Fornecedor</div>
-          </div>
-          <div class="rb-group">
-            <div class="rb-row">
-              <button id="miDocMarked"  class="rb-btn"><span class="ico">🗺️</span><span>Planta Marcada</span></button>
-              <button id="miDocSummary" class="rb-btn"><span class="ico">📋</span><span>Quadro Resumo</span></button>
-            </div>
-            <div class="rb-label">Plantas</div>
+            <div class="rb-label">Documentos</div>
           </div>
           <div class="rb-group">
             <div class="rb-row">
@@ -849,11 +835,6 @@
             </tfoot>
           </table>
         </div>
-        <button id="btnSummaryPdf"
-          class="mt-4 text-sm px-3 py-1.5 rounded-lg bg-steel-600 text-white font-medium hover:bg-steel-700 transition flex items-center gap-1.5">
-          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
-          Baixar Quadro Resumo (PDF)
-        </button>
         <p id="summaryMsg" class="text-xs text-emerald-600 mt-2 hidden"></p>
       </div>
 
@@ -873,52 +854,15 @@
           <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">8</span>
           Exportação
         </h2>
-        <p class="text-sm text-steel-500 mb-4">Gere os documentos finais para cliente e fornecedor.</p>
-
-        <div class="grid sm:grid-cols-2 gap-4">
-          <button id="btnQuote"
-            class="group rounded-lg border border-steel-200 p-5 text-left hover:border-steel-500 hover:shadow-md transition">
-            <div class="flex items-center gap-2 mb-1">
-              <svg viewBox="0 0 24 24" class="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" stroke-width="1.6">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/>
-              </svg>
-              <span class="font-semibold">Orçamento Cliente</span>
-            </div>
-            <p class="text-xs text-steel-500">PDF com itens, preços, total e condições de pagamento.</p>
-          </button>
-
-          <button id="btnSupplier"
-            class="group rounded-lg border border-steel-200 p-5 text-left hover:border-steel-500 hover:shadow-md transition">
-            <div class="flex items-center gap-2 mb-1">
-              <svg viewBox="0 0 24 24" class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" stroke-width="1.6">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/>
-              </svg>
-              <span class="font-semibold">Pedido Fornecedor</span>
-            </div>
-            <p class="text-xs text-steel-500">Excel (.xlsx) com medidas e especificações (sem preços).</p>
-          </button>
-        </div>
-        <button id="btnMarkedPlan"
-          class="mt-4 w-full rounded-lg border border-steel-200 p-4 text-left hover:border-steel-500 hover:shadow-md transition">
+        <p class="text-sm text-steel-500 mb-4">Todos os documentos agora ficam na Central de relatórios.</p>
+        <button id="btnReportsHub"
+          class="w-full rounded-lg border border-steel-200 p-5 text-left hover:border-steel-500 hover:shadow-md transition">
           <div class="flex items-center gap-2 mb-1">
-            <svg viewBox="0 0 24 24" class="w-6 h-6 text-steel-600" fill="none" stroke="currentColor" stroke-width="1.6">
-              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="9" r="1.6" fill="currentColor"/><path d="M13 8h5M13 12h5M6 16h12"/>
-            </svg>
-            <span class="font-semibold">Planta Marcada</span>
+            <span class="text-2xl">📄</span>
+            <span class="font-semibold">Abrir a Central de relatórios</span>
           </div>
-          <p class="text-xs text-steel-500">PDF da planta com a marca colorida sobre cada janela + quadro resumo em cada folha (para conferir o levantamento da IA).</p>
+          <p class="text-xs text-steel-500">Orçamento, Proposta, Pedido, Quadro Resumo e Planta Marcada — organizados por pacote.</p>
         </button>
-        <button id="btnProposal"
-          class="mt-3 w-full rounded-lg border border-steel-200 p-4 text-left hover:border-steel-500 hover:shadow-md transition">
-          <div class="flex items-center gap-2 mb-1">
-            <svg viewBox="0 0 24 24" class="w-6 h-6 text-steel-700" fill="none" stroke="currentColor" stroke-width="1.6">
-              <path d="M6 2h9l5 5v15a0 0 0 01 0 0H6a2 2 0 01-2-2V4a2 2 0 012-2z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/>
-            </svg>
-            <span class="font-semibold">Proposta Cliente</span>
-          </div>
-          <p class="text-xs text-steel-500">PDF de proposta (capa, posições com desenho + specs, pricing, contato) — sem marca do fornecedor.</p>
-        </button>
-        <p id="exportMsg" class="text-xs text-emerald-600 mt-3 hidden"></p>
       </div>
 
       <!-- Placeholder inicial -->
@@ -1216,23 +1160,23 @@
     </div>
   </div>
 
-  <script src="js/i18n.js?v=222"></script>
+  <script src="js/i18n.js?v=223"></script>
   <script src="js/license.js?v=207"></script>
   <script src="js/calculator.js?v=216"></script>
   <script src="js/svg-engine.js?v=200"></script>
-  <script src="js/export.js?v=216"></script>
+  <script src="js/export.js?v=217"></script>
   <script src="js/plan-marker.js?v=200"></script>
   <script src="js/import-takeoff.js?v=215"></script>
   <script src="js/proposal.js?v=200"></script>
-  <script src="js/main.js?v=200"></script>
+  <script src="js/main.js?v=201"></script>
   <script src="js/annotator.js?v=200"></script>
   <script src="js/workspace.js?v=257"></script>
-  <script src="js/framing.js?v=35"></script>
+  <script src="js/framing.js?v=36"></script>
   <script src="js/framing-export.js?v=4"></script>
   <script src="js/framing-report-editor.js?v=7"></script>
   <script src="js/framing-report-grapes.js?v=1"></script>
   <script src="js/desktop.js?v=220"></script>
-  <script src="js/menu.js?v=239"></script>
+  <script src="js/menu.js?v=240"></script>
   <script src="js/cards.js?v=200"></script>
 </body>
 </html>

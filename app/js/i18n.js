@@ -1343,6 +1343,9 @@ window.ConstructCount = window.ConstructCount || {};
   // ---- Central de relatórios (aba Relatórios) ----
   Object.assign(DICT, {
     'Central de relatórios': { en: 'Reports hub', es: 'Central de informes' },
+    'Abrir a Central de relatórios': { en: 'Open the Reports hub', es: 'Abrir la Central de informes' },
+    'Todos os documentos agora ficam na Central de relatórios.': { en: 'All documents now live in the Reports hub.', es: 'Todos los documentos ahora están en la Central de informes.' },
+    'Orçamento, Proposta, Pedido, Quadro Resumo e Planta Marcada — organizados por pacote.': { en: 'Quote, Proposal, Order, Summary Table and Marked Plan — organized by package.', es: 'Cotización, Propuesta, Pedido, Cuadro Resumen y Plano Marcado — organizados por paquete.' },
     'Todos os documentos num lugar só, organizados por pacote.': { en: 'All documents in one place, organized by package.', es: 'Todos los documentos en un solo lugar, organizados por paquete.' },
     'Gerados do takeoff de esquadrias consolidado.': { en: 'Generated from the consolidated windows & doors takeoff.', es: 'Generados del cómputo consolidado de carpinterías.' },
     'Gerados do takeoff de paredes (Linear). Requer o add-on Relatórios.': { en: 'Generated from the wall takeoff (Linear). Requires the Reports add-on.', es: 'Generados del cómputo de paredes (Lineal). Requiere el add-on de Informes.' },

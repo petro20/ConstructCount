@@ -355,13 +355,19 @@ window.ConstructCount = window.ConstructCount || {};
     F.flashExport('✓ ' + t('Quadro Resumo') + ' (PDF) ✓');
   };
 
-  /** Mensagem temporária de feedback de exportação */
+  /** Mensagem temporária de feedback de exportação — toast global (funciona em qualquer tela) */
   F.flashExport = function (msg) {
-    const el = document.querySelector('#exportMsg');
-    if (!el) return;
+    let el = document.getElementById('ccToast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'ccToast';
+      el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:34px;z-index:100200;background:#262420;color:#ffe9b8;font:600 13px Inter,system-ui,sans-serif;padding:10px 18px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.4);transition:opacity .3s;pointer-events:none;max-width:80vw';
+      document.body.appendChild(el);
+    }
     el.textContent = msg;
-    el.classList.remove('hidden');
-    setTimeout(() => el.classList.add('hidden'), 4000);
+    el.style.opacity = '1';
+    clearTimeout(F._toastTimer);
+    F._toastTimer = setTimeout(() => { el.style.opacity = '0'; }, 4000);
   };
 
   /* ---- painel "Marca / Relatórios" (logo/empresa/cor/rodapé) ---- */

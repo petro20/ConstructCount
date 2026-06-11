@@ -64,11 +64,8 @@
     // ----- Documentos (exportações) -----
     const hasItems = () => (F.state && Array.isArray(F.state.items) && F.state.items.length);
     const needItems = () => { if (!hasItems()) { alert(F.tr('Abra um projeto e consolide o levantamento antes de gerar este documento.')); return false; } return true; };
-    const dq = $('#miDocQuote');    if (dq) dq.addEventListener('click', () => { closeMenus(); if (needItems() && F.exportClientPDF) F.exportClientPDF(); });
-    const ds = $('#miDocSupplier'); if (ds) ds.addEventListener('click', () => { closeMenus(); if (needItems() && F.exportSupplierXLSX) F.exportSupplierXLSX(); });
-    const dm = $('#miDocMarked');   if (dm) dm.addEventListener('click', () => { closeMenus(); if (F.exportMarkedPlan) F.exportMarkedPlan(); });
-    const dp = $('#miDocProposal'); if (dp) dp.addEventListener('click', () => { closeMenus(); if (needItems() && F.exportClientProposal) F.exportClientProposal(); });
-    const dr = $('#miDocSummary');  if (dr) dr.addEventListener('click', () => { closeMenus(); if (needItems() && F.exportSummaryPDF) F.exportSummaryPDF(); });
+    // documentos saíram daqui → tudo na Central de relatórios (aba Relatórios)
+    const mrh = $('#miReportsHub'); if (mrh) mrh.addEventListener('click', () => { closeMenus(); if (F.openReportsHub) F.openReportsHub(); });
 
     // ----- Central de relatórios (aba Relatórios) -----
     const rw = (id, fn) => { const b = $(id); if (b) b.addEventListener('click', fn); };
@@ -98,6 +95,7 @@
       });
     }
     F._renderReportsHub = renderReportsHub;
+    F.openReportsHub = () => { const ws = $('#workspace'); if (ws && !ws.classList.contains('hidden')) ws.classList.add('hidden'); const t = document.querySelector('.rb-tab[data-tab="rbReports"]'); if (t) t.click(); };
     { const t = document.querySelector('.rb-tab[data-tab="rbReports"]'); if (t) t.addEventListener('click', renderReportsHub); }
     // ----- Início: importar takeoff -----
     const imp = $('#miImport'); if (imp) imp.addEventListener('click', () => { const el = $('#takeoffInput'); if (el) el.click(); });

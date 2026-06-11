@@ -435,10 +435,7 @@
   /* =======================================================================
      7. EXPORTAÇÃO
      ===================================================================== */
-  $('#btnQuote').addEventListener('click', F.exportClientPDF);
-  $('#btnSupplier').addEventListener('click', F.exportSupplierXLSX);
-  $('#btnSummaryPdf').addEventListener('click', () => F.exportSummaryPDF());
-  $('#btnMarkedPlan').addEventListener('click', () => F.exportMarkedPlan());
-  $('#btnProposal').addEventListener('click', () => F.exportClientProposal());
+  // documentos saíram daqui → Central de relatórios (aba Relatórios)
+  { const b = $('#btnReportsHub'); if (b) b.addEventListener('click', () => { if (F.openReportsHub) F.openReportsHub(); }); }
 
 })(window.ConstructCount);

@@ -417,39 +417,6 @@
       + '</div>';
   }
 
-  // dropdown dos relatórios (ancorado no botão Relatórios)
-  function openReportsMenu(anchor) {
-    var old = document.getElementById('ftReportsMenu'); if (old) { old.remove(); return; }
-    var menu = document.createElement('div'); menu.id = 'ftReportsMenu'; menu.className = 'ftt-repmenu';
-    var hasReports = (!F.hasPackage) || F.hasPackage('reports');
-    if (!hasReports) {
-      // add-on não assinado → upsell
-      var info = document.createElement('div'); info.className = 'ftt-repitem'; info.style.cursor = 'default'; info.style.opacity = '.8';
-      info.textContent = '🔒 ' + tr('Relatórios é um add-on (US$ 15/mês)');
-      var buy = document.createElement('div'); buy.className = 'ftt-repitem'; buy.textContent = '💳 ' + tr('Assinar Relatórios');
-      buy.addEventListener('click', function (e) { e.stopPropagation(); close(); try { window.open('https://constructcount.com/checkout.php?plan=reports', '_blank'); } catch (er) {} });
-      menu.appendChild(info); menu.appendChild(buy);
-      document.body.appendChild(menu);
-      var rc0 = anchor.getBoundingClientRect();
-      menu.style.left = Math.min(rc0.left, window.innerWidth - menu.offsetWidth - 6) + 'px'; menu.style.top = (rc0.bottom + 4) + 'px';
-      function close() { menu.remove(); document.removeEventListener('click', close); }
-      setTimeout(function () { document.addEventListener('click', close); }, 0);
-      return;
-    }
-    var reps = F.framingReports || [];
-    reps.forEach(function (r) {
-      var b = document.createElement('div'); b.className = 'ftt-repitem'; b.textContent = tr(r.label);
-      b.addEventListener('click', function (e) { e.stopPropagation(); close(); try { r.fn(); } catch (err) { if (F.flashExport) F.flashExport('⚠️ ' + (err && err.message ? err.message : 'erro')); } });
-      menu.appendChild(b);
-    });
-    document.body.appendChild(menu);
-    var rc = anchor.getBoundingClientRect();
-    menu.style.left = Math.min(rc.left, window.innerWidth - menu.offsetWidth - 6) + 'px';
-    menu.style.top = (rc.bottom + 4) + 'px';
-    function close() { menu.remove(); document.removeEventListener('click', close); }
-    setTimeout(function () { document.addEventListener('click', close); }, 0);
-  }
-
   // Takeoff de Framing como TABELA editável no painel INFERIOR (igual ao Resumo) — colunas seguem o ESCOPO
   function renderFramingTakeoff(ov) {
     if ((!FR.activeWT || !wtById(FR.activeWT)) && FR.wallTypes[0]) FR.activeWT = FR.wallTypes[0].id;
@@ -555,7 +522,7 @@
       + '<div class="ftt-top"><span>🏗️ ' + tr('Takeoff de Framing') + '</span>'
       + '<span class="ftt-scopes" title="' + tr('Escopo da obra — quais ofícios o takeoff cobre') + '">' + scopeChips + '</span>'
       + '<span class="ftt-pr">' + prHTML + '</span>'
-      + '<button id="ftReports" class="ftt-reportsbtn" title="' + tr('Gerar relatórios deste levantamento') + '">📄 ' + tr('Relatórios') + ' ▾</button>'
+      + '<button id="ftReports" class="ftt-reportsbtn" title="' + tr('Abrir a Central de relatórios') + '">📄 ' + tr('Relatórios') + '</button>'
       + '<button id="ftClose" class="ft-x">✕</button></div>'
       + regionHTML
       + confHTML
@@ -567,7 +534,7 @@
 
     ov.querySelectorAll('.ftt-scope').forEach(function (b) { b.addEventListener('click', function () { F.framingToggleScope(b.getAttribute('data-scope')); if (F._syncScope) F._syncScope(); renderFramingTakeoff(ov); }); });
     ov.querySelector('#ftClose').addEventListener('click', function () { ov.style.display = 'none'; });
-    { var rb = ov.querySelector('#ftReports'); if (rb) rb.addEventListener('click', function (e) { e.stopPropagation(); openReportsMenu(rb); }); }
+    { var rb = ov.querySelector('#ftReports'); if (rb) rb.addEventListener('click', function (e) { e.stopPropagation(); if (F.openReportsHub) F.openReportsHub(); }); }
 
     // ALÇA: arrastar p/ aumentar/diminuir a tabela
     var grip = ov.querySelector('.ftt-grip');
