@@ -17,13 +17,12 @@ $cat = function_exists('cc_plan_catalog') ? cc_plan_catalog() : (defined('DITE_P
 $plans = [];
 foreach ($cat as $key => $d) {
   if (!is_array($d)) continue;
-  $row = [
+  if ((float) ($d['amount'] ?? 0) <= 0) continue;   // trial sem cartão (amount 0) não vai pro gateway
+  $plans[] = [
     'name'     => (string) ($d['name'] ?? $key),
     'amount'   => (float) ($d['amount'] ?? 0),
     'currency' => (string) ($d['currency'] ?? 'USD'),
     'interval' => (string) ($d['interval'] ?? 'month'),
   ];
-  if (!empty($d['trial_days'])) $row['trial_days'] = (int) $d['trial_days'];
-  $plans[] = $row;
 }
 echo json_encode(['plans' => $plans], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

@@ -75,7 +75,6 @@ function dite_create_subscription(array $user, string $plan): ?array {
       'currency' => (string) $def['currency'],
       'interval' => (string) $def['interval'],   // "month" | "year"
     ];
-    if (!empty($def['trial_days'])) $payload['plan']['trial_days'] = (int) $def['trial_days'];   // ex.: 7 dias grátis no combo
   } else {
     $plans  = defined('DITE_PLANS') ? DITE_PLANS : [];
     $planId = $plans[$plan] ?? null;

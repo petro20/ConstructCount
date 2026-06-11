@@ -20,9 +20,11 @@ function cc_plan_catalog(): array {
     'drywall'    => ['name' => 'Drywall — mensal',    'amount' => 15.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['drywall']],
     'insulation' => ['name' => 'Insulation — mensal', 'amount' => 12.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['insulation']],
     'paint'      => ['name' => 'Paint — mensal',      'amount' => 12.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['paint']],
-    // Combo Parede completa (libera os 4 ofícios) — 7 dias grátis
-    'parede'     => ['name' => 'Parede completa — mensal', 'amount' => 45.00,  'currency' => 'USD', 'interval' => 'month', 'trial_days' => 7, 'modules' => ['wall_combo', 'framing', 'drywall', 'insulation', 'paint']],
-    'parede_ano' => ['name' => 'Parede completa — anual',  'amount' => 450.00, 'currency' => 'USD', 'interval' => 'year',  'trial_days' => 7, 'modules' => ['wall_combo', 'framing', 'drywall', 'insulation', 'paint']],
+    // Combo Parede completa (libera os 4 ofícios)
+    'parede'     => ['name' => 'Parede completa — mensal', 'amount' => 45.00,  'currency' => 'USD', 'interval' => 'month', 'modules' => ['wall_combo', 'framing', 'drywall', 'insulation', 'paint']],
+    'parede_ano' => ['name' => 'Parede completa — anual',  'amount' => 450.00, 'currency' => 'USD', 'interval' => 'year',  'modules' => ['wall_combo', 'framing', 'drywall', 'insulation', 'paint']],
+    // Trial SEM cartão (licença de 7 dias emitida pelo portal em trial.php — amount 0 = não vai pro gateway)
+    'parede_trial' => ['name' => 'Parede completa — teste 7 dias', 'amount' => 0, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['wall_combo', 'framing', 'drywall', 'insulation', 'paint']],
     // Add-on Relatórios (sempre à parte)
     'reports'    => ['name' => 'Relatórios — mensal', 'amount' => 15.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['reports']],
   ];
@@ -36,8 +38,8 @@ function cc_portal_packages(): array {
   if (defined('PORTAL_PACKAGES')) return PORTAL_PACKAGES;
   $pm = ['per' => '/mês', 'per_en' => '/mo', 'per_es' => '/mes'];
   return [
-    ['plan' => 'parede', 'price' => '$45', 'featured' => true,
-      'badge' => '🎁 7 dias grátis', 'badge_en' => '🎁 7-day free trial', 'badge_es' => '🎁 7 días gratis',
+    ['plan' => 'parede', 'price' => '$45', 'featured' => true, 'trial' => true,
+      'badge' => '🎁 7 dias grátis — sem cartão', 'badge_en' => '🎁 7 days free — no card', 'badge_es' => '🎁 7 días gratis — sin tarjeta',
       'name' => 'Parede completa', 'name_en' => 'Complete wall', 'name_es' => 'Pared completa',
       'desc' => 'Framing + Drywall + Insulation + Paint — a parede inteira, com IA.', 'desc_en' => 'Framing + Drywall + Insulation + Paint — the whole wall, with AI.', 'desc_es' => 'Framing + Drywall + Insulation + Paint — la pared entera, con IA.'] + $pm,
     ['plan' => 'framing', 'price' => '$15', 'name' => 'Framing',

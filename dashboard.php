@@ -27,6 +27,7 @@ $pkgBtns = function () use ($L) {
     $cls   = !empty($p['featured']) ? 'btn' : 'btn ghost';
     echo '<a class="' . $cls . '" href="' . h(url('checkout.php?plan=' . urlencode((string) $p['plan']))) . '">'
       . h($name . ' — ' . ($p['price'] ?? '') . $per . ($badge !== '' ? ' · ' . $badge : '')) . '</a>';
+    if (!empty($p['trial'])) echo '<a class="btn ghost" href="' . h(url('trial.php')) . '">' . h(t('start_trial')) . '</a>';
   }
   echo '</div>';
 };

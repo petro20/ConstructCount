@@ -136,6 +136,7 @@ layout_top(t('app_name'));
           <?php if ($badge !== ''): ?><div style="margin:4px 0 0;font-weight:800;color:#7fe3b0;font-size:14px"><?= h($badge) ?></div><?php endif; ?>
           <?php if ($desc !== ''): ?><ul class="plist"><li><?= h($desc) ?></li></ul><?php endif; ?>
           <a class="btn block" href="<?= h(url('checkout.php?plan=' . urlencode($p['plan']))) ?>"><?= h(t('subscribe')) ?></a>
+          <?php if (!empty($p['trial'])): ?><a class="btn ghost block" style="margin-top:8px" href="<?= h(url('trial.php')) ?>"><?= h(t('start_trial')) ?></a><?php endif; ?>
         </div>
       <?php endforeach; ?>
     </div>
