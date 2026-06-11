@@ -48,8 +48,24 @@ function current_user(): ?array {
 
 function require_login(): array {
   $u = current_user();
-  if (!$u) redirect(url('login.php'));
+  if (!$u) {
+    // guarda o destino (ex.: trial.php, checkout.php?plan=parede) p/ voltar após o login
+    $uri = (string) ($_SERVER['REQUEST_URI'] ?? '');
+    if ($uri !== '' && $uri[0] === '/' && strpos($uri, '//') !== 0) $_SESSION['after_login'] = $uri;
+    redirect(url('login.php'));
+  }
   return $u;
+}
+
+/** Destino pós-login: volta pra página que exigiu login (trial/checkout), senão dashboard. */
+function after_login_url(): string {
+  $next = (string) ($_SESSION['after_login'] ?? '');
+  unset($_SESSION['after_login']);
+  if ($next !== '' && $next[0] === '/' && strpos($next, '//') !== 0 && !preg_match('/[\r\n]/', $next)) {
+    cfg_loaded();
+    return rtrim(PORTAL_URL, '/') . $next;
+  }
+  return url('dashboard.php');
 }
 
 function is_admin(?array $u = null): bool {

@@ -5,7 +5,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
   if (!csrf_check()) $err = 'csrf';
   else {
     $r = auth_login((string) ($_POST['email'] ?? ''), (string) ($_POST['password'] ?? ''));
-    if ($r['ok']) redirect(url('dashboard.php'));
+    if ($r['ok']) redirect(after_login_url());   // volta pro destino (trial/checkout) ou dashboard
     $err = $r['err'];
   }
 }
