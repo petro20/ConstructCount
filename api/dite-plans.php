@@ -13,7 +13,7 @@ cfg_loaded();
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: public, max-age=300');
 
-$cat = defined('DITE_PLAN_CATALOG') ? DITE_PLAN_CATALOG : [];
+$cat = function_exists('cc_plan_catalog') ? cc_plan_catalog() : (defined('DITE_PLAN_CATALOG') ? DITE_PLAN_CATALOG : []);
 $plans = [];
 foreach ($cat as $key => $d) {
   if (!is_array($d)) continue;
