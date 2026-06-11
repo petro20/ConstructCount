@@ -1340,6 +1340,28 @@ window.ConstructCount = window.ConstructCount || {};
     'que você liga em qualquer pacote, na aba': { en: 'you can add to any package, in the', es: 'que activas en cualquier paquete, en la pestaña' }
   });
 
+  // ---- Central de relatórios (aba Relatórios) ----
+  Object.assign(DICT, {
+    'Central de relatórios': { en: 'Reports hub', es: 'Central de informes' },
+    'Todos os documentos num lugar só, organizados por pacote.': { en: 'All documents in one place, organized by package.', es: 'Todos los documentos en un solo lugar, organizados por paquete.' },
+    'Gerados do takeoff de esquadrias consolidado.': { en: 'Generated from the consolidated windows & doors takeoff.', es: 'Generados del cómputo consolidado de carpinterías.' },
+    'Gerados do takeoff de paredes (Linear). Requer o add-on Relatórios.': { en: 'Generated from the wall takeoff (Linear). Requires the Reports add-on.', es: 'Generados del cómputo de paredes (Lineal). Requiere el add-on de Informes.' },
+    'PDF com preços, com a sua marca': { en: 'PDF with prices, with your brand', es: 'PDF con precios, con tu marca' },
+    'PDF de apresentação': { en: 'Presentation PDF', es: 'PDF de presentación' },
+    'Excel sem preços': { en: 'Excel without prices', es: 'Excel sin precios' },
+    'PDF resumo das marcas': { en: 'PDF summary of the marks', es: 'PDF resumen de las marcas' },
+    'PDF da planta com as marcas': { en: 'PDF of the plan with the marks', es: 'PDF del plano con las marcas' },
+    '✏️ Editor de relatório (blocos)': { en: '✏️ Report editor (blocks)', es: '✏️ Editor de informe (bloques)' },
+    '🎨 Editor visual completo (arrastar/soltar)': { en: '🎨 Full visual editor (drag & drop)', es: '🎨 Editor visual completo (arrastrar/soltar)' },
+    '📄 Orçamento ao cliente (PDF)': { en: '📄 Client quote (PDF)', es: '📄 Cotización al cliente (PDF)' },
+    '🔒 Análise do proprietário — custo × venda (PDF)': { en: '🔒 Owner analysis — cost × sale (PDF)', es: '🔒 Análisis del propietario — costo × venta (PDF)' },
+    '📦 Lista de materiais / Pedido (Excel)': { en: '📦 Material list / Order (Excel)', es: '📦 Lista de materiales / Pedido (Excel)' },
+    '🏢 Material por piso (Excel)': { en: '🏢 Material by floor (Excel)', es: '🏢 Material por piso (Excel)' },
+    '🧾 Cotação ao fornecedor (Excel)': { en: '🧾 Supplier RFQ (Excel)', es: '🧾 Cotización al proveedor (Excel)' },
+    '📊 Resumo do takeoff (PDF)': { en: '📊 Takeoff summary (PDF)', es: '📊 Resumen del cómputo (PDF)' },
+    '🗺️ Planta marcada (PDF)': { en: '🗺️ Marked plan (PDF)', es: '🗺️ Plano marcado (PDF)' }
+  });
+
   // índice normalizado (chaves com espaços colapsados) p/ casar HTML e chamadas JS
   const NDICT = {};
   Object.keys(DICT).forEach(k => { NDICT[norm(k)] = DICT[k]; });

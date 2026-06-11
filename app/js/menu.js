@@ -69,6 +69,36 @@
     const dm = $('#miDocMarked');   if (dm) dm.addEventListener('click', () => { closeMenus(); if (F.exportMarkedPlan) F.exportMarkedPlan(); });
     const dp = $('#miDocProposal'); if (dp) dp.addEventListener('click', () => { closeMenus(); if (needItems() && F.exportClientProposal) F.exportClientProposal(); });
     const dr = $('#miDocSummary');  if (dr) dr.addEventListener('click', () => { closeMenus(); if (needItems() && F.exportSummaryPDF) F.exportSummaryPDF(); });
+
+    // ----- Central de relatórios (aba Relatórios) -----
+    const rw = (id, fn) => { const b = $(id); if (b) b.addEventListener('click', fn); };
+    rw('#repWinQuote',    () => { if (needItems() && F.exportClientPDF) F.exportClientPDF(); });
+    rw('#repWinProposal', () => { if (needItems() && F.exportClientProposal) F.exportClientProposal(); });
+    rw('#repWinSupplier', () => { if (needItems() && F.exportSupplierXLSX) F.exportSupplierXLSX(); });
+    rw('#repWinSummary',  () => { if (needItems() && F.exportSummaryPDF) F.exportSummaryPDF(); });
+    rw('#repWinMarked',   () => { if (F.exportMarkedPlan) F.exportMarkedPlan(); });
+    function renderReportsHub() {
+      const list = $('#repWallList'); if (!list) return;
+      list.innerHTML = '';
+      const owned = !F.hasPackage || F.hasPackage('reports');
+      if (!owned) {                                   // add-on não assinado → upsell (nada grátis)
+        const d = document.createElement('div');
+        d.className = 'rep-lock';
+        d.innerHTML = '🔒 ' + F.tr('Relatórios é um add-on (US$ 15/mês)') + '<button class="cc-btn cc-btn-primary"><span>💳</span><span>' + F.tr('Assinar Relatórios') + '</span></button>';
+        d.querySelector('button').addEventListener('click', () => window.open('https://constructcount.com/checkout.php?plan=reports', '_blank'));
+        list.appendChild(d);
+        return;
+      }
+      (F.framingReports || []).forEach(r => {
+        const card = document.createElement('button');
+        card.className = 'rep-card';
+        card.innerHTML = '<span class="rep-t">' + F.tr(r.label) + '</span>';
+        card.addEventListener('click', () => { try { r.fn(); } catch (e) { if (F.flashExport) F.flashExport('⚠️ ' + ((e && e.message) || 'erro')); } });
+        list.appendChild(card);
+      });
+    }
+    F._renderReportsHub = renderReportsHub;
+    { const t = document.querySelector('.rb-tab[data-tab="rbReports"]'); if (t) t.addEventListener('click', renderReportsHub); }
     // ----- Início: importar takeoff -----
     const imp = $('#miImport'); if (imp) imp.addEventListener('click', () => { const el = $('#takeoffInput'); if (el) el.click(); });
     // ----- Exibir: alternar unidade (reusa o botão da tabela) -----
