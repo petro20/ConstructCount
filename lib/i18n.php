@@ -43,6 +43,8 @@ $GLOBALS['I18N'] = [
   'err_exists'    => ['Este e-mail já tem conta.', 'This email already has an account.', 'Este correo ya tiene cuenta.'],
   'err_fields'    => ['Preencha todos os campos.', 'Fill in all fields.', 'Completa todos los campos.'],
   'no_licenses'   => ['Você ainda não tem licença. Assine para começar.', 'You have no license yet. Subscribe to start.', 'Aún no tienes licencia. Suscríbete para empezar.'],
+  'add_packages'  => ['Adicionar pacotes', 'Add packages', 'Añadir paquetes'],
+  'add_packages_hint' => ['Compre mais ofícios, o combo Parede completa ou o add-on Relatórios — o app destrava na hora.', 'Buy more trades, the Complete wall combo or the Reports add-on — the app unlocks instantly.', 'Compra más oficios, el combo Pared completa o el add-on de Informes — la app se desbloquea al instante.'],
   'pay_ok'        => ['Pagamento confirmado! Sua licença está ativa.', 'Payment confirmed! Your license is active.', '¡Pago confirmado! Tu licencia está activa.'],
   'pay_cancel'    => ['Pagamento cancelado.', 'Payment canceled.', 'Pago cancelado.'],
 

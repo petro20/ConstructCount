@@ -10,15 +10,31 @@ $badge = function ($l) {
   return ['b-bad', $exp ? t('not_approved') : $l['status']];
 };
 layout_top(t('dashboard'));
+$L = lang();
+// botões de TODOS os pacotes (à la carte, combo, Janelas, add-on) — do catálogo no código
+$pkgBtns = function () use ($L) {
+  if (!function_exists('cc_portal_packages')) {
+    echo '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">'
+      . '<a class="btn" href="' . h(url('checkout.php?plan=mensal')) . '">' . h(t('monthly')) . ' — ' . h(t('subscribe')) . '</a>'
+      . '<a class="btn ghost" href="' . h(url('checkout.php?plan=anual')) . '">' . h(t('annual')) . ' — ' . h(t('subscribe')) . '</a></div>';
+    return;
+  }
+  echo '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">';
+  foreach (cc_portal_packages() as $p) {
+    $name = $p['name_' . $L] ?? ($p['name'] ?? $p['plan']);
+    $per  = $p['per_' . $L] ?? ($p['per'] ?? '');
+    $cls  = !empty($p['featured']) ? 'btn' : 'btn ghost';
+    echo '<a class="' . $cls . '" href="' . h(url('checkout.php?plan=' . urlencode((string) $p['plan']))) . '">'
+      . h($name . ' — ' . ($p['price'] ?? '') . $per) . '</a>';
+  }
+  echo '</div>';
+};
 ?>
 <div class="card">
   <h2><?= h(t('my_licenses')) ?></h2>
   <?php if (!$lics): ?>
     <p class="muted"><?= h(t('no_licenses')) ?></p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
-      <a class="btn" href="<?= h(url('checkout.php?plan=mensal')) ?>"><?= h(t('monthly')) ?> — <?= h(t('subscribe')) ?></a>
-      <a class="btn ghost" href="<?= h(url('checkout.php?plan=anual')) ?>"><?= h(t('annual')) ?> — <?= h(t('subscribe')) ?></a>
-    </div>
+    <?php $pkgBtns(); ?>
   <?php else: ?>
     <table>
       <tr><th><?= h(t('key')) ?></th><th><?= h(t('package')) ?></th><th><?= h(t('plan')) ?></th><th><?= h(t('status')) ?></th><th><?= h(t('expires')) ?></th><th><?= h(t('devices')) ?></th><th></th></tr>
@@ -44,6 +60,11 @@ layout_top(t('dashboard'));
       <p style="margin-top:8px;font-size:12.5px;line-height:1.5;color:#065f46;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:8px 10px"><?= h(t('data_safe')) ?></p>
     <?php endif; ?>
     <div style="margin-top:12px"><a class="btn ghost" href="<?= h(url('billing.php')) ?>" onclick="return confirm('<?= h(t('confirm_cancel')) ?>')"><?= h(t('cancel_sub')) ?></a></div>
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--bd)">
+      <h3 style="margin:0 0 2px"><?= h(t('add_packages')) ?></h3>
+      <p class="muted" style="margin:0"><?= h(t('add_packages_hint')) ?></p>
+      <?php $pkgBtns(); ?>
+    </div>
   <?php endif; ?>
 </div>
 <?php layout_bottom(); ?>
