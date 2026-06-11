@@ -21,11 +21,12 @@ $pkgBtns = function () use ($L) {
   }
   echo '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">';
   foreach (cc_portal_packages() as $p) {
-    $name = $p['name_' . $L] ?? ($p['name'] ?? $p['plan']);
-    $per  = $p['per_' . $L] ?? ($p['per'] ?? '');
-    $cls  = !empty($p['featured']) ? 'btn' : 'btn ghost';
+    $name  = $p['name_' . $L] ?? ($p['name'] ?? $p['plan']);
+    $per   = $p['per_' . $L] ?? ($p['per'] ?? '');
+    $badge = $p['badge_' . $L] ?? ($p['badge'] ?? '');
+    $cls   = !empty($p['featured']) ? 'btn' : 'btn ghost';
     echo '<a class="' . $cls . '" href="' . h(url('checkout.php?plan=' . urlencode((string) $p['plan']))) . '">'
-      . h($name . ' — ' . ($p['price'] ?? '') . $per) . '</a>';
+      . h($name . ' — ' . ($p['price'] ?? '') . $per . ($badge !== '' ? ' · ' . $badge : '')) . '</a>';
   }
   echo '</div>';
 };

@@ -127,11 +127,13 @@ layout_top(t('app_name'));
       <?php foreach ($pkgs as $p):
         $per = $p['per_' . $L] ?? ($p['per'] ?? '');
         $name = $p['name_' . $L] ?? ($p['name'] ?? '');
-        $desc = $p['desc_' . $L] ?? ($p['desc'] ?? ''); ?>
+        $desc = $p['desc_' . $L] ?? ($p['desc'] ?? '');
+        $badge = $p['badge_' . $L] ?? ($p['badge'] ?? ''); ?>
         <div class="card plan center<?= !empty($p['featured']) ? ' hot' : '' ?>">
           <?php if (!empty($p['featured'])): ?><span class="ribbon"><?= h(t('best')) ?></span><?php endif; ?>
           <h3><?= h($name) ?></h3>
           <div class="price"><?= h($p['price']) ?><small><?= h($per) ?></small></div>
+          <?php if ($badge !== ''): ?><div style="margin:4px 0 0;font-weight:800;color:#7fe3b0;font-size:14px"><?= h($badge) ?></div><?php endif; ?>
           <?php if ($desc !== ''): ?><ul class="plist"><li><?= h($desc) ?></li></ul><?php endif; ?>
           <a class="btn block" href="<?= h(url('checkout.php?plan=' . urlencode($p['plan']))) ?>"><?= h(t('subscribe')) ?></a>
         </div>
