@@ -324,6 +324,36 @@ function prj_check_deadlines(): void {
   prj_purge_overdue();   // 30 dias sem quitar → dados apagados (bloqueio permanece)
 }
 
+/* ---------- PROTEÇÃO DE PAGAMENTO (mechanic's lien — AVISOS) ----------
+   O sistema PREPARA os avisos com os dados do mural (documentos em INGLÊS,
+   padrão legal dos EUA): Preliminary Notice automático quando o contrato é
+   assinado pelos dois, e Notice of Intent to Lien sob demanda do contratado.
+   REGISTRAR o lien no cartório do condado é com o contratado — isto NÃO é
+   consultoria jurídica (requisitos/prazos variam por estado). */
+function prj_lien_winner(array $p): ?array {
+  if (empty($p['awarded_proposal_id'])) return null;
+  try {
+    $st = db()->prepare('SELECT * FROM proposals WHERE id=? LIMIT 1');
+    $st->execute([(int) $p['awarded_proposal_id']]);
+    return $st->fetch() ?: null;
+  } catch (Throwable $e) { return null; }
+}
+
+/** Contrato fechado (os dois assinaram) → envia o PRELIMINARY NOTICE de cortesia
+    ao dono, com cópia ao contratado — é o que preserva o direito de lien
+    em boa parte dos estados quando enviado no início do trabalho. */
+function prj_lien_prelim_notify(array $p): void {
+  $b = prj_lien_winner($p);
+  if (!$b) return;
+  $link = url('lien.php?id=' . (int) $p['id'] . '&kind=prelim');
+  $hdr = "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8";
+  $body = t('lien_prelim_mail') . "\n\n" . $p['title'] . ' — ' . $p['region'] .
+          "\n" . t('lien_by') . ' ' . $b['company'] . ' (' . $b['email'] . ')' .
+          "\n\n" . $link . "\n\n" . t('lien_disclaimer');
+  if (!empty($p['contact_email'])) @mail((string) $p['contact_email'], 'ConstructCount — ' . t('lien_prelim_subject'), $body, $hdr);
+  if (!empty($b['email'])) @mail((string) $b['email'], 'ConstructCount — ' . t('lien_prelim_subject'), $body, $hdr);
+}
+
 /* ---------- CHAT TEMPORÁRIO (dúvidas entre ofertante e quem dá preço) ----------
    NADA fica guardado no site: ao encerrar (botão de qualquer lado, encerramento
    do projeto ou 7 dias sem mensagem) a conversa COMPLETA é enviada por e-mail

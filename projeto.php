@@ -70,7 +70,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
   if ($isOwner && ($_POST['act'] ?? '') === 'sign_gc' && $p['status'] === 'awarded') {
     db()->prepare('UPDATE projects SET contract_gc_at = NOW() WHERE id=?')->execute([$id]);
     $st = db()->prepare('SELECT contract_bidder_at FROM proposals WHERE id=?'); $st->execute([(int) $p['awarded_proposal_id']]);
-    if (!empty(($st->fetch() ?: [])['contract_bidder_at'])) db()->prepare("UPDATE projects SET status='working' WHERE id=?")->execute([$id]);
+    if (!empty(($st->fetch() ?: [])['contract_bidder_at'])) {
+      db()->prepare("UPDATE projects SET status='working' WHERE id=?")->execute([$id]);
+      prj_lien_prelim_notify($p);   // contrato fechado → Preliminary Notice de cortesia
+    }
     flash(t('prj_sign_flash'));
     redirect(url('projeto.php?id=' . $id . '&t=' . $tok));
   }
@@ -78,8 +81,26 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
     $st = db()->prepare('SELECT id FROM proposals WHERE id=? AND user_id=?'); $st->execute([(int) $p['awarded_proposal_id'], (int) $u['id']]);
     if ($st->fetch()) {
       db()->prepare('UPDATE proposals SET contract_bidder_at = NOW() WHERE id=?')->execute([(int) $p['awarded_proposal_id']]);
-      if (!empty($p['contract_gc_at'])) db()->prepare("UPDATE projects SET status='working' WHERE id=?")->execute([$id]);
+      if (!empty($p['contract_gc_at'])) {
+        db()->prepare("UPDATE projects SET status='working' WHERE id=?")->execute([$id]);
+        prj_lien_prelim_notify($p);   // contrato fechado → Preliminary Notice de cortesia
+      }
       flash(t('prj_sign_flash'));
+    }
+    redirect(url('projeto.php?id=' . $id));
+  }
+  // VENCEDOR sem receber → envia o NOTICE OF INTENT TO LIEN ao dono (sob demanda)
+  if ($u && ($_POST['act'] ?? '') === 'send_intent' && !empty($p['awarded_proposal_id']) && in_array($p['status'], ['awarded', 'working'], true)) {
+    $st = db()->prepare('SELECT * FROM proposals WHERE id=? AND user_id=? LIMIT 1');
+    $st->execute([(int) $p['awarded_proposal_id'], (int) $u['id']]);
+    if ($b = $st->fetch()) {
+      $link = url('lien.php?id=' . $id . '&kind=intent');
+      @mail((string) $p['contact_email'], 'ConstructCount — ' . t('lien_intent_subject'),
+            t('lien_intent_mail') . "\n\n" . $p['title'] . ' — ' . $p['region'] .
+            "\nUS$ " . number_format((float) $b['amount'], 2) . ' — ' . $b['company'] . ' (' . $b['email'] . ')' .
+            "\n\n" . $link . "\n\n" . t('lien_disclaimer'),
+            "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8");
+      flash(t('lien_intent_sent'));
     }
     redirect(url('projeto.php?id=' . $id));
   }
@@ -168,18 +189,31 @@ layout_top($p['title']);
     <?php endforeach; ?>
     <span class="muted" style="font-size:12px">· <?= h(str_replace('{fee}', number_format(prj_fee(), 2), t('prj_fee_note'))) ?></span>
   </div>
-  <?php // 🎉 vencedor logado: banner + confirmação de contrato
-    if ($u && !empty($p['awarded_proposal_id']) && $p['status'] === 'awarded') {
+  <?php // 🎉 vencedor logado: banner + confirmação de contrato + proteção de pagamento
+    if ($u && !empty($p['awarded_proposal_id']) && in_array($p['status'], ['awarded', 'working'], true)) {
       $stW = db()->prepare('SELECT * FROM proposals WHERE id=? AND user_id=?');
       $stW->execute([(int) $p['awarded_proposal_id'], (int) $u['id']]);
       if ($win = $stW->fetch()) { ?>
         <div style="margin-top:12px;padding:12px;border:1px solid #3a5; border-radius:10px">
           <b>🎉 <?= h(t('prj_you_won')) ?></b>
-          <?php if (empty($win['contract_bidder_at'])): ?>
+          <?php if ($p['status'] === 'awarded' && empty($win['contract_bidder_at'])): ?>
             <form method="post" style="display:inline-block;margin-left:10px"><?= csrf_field() ?><input type="hidden" name="act" value="sign_bidder"><button class="btn"><?= h(t('prj_sign_btn')) ?></button></form>
           <?php else: ?>
             <span class="badge b-ok" style="margin-left:8px">✓ <?= h(t('prj_signed')) ?></span>
           <?php endif; ?>
+          <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--bd)">
+            <b>⚖️ <?= h(t('lien_box_title')) ?></b>
+            <p class="muted" style="margin:4px 0 8px;font-size:12.5px"><?= h(t('lien_box_hint')) ?></p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <a class="btn ghost" target="_blank" href="<?= h(url('lien.php?id=' . $id . '&kind=prelim')) ?>">📄 Preliminary Notice</a>
+              <a class="btn ghost" target="_blank" href="<?= h(url('lien.php?id=' . $id . '&kind=intent')) ?>">⚠️ Notice of Intent to Lien</a>
+              <form method="post" onsubmit="return confirm('<?= h(t('lien_intent_confirm')) ?>')">
+                <?= csrf_field() ?><input type="hidden" name="act" value="send_intent">
+                <button class="btn"><?= h(t('lien_send_intent')) ?></button>
+              </form>
+            </div>
+            <p class="muted" style="margin:8px 0 0;font-size:11.5px"><?= h(t('lien_disclaimer')) ?></p>
+          </div>
         </div>
       <?php } } ?>
   <?php if (!empty($p['pdf_path']) || !empty($p['pdf_link'])): ?>
