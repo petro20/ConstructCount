@@ -66,6 +66,7 @@ function prj_ensure_schema(): void {
     UNIQUE KEY uniq_v (project_id, kind),
     INDEX (email), INDEX (status)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+  try { db()->exec("ALTER TABLE violations ADD COLUMN IF NOT EXISTS purged_at DATETIME NULL"); } catch (Throwable $e) {}
   db()->exec("CREATE TABLE IF NOT EXISTS proposals (
     id INT AUTO_INCREMENT PRIMARY KEY,
     project_id INT NOT NULL,
@@ -220,9 +221,10 @@ function prj_violation(array $p, string $party, string $kind, ?int $userId, stri
     $st = db()->prepare('INSERT IGNORE INTO violations (project_id, party, user_id, email, kind, fee) VALUES (?,?,?,?,?,?)');
     $st->execute([(int) $p['id'], $party, $userId, $email, $kind, prj_fee()]);
     if ($st->rowCount() > 0 && $email !== '') {
+      $due = date('Y-m-d', time() + 30 * 86400);   // prazo p/ quitar = 30 dias
       @mail($email, 'ConstructCount — ' . t('prj_v_subject'),
             t('prj_v_mail') . ' "' . $p['title'] . "\" — US$ " . number_format(prj_fee(), 2) .
-            "\n\n" . t('prj_v_mail2') . "\n" . url('projeto.php?id=' . (int) $p['id']),
+            "\n\n" . str_replace('{due}', $due, t('prj_v_mail2')) . "\n\n" . url('projeto.php?id=' . (int) $p['id']),
             "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8");
     }
   } catch (Throwable $e) {}
@@ -263,6 +265,44 @@ function prj_check_deadlines(): void {
     foreach ($st->fetchAll() as $p) {
       if (empty($p['contract_gc_at'])) prj_violation($p, 'owner', 'no_contract_owner', null, (string) $p['contact_email']);
       if (empty($p['contract_bidder_at'])) prj_violation($p, 'bidder', 'no_contract_bidder', (int) $p['bidder_id'], (string) $p['bidder_email']);
+    }
+  } catch (Throwable $e) {}
+  prj_purge_overdue();   // 30 dias sem quitar → dados apagados (bloqueio permanece)
+}
+
+/** PURGA por inadimplência: multa pendente há 30+ dias sem quitar → os dados são
+    APAGADOS definitivamente (avisado no e-mail da multa). Owner: projeto inteiro
+    (PDFs + propostas + registro). Bidder: as propostas dele naquele projeto.
+    A multa CONTINUA pendente (o bloqueio não cai com a purga). */
+function prj_purge_overdue(): void {
+  try {
+    $st = db()->query("SELECT * FROM violations WHERE status='pending' AND purged_at IS NULL AND created_at < (NOW() - INTERVAL 30 DAY) LIMIT 10");
+    foreach ($st->fetchAll() as $v) {
+      $pid = (int) $v['project_id'];
+      if ($v['party'] === 'owner') {
+        $p = prj_get($pid);
+        if ($p) {
+          if (!empty($p['pdf_path'])) { $f = __DIR__ . '/../' . $p['pdf_path']; if (is_file($f)) @unlink($f); }
+          $q = db()->prepare('SELECT report_path FROM proposals WHERE project_id=? AND report_path IS NOT NULL');
+          $q->execute([$pid]);
+          foreach ($q->fetchAll() as $r) { $f = __DIR__ . '/../' . $r['report_path']; if (is_file($f)) @unlink($f); }
+          db()->prepare('DELETE FROM proposals WHERE project_id=?')->execute([$pid]);
+          db()->prepare('DELETE FROM projects WHERE id=?')->execute([$pid]);
+        }
+      } else {
+        $q = db()->prepare('SELECT id, report_path FROM proposals WHERE project_id=? AND user_id=?');
+        $q->execute([$pid, (int) $v['user_id']]);
+        foreach ($q->fetchAll() as $r) {
+          if (!empty($r['report_path'])) { $f = __DIR__ . '/../' . $r['report_path']; if (is_file($f)) @unlink($f); }
+          db()->prepare('DELETE FROM proposals WHERE id=?')->execute([(int) $r['id']]);
+        }
+      }
+      db()->prepare('UPDATE violations SET purged_at = NOW() WHERE id=?')->execute([(int) $v['id']]);
+      if (!empty($v['email'])) {
+        @mail((string) $v['email'], 'ConstructCount — ' . t('prj_purged_subject'),
+              t('prj_purged_mail'),
+              "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8");
+      }
     }
   } catch (Throwable $e) {}
 }
