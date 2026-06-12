@@ -105,6 +105,47 @@ layout_top(t('app_name'));
 <audio id="bgm" loop preload="auto"><source src="assets/audio/hero-music.mp3" type="audio/mpeg"></audio>
 <button id="musicBtn" class="music-btn" type="button" title="Música ligada/desligada" aria-label="Música">🎵</button>
 
+<section class="sec reveal" id="projetos">
+  <h2 class="sec-title">📋 <?= h(t('prj_map_title')) ?></h2>
+  <p style="text-align:center;color:#cabfa4;margin:-6px 0 18px"><?= h(t('prj_map_sub')) ?></p>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <div id="prjMap" style="height:380px;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.14);background:#11100c"></div>
+  <div class="grid" style="margin-top:16px">
+    <div class="card center"><div class="price" style="font-size:34px"><?= (int) $prjStats['waiting'] ?></div><p class="muted" style="margin:4px 0 0">⏳ <?= h(t('prj_s_waiting')) ?></p></div>
+    <div class="card center"><div class="price" style="font-size:34px"><?= (int) $prjStats['negotiating'] ?></div><p class="muted" style="margin:4px 0 0">🤝 <?= h(t('prj_s_negotiating')) ?></p></div>
+    <div class="card center"><div class="price" style="font-size:34px"><?= (int) $prjStats['working'] ?></div><p class="muted" style="margin:4px 0 0">🏗️ <?= h(t('prj_s_working')) ?></p></div>
+    <div class="card center"><div class="price" style="font-size:34px"><?= (int) $prjStats['done'] ?></div><p class="muted" style="margin:4px 0 0">✅ <?= h(t('prj_s_done')) ?></p></div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px">
+    <?php foreach ($prjTrades as $tr => $n): ?>
+      <a class="btn ghost" href="<?= h(url('projetos.php?trade=' . $tr)) ?>"><?= h(prj_trade_label($tr)) ?> · <b><?= (int) $n ?></b></a>
+    <?php endforeach; ?>
+  </div>
+  <div style="display:flex;gap:12px;justify-content:center;margin-top:18px">
+    <a class="btn lg" href="<?= h(url('projetos.php')) ?>"><?= h(t('prj_map_cta_board')) ?></a>
+    <a class="btn ghost lg" href="<?= h(url('publicar.php')) ?>"><?= h(t('prj_map_cta_post')) ?></a>
+  </div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+  (function () {
+    if (!window.L) return;
+    var map = L.map('prjMap', { scrollWheelZoom: false }).setView([39.5, -96.0], 4);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
+    fetch('<?= h(url('api/projects-geo.php')) ?>').then(function (r) { return r.json(); }).then(function (j) {
+      var pts = [];
+      (j.pins || []).forEach(function (p) {
+        var mk = L.marker([p.lat, p.lng]).addTo(map);
+        mk.bindPopup('<b>' + p.title.replace(/</g, '&lt;') + '</b><br>📍 ' + p.region.replace(/</g, '&lt;') +
+          '<br>' + (p.trades || []).join(' · ') + '<br><a href="<?= h(url('projeto.php')) ?>?id=' + p.id + '">'
+          + <?= json_encode(t('prj_map_view'), JSON_UNESCAPED_UNICODE) ?> + ' →</a>');
+        pts.push([p.lat, p.lng]);
+      });
+      if (pts.length) map.fitBounds(pts, { padding: [40, 40], maxZoom: 9 });
+    }).catch(function () {});
+  })();
+  </script>
+</section>
+
 <section class="sec reveal" id="features">
   <h2 class="sec-title"><?= h(t('feat_title')) ?></h2>
   <div class="features">
@@ -160,47 +201,6 @@ layout_top(t('app_name'));
       </div>
     </div>
   <?php endif; ?>
-</section>
-
-<section class="sec reveal" id="projetos">
-  <h2 class="sec-title">📋 <?= h(t('prj_map_title')) ?></h2>
-  <p style="text-align:center;color:#cabfa4;margin:-6px 0 18px"><?= h(t('prj_map_sub')) ?></p>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <div id="prjMap" style="height:380px;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.14);background:#11100c"></div>
-  <div class="grid" style="margin-top:16px">
-    <div class="card center"><div class="price" style="font-size:34px"><?= (int) $prjStats['waiting'] ?></div><p class="muted" style="margin:4px 0 0">⏳ <?= h(t('prj_s_waiting')) ?></p></div>
-    <div class="card center"><div class="price" style="font-size:34px"><?= (int) $prjStats['negotiating'] ?></div><p class="muted" style="margin:4px 0 0">🤝 <?= h(t('prj_s_negotiating')) ?></p></div>
-    <div class="card center"><div class="price" style="font-size:34px"><?= (int) $prjStats['working'] ?></div><p class="muted" style="margin:4px 0 0">🏗️ <?= h(t('prj_s_working')) ?></p></div>
-    <div class="card center"><div class="price" style="font-size:34px"><?= (int) $prjStats['done'] ?></div><p class="muted" style="margin:4px 0 0">✅ <?= h(t('prj_s_done')) ?></p></div>
-  </div>
-  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px">
-    <?php foreach ($prjTrades as $tr => $n): ?>
-      <a class="btn ghost" href="<?= h(url('projetos.php?trade=' . $tr)) ?>"><?= h(prj_trade_label($tr)) ?> · <b><?= (int) $n ?></b></a>
-    <?php endforeach; ?>
-  </div>
-  <div style="display:flex;gap:12px;justify-content:center;margin-top:18px">
-    <a class="btn lg" href="<?= h(url('projetos.php')) ?>"><?= h(t('prj_map_cta_board')) ?></a>
-    <a class="btn ghost lg" href="<?= h(url('publicar.php')) ?>"><?= h(t('prj_map_cta_post')) ?></a>
-  </div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-  (function () {
-    if (!window.L) return;
-    var map = L.map('prjMap', { scrollWheelZoom: false }).setView([39.5, -96.0], 4);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
-    fetch('<?= h(url('api/projects-geo.php')) ?>').then(function (r) { return r.json(); }).then(function (j) {
-      var pts = [];
-      (j.pins || []).forEach(function (p) {
-        var mk = L.marker([p.lat, p.lng]).addTo(map);
-        mk.bindPopup('<b>' + p.title.replace(/</g, '&lt;') + '</b><br>📍 ' + p.region.replace(/</g, '&lt;') +
-          '<br>' + (p.trades || []).join(' · ') + '<br><a href="<?= h(url('projeto.php')) ?>?id=' + p.id + '">'
-          + <?= json_encode(t('prj_map_view'), JSON_UNESCAPED_UNICODE) ?> + ' →</a>');
-        pts.push([p.lat, p.lng]);
-      });
-      if (pts.length) map.fitBounds(pts, { padding: [40, 40], maxZoom: 9 });
-    }).catch(function () {});
-  })();
-  </script>
 </section>
 
 <section class="sec">
