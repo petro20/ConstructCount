@@ -425,6 +425,20 @@ function prj_award(array $p, int $proposalId): bool {
   return true;
 }
 
+/** Contagem de projetos por REGIÃO (quadro da landing): abertos, em obra e total. */
+function prj_region_counts(int $limit = 12): array {
+  prj_ensure_schema();
+  try {
+    return db()->query("SELECT region,
+        SUM(status='open') open_n,
+        SUM(status='awarded') awarded_n,
+        SUM(status='working') working_n,
+        COUNT(*) total_n
+      FROM projects WHERE status IN ('open','awarded','working')
+      GROUP BY region ORDER BY total_n DESC, region ASC LIMIT " . (int) $limit)->fetchAll();
+  } catch (Throwable $e) { return []; }
+}
+
 /** Projetos com coordenadas (pins do mapa). */
 function prj_geo_list(): array {
   prj_ensure_schema();

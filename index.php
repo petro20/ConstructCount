@@ -5,6 +5,7 @@ require __DIR__ . '/lib/projects.php';
 cfg_loaded();
 $prjStats = prj_stats();
 $prjTrades = prj_trade_counts();                                  // garante PLAN_DISPLAY etc. carregados
+$prjRegions = prj_region_counts();                                // quadro: projetos por região
 
 $checkKey = trim((string) ($_POST['key'] ?? ''));
 $res = $checkKey !== '' ? lic_status_only($checkKey) : null;
@@ -130,6 +131,23 @@ layout_top(t('app_name'));
       <a class="btn ghost" href="<?= h(url('projetos.php?trade=' . $tr)) ?>"><?= h(prj_trade_label($tr)) ?> · <b><?= (int) $n ?></b></a>
     <?php endforeach; ?>
   </div>
+  <?php if ($prjRegions): ?>
+    <div class="card" style="max-width:680px;margin:18px auto 0">
+      <h3 style="margin:0 0 8px;text-align:center">📍 <?= h(t('prj_region_tbl')) ?></h3>
+      <table style="width:100%">
+        <tr><th><?= h(t('prj_t_region')) ?></th><th style="text-align:center">⏳ <?= h(t('prj_s_waiting')) ?></th><th style="text-align:center">🏗️ <?= h(t('prj_s_working')) ?></th><th style="text-align:center"><?= h(t('prj_t_total')) ?></th><th></th></tr>
+        <?php foreach ($prjRegions as $rg): ?>
+          <tr>
+            <td><b><?= h((string) $rg['region']) ?></b></td>
+            <td style="text-align:center"><?= (int) $rg['open_n'] ?></td>
+            <td style="text-align:center"><?= (int) $rg['working_n'] + (int) $rg['awarded_n'] ?></td>
+            <td style="text-align:center"><b><?= (int) $rg['total_n'] ?></b></td>
+            <td style="text-align:right"><a href="<?= h(url('projetos.php?q=' . urlencode((string) $rg['region']))) ?>"><?= h(t('prj_see')) ?> →</a></td>
+          </tr>
+        <?php endforeach; ?>
+      </table>
+    </div>
+  <?php endif; ?>
   <div style="display:flex;gap:12px;justify-content:center;margin-top:18px">
     <a class="btn lg" href="<?= h(url('projetos.php')) ?>"><?= h(t('prj_map_cta_board')) ?></a>
     <a class="btn ghost lg" href="<?= h(url('publicar.php')) ?>"><?= h(t('prj_map_cta_post')) ?></a>
