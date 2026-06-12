@@ -90,9 +90,10 @@ layout_top(t('app_name'));
     <h1 class="vhero-h1"><?= h(t('hero_h1')) ?></h1>
     <p class="vhero-sub"><?= h(t('hero_sub')) ?></p>
     <div class="hero-cta">
-      <a class="btn lg glow" href="<?= h(url('register.php')) ?>"><?= h(t('cta_start')) ?></a>
+      <a class="btn lg glow" href="<?= h(url('trial.php')) ?>">🎁 <?= h(t('cta_start')) ?></a>
       <a class="btn ghost lg" href="#planos"><?= h(t('cta_plans')) ?></a>
     </div>
+    <p style="margin:10px 0 0;font-size:13px;color:#cabfa4;text-shadow:0 1px 10px rgba(0,0,0,.6)">✓ <?= h(t('cta_nocard')) ?></p>
     <div class="vhero-stats">
       <div class="vstat"><b><span class="vnum" data-to="10">0</span><span class="vsuf">×</span></b><span><?= h(t('stat_fast')) ?></span></div>
       <div class="vstat"><b><span class="vnum" data-to="3">0</span></b><span><?= h(t('stat_min')) ?></span></div>
@@ -149,7 +150,7 @@ layout_top(t('app_name'));
 <section class="sec reveal" id="features">
   <h2 class="sec-title"><?= h(t('feat_title')) ?></h2>
   <div class="features">
-    <?php foreach (['f1','f2','f3','f4','f5','f6'] as $i => $f): $ic = ['🤖','📐','📄','🗺️','🌐','💻'][$i]; ?>
+    <?php foreach (['f1','f2','f7','f3','f4','f8','f5','f6'] as $i => $f): $ic = ['🤖','📐','💲','📄','🗺️','📋','🌐','💻'][$i]; ?>
       <div class="feat"><div class="feat-ic"><?= $ic ?></div><h3><?= h(t($f.'_t')) ?></h3><p><?= h(t($f.'_d')) ?></p></div>
     <?php endforeach; ?>
   </div>
@@ -226,7 +227,8 @@ layout_top(t('app_name'));
 
 <section class="sec center cta-final reveal">
   <h2><?= h(t('final_cta')) ?></h2>
-  <a class="btn lg" href="<?= h(url('register.php')) ?>"><?= h(t('cta_start')) ?></a>
+  <a class="btn lg" href="<?= h(url('trial.php')) ?>">🎁 <?= h(t('cta_start')) ?></a>
+  <p class="muted" style="margin-top:8px;font-size:13px">✓ <?= h(t('cta_nocard')) ?></p>
 </section>
 <script>
 (function () {
