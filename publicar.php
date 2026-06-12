@@ -55,9 +55,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         // OFERTA o link a todos os assinantes do pacote Mural (e-mail broadcast)
         prj_notify_subscribers(['id' => $id, 'title' => $title, 'region' => $region, 'trades' => implode(',', $trades), 'deadline' => $deadline]);
         $link = url('projeto.php?id=' . $id . '&t=' . $tok);
-        @mail($cemail, 'ConstructCount — ' . t('prj_published_subject'),
-              t('prj_published_mail') . "\n\n" . $link,
-              "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8");
+        cc_mail($cemail, 'ConstructCount — ' . t('prj_published_subject'),
+              t('prj_published_mail') . "\n\n" . $link);
         flash(t('prj_published_flash'));
         redirect($link);
       }

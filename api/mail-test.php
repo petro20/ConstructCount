@@ -4,6 +4,7 @@
    e reporta o retorno do mail() com variações de cabeçalho, p/ descobrir por
    que os e-mails do mural não chegam. Protegido por chave simples. */
 declare(strict_types=1);
+require __DIR__ . '/../lib/mailer.php';
 header('Content-Type: application/json; charset=utf-8');
 if (($_GET['k'] ?? '') !== 'ccdiag2026') { http_response_code(403); echo '{"err":"forbidden"}'; exit; }
 
@@ -27,6 +28,10 @@ $r3 = @mail($to, "CC mail-test 3/3 ($ts) — From padrao do servidor", "Teste 3:
             "Content-Type: text/plain; charset=utf-8");
 $out['tests'][] = ['test' => 'default_from', 'mail_returned' => $r3];
 
+// 4) pelo remetente central (SMTP autenticado se SMTP_* estiver no config.php)
+$r4 = cc_mail($to, "CC mail-test 4/4 ($ts) — cc_mail/SMTP", 'Teste 4: cc_mail (SMTP autenticado se configurado; senao mail() com -f).');
+$out['tests'][] = ['test' => 'cc_mail_smtp', 'mail_returned' => $r4];
+$out['smtp_configured'] = defined('SMTP_HOST') && defined('SMTP_USER') && defined('SMTP_PASS');
 $out['php_sendmail_path'] = ini_get('sendmail_path');
 $out['php_smtp'] = ini_get('SMTP');
 $out['sendmail_from'] = ini_get('sendmail_from');

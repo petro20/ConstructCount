@@ -95,11 +95,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
     $st->execute([(int) $p['awarded_proposal_id'], (int) $u['id']]);
     if ($b = $st->fetch()) {
       $link = url('lien.php?id=' . $id . '&kind=intent');
-      @mail((string) $p['contact_email'], 'ConstructCount — ' . t('lien_intent_subject'),
+      cc_mail((string) $p['contact_email'], 'ConstructCount — ' . t('lien_intent_subject'),
             t('lien_intent_mail') . "\n\n" . $p['title'] . ' — ' . $p['region'] .
             "\nUS$ " . number_format((float) $b['amount'], 2) . ' — ' . $b['company'] . ' (' . $b['email'] . ')' .
-            "\n\n" . $link . "\n\n" . t('lien_disclaimer'),
-            "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8");
+            "\n\n" . $link . "\n\n" . t('lien_disclaimer'));
       flash(t('lien_intent_sent'));
     }
     redirect(url('projeto.php?id=' . $id));
@@ -127,10 +126,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
       db()->prepare('INSERT INTO proposals (project_id,user_id,company,email,amount,message,report_path,terms_accepted_at,terms_version) VALUES (?,?,?,?,?,?,?,NOW(),?)')
           ->execute([$id, (int) $u['id'], $company, (string) $u['email'], $amount, $msg, $report, '2026-06-12']);
     }
-    @mail((string) $p['contact_email'], 'ConstructCount — ' . t('prj_newbid_subject'),
+    cc_mail((string) $p['contact_email'], 'ConstructCount — ' . t('prj_newbid_subject'),
           t('prj_newbid_mail') . ' "' . $p['title'] . '"' . "\nUS$ " . number_format($amount, 2) . ' — ' . $company .
-          "\n\n" . url('projeto.php?id=' . $id . '&t=' . $p['manage_token']),
-          "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8");
+          "\n\n" . url('projeto.php?id=' . $id . '&t=' . $p['manage_token']));
     flash(t('prj_bid_flash'));
     redirect(url('projeto.php?id=' . $id));
   }

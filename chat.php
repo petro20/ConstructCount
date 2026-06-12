@@ -69,9 +69,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
             $q->execute([$bidderId]);
             $to = (string) (($q->fetch()['email'] ?? ''));
           }
-          if ($to !== '') @mail($to, 'ConstructCount — ' . t('chat_new_subject'),
-                t('chat_new_mail') . ' "' . $p['title'] . "\"\n\n" . url('chat.php?id=' . $id . ($sender === 'bidder' ? '&u=' . $bidderId . '&t=' . $p['manage_token'] : '')),
-                "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8");
+          if ($to !== '') cc_mail($to, 'ConstructCount — ' . t('chat_new_subject'),
+                t('chat_new_mail') . ' "' . $p['title'] . "\"\n\n" . url('chat.php?id=' . $id . ($sender === 'bidder' ? '&u=' . $bidderId . '&t=' . $p['manage_token'] : '')));
         }
       } catch (Throwable $e) {}
     }

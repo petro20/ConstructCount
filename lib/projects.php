@@ -11,6 +11,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/license.php';
+require_once __DIR__ . '/mailer.php';   // cc_mail: SMTP autenticado (fallback mail())
 
 const PRJ_TRADES = ['framing', 'drywall', 'insulation', 'paint', 'windows_doors'];
 const PRJ_MAX_PDF = 31457280;   // 30 MB
@@ -237,8 +238,7 @@ function prj_notify_subscribers(array $p): void {
           (!empty($p['deadline']) ? ("\n⏳ " . $p['deadline']) : '') .
           "\n\n" . url('projeto.php?id=' . (int) $p['id']);
   foreach (array_chunk($emails, 50) as $chunk) {
-    @mail('no-reply@constructcount.com', $subject, $body,
-          "From: no-reply@constructcount.com\r\nBcc: " . implode(', ', $chunk) . "\r\nContent-Type: text/plain; charset=utf-8");
+    cc_mail('no-reply@constructcount.com', $subject, $body, $chunk);
   }
 }
 
@@ -274,10 +274,9 @@ function prj_violation(array $p, string $party, string $kind, ?int $userId, stri
     $st->execute([(int) $p['id'], $party, $userId, $email, $kind, prj_fee()]);
     if ($st->rowCount() > 0 && $email !== '') {
       $due = date('Y-m-d', time() + 30 * 86400);   // prazo p/ quitar = 30 dias
-      @mail($email, 'ConstructCount — ' . t('prj_v_subject'),
+      cc_mail($email, 'ConstructCount — ' . t('prj_v_subject'),
             t('prj_v_mail') . ' "' . $p['title'] . "\" — US$ " . number_format(prj_fee(), 2) .
-            "\n\n" . str_replace('{due}', $due, t('prj_v_mail2')) . "\n\n" . url('projeto.php?id=' . (int) $p['id']),
-            "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8");
+            "\n\n" . str_replace('{due}', $due, t('prj_v_mail2')) . "\n\n" . url('projeto.php?id=' . (int) $p['id']));
     }
   } catch (Throwable $e) {}
 }
@@ -349,12 +348,11 @@ function prj_lien_prelim_notify(array $p): void {
   $b = prj_lien_winner($p);
   if (!$b) return;
   $link = url('lien.php?id=' . (int) $p['id'] . '&kind=prelim');
-  $hdr = "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8";
   $body = t('lien_prelim_mail') . "\n\n" . $p['title'] . ' — ' . $p['region'] .
           "\n" . t('lien_by') . ' ' . $b['company'] . ' (' . $b['email'] . ')' .
           "\n\n" . $link . "\n\n" . t('lien_disclaimer');
-  if (!empty($p['contact_email'])) @mail((string) $p['contact_email'], 'ConstructCount — ' . t('lien_prelim_subject'), $body, $hdr);
-  if (!empty($b['email'])) @mail((string) $b['email'], 'ConstructCount — ' . t('lien_prelim_subject'), $body, $hdr);
+  if (!empty($p['contact_email'])) cc_mail((string) $p['contact_email'], 'ConstructCount — ' . t('lien_prelim_subject'), $body);
+  if (!empty($b['email'])) cc_mail((string) $b['email'], 'ConstructCount — ' . t('lien_prelim_subject'), $body);
 }
 
 /* ---------- CHAT TEMPORÁRIO (dúvidas entre ofertante e quem dá preço) ----------
@@ -385,9 +383,8 @@ function prj_chat_end(array $p, int $bidderId): void {
     }
     $body = t('chat_mail_body') . ' "' . $p['title'] . "\"\n\n" . implode("\n", $lines)
           . "\n\n" . url('projeto.php?id=' . (int) $p['id']);
-    $hdr = "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8";
-    if (!empty($p['contact_email'])) @mail((string) $p['contact_email'], 'ConstructCount — ' . t('chat_mail_subject'), $body, $hdr);
-    if (!empty($b['email'])) @mail((string) $b['email'], 'ConstructCount — ' . t('chat_mail_subject'), $body, $hdr);
+    if (!empty($p['contact_email'])) cc_mail((string) $p['contact_email'], 'ConstructCount — ' . t('chat_mail_subject'), $body);
+    if (!empty($b['email'])) cc_mail((string) $b['email'], 'ConstructCount — ' . t('chat_mail_subject'), $body);
     db()->prepare('DELETE FROM prj_chat WHERE project_id=? AND user_id=?')->execute([(int) $p['id'], $bidderId]);
   } catch (Throwable $e) {}
 }
@@ -462,9 +459,7 @@ function prj_purge_overdue(): void {
       db()->prepare('UPDATE violations SET purged_at = NOW() WHERE id=?')->execute([(int) $v['id']]);
       prj_ban((string) $v['email'], $v['user_id'] ? (int) $v['user_id'] : null, 'fee_unpaid_30d');   // bloqueio DEFINITIVO
       if (!empty($v['email'])) {
-        @mail((string) $v['email'], 'ConstructCount — ' . t('prj_purged_subject'),
-              t('prj_purged_mail'),
-              "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8");
+        cc_mail((string) $v['email'], 'ConstructCount — ' . t('prj_purged_subject'), t('prj_purged_mail'));
       }
     }
   } catch (Throwable $e) {}
@@ -478,11 +473,10 @@ function prj_award(array $p, int $proposalId): bool {
   if (!$b) return false;
   db()->prepare("UPDATE projects SET status='awarded', awarded_at=NOW(), awarded_proposal_id=? WHERE id=?")
       ->execute([$proposalId, (int) $p['id']]);
-  @mail((string) $b['email'], 'ConstructCount — 🎉 ' . t('prj_won_subject'),
+  cc_mail((string) $b['email'], 'ConstructCount — 🎉 ' . t('prj_won_subject'),
         t('prj_won_mail') . ' "' . $p['title'] . "\"\n" . t('prj_won_mail2') .
         (!empty($p['contract_deadline']) ? (' ' . t('prj_until') . ' ' . $p['contract_deadline']) : '') .
-        "\n\n" . url('projeto.php?id=' . (int) $p['id']),
-        "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8");
+        "\n\n" . url('projeto.php?id=' . (int) $p['id']));
   return true;
 }
 

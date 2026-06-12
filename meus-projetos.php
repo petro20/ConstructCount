@@ -17,8 +17,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
       foreach ($rows as $r) {
         $body .= '• ' . $r['title'] . ' (' . $r['status'] . ")\n  " . url('projeto.php?id=' . (int) $r['id'] . '&t=' . $r['manage_token']) . "\n\n";
       }
-      @mail($email, 'ConstructCount — ' . t('prj_recover_subject'), $body,
-            "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8");
+      cc_mail($email, 'ConstructCount — ' . t('prj_recover_subject'), $body);
     }
   }
   // resposta idêntica com ou sem projetos (não revela se o e-mail existe)
