@@ -16,6 +16,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $cname = trim((string) ($_POST['contact_name'] ?? '')) ?: (string) $u['name'];
     $cemail = (string) $u['email'];   // o contato é SEMPRE o e-mail da conta (responsabilização)
     $region = trim((string) ($_POST['region'] ?? ''));
+    $address = trim((string) ($_POST['address'] ?? ''));
+    $plat = is_numeric($_POST['lat'] ?? '') ? (float) $_POST['lat'] : null;   // GPS confirmado no mapa
+    $plng = is_numeric($_POST['lng'] ?? '') ? (float) $_POST['lng'] : null;
     $deadline = trim((string) ($_POST['deadline'] ?? ''));
     $negDeadline = trim((string) ($_POST['negotiation_deadline'] ?? ''));
     $conDeadline = trim((string) ($_POST['contract_deadline'] ?? ''));
@@ -23,6 +26,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $trades = array_values(array_intersect((array) ($_POST['trades'] ?? []), PRJ_TRADES));
     if ($title === '' || $company === '' || $cemail === '' || $region === '' || !$trades || !filter_var($cemail, FILTER_VALIDATE_EMAIL)) {
       $err = t('err_fields');
+    } elseif ($address === '' || $plat === null || $plng === null) {
+      $err = t('prj_addr_err');                        // endereço tem que ser CONFIRMADO no GPS (sugestão + pin)
     } elseif (empty($_POST['accept_terms'])) {
       $err = t('terms_required');                      // contrato de uso do Mural é obrigatório
     } elseif (!$deadline || !$negDeadline || !$conDeadline || $negDeadline < $deadline || $conDeadline < $negDeadline) {
@@ -41,10 +46,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
       if ($pdfLink !== '' && !filter_var($pdfLink, FILTER_VALIDATE_URL)) $err = t('prj_link_err');
       if ($err === '') {
         $tok = bin2hex(random_bytes(16));
-        $geo = prj_geocode($region);   // pin no mapa da landing
+        // GPS: usa o pin CONFIRMADO no formulário; geocode da região é só fallback
+        $geo = ($plat !== null && $plng !== null) ? ['lat' => $plat, 'lng' => $plng] : prj_geocode($region);
         $pdfSize = ($pdf !== null) ? (int) ($_FILES['pdf']['size'] ?? 0) : null;
-        db()->prepare('INSERT INTO projects (title,company,contact_name,contact_email,owner_user_id,region,trades,deadline,negotiation_deadline,contract_deadline,contract_deadline_orig,descr,pdf_path,pdf_size,pdf_link,manage_token,lat,lng,terms_accepted_at,terms_version) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?)')
-            ->execute([$title, $company, $cname, $cemail, (int) $u['id'], $region, implode(',', $trades), $deadline, $negDeadline, $conDeadline, $conDeadline, $descr, $pdf, $pdfSize, ($pdfLink ?: null), $tok, $geo['lat'] ?? null, $geo['lng'] ?? null, '2026-06-12']);
+        db()->prepare('INSERT INTO projects (title,company,contact_name,contact_email,owner_user_id,region,address,trades,deadline,negotiation_deadline,contract_deadline,contract_deadline_orig,descr,pdf_path,pdf_size,pdf_link,manage_token,lat,lng,terms_accepted_at,terms_version) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?)')
+            ->execute([$title, $company, $cname, $cemail, (int) $u['id'], $region, $address, implode(',', $trades), $deadline, $negDeadline, $conDeadline, $conDeadline, $descr, $pdf, $pdfSize, ($pdfLink ?: null), $tok, $geo['lat'] ?? null, $geo['lng'] ?? null, '2026-06-12']);
         $id = (int) db()->lastInsertId();
         // OFERTA o link a todos os assinantes do pacote Mural (e-mail broadcast)
         prj_notify_subscribers(['id' => $id, 'title' => $title, 'region' => $region, 'trades' => implode(',', $trades), 'deadline' => $deadline]);
@@ -81,10 +87,15 @@ layout_top(t('prj_post_title'));
       <label><?= h(t('prj_f_company')) ?><br><input name="company" required maxlength="120" style="width:100%"></label>
       <label><?= h(t('prj_f_contact')) ?><br><input name="contact_name" maxlength="120" style="width:100%"></label>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <label><?= h(t('prj_f_email')) ?><br><input type="email" value="<?= h((string) $u['email']) ?>" disabled style="width:100%;opacity:.7" title="<?= h(t('prj_f_email_acct')) ?>"></label>
-      <label><?= h(t('prj_f_region')) ?><br><input name="region" required maxlength="120" placeholder="Paterson, NJ" style="width:100%"></label>
+    <label><?= h(t('prj_f_email')) ?><br><input type="email" value="<?= h((string) $u['email']) ?>" disabled style="width:100%;opacity:.7" title="<?= h(t('prj_f_email_acct')) ?>"></label>
+    <div style="position:relative">
+      <label><?= h(t('prj_f_address')) ?><br><input id="prjAddr" name="address" required maxlength="255" autocomplete="off" placeholder="123 Main St, Paterson, NJ" style="width:100%"></label>
+      <div id="prjAddrSug" style="position:absolute;left:0;right:0;z-index:30;background:#181818;border:1px solid var(--bd);border-radius:10px;display:none;overflow:hidden"></div>
+      <p class="muted" id="prjAddrStatus" style="margin:4px 0 0;font-size:12px"><?= h(t('prj_addr_hint')) ?></p>
+      <input type="hidden" name="lat" id="prjLat"><input type="hidden" name="lng" id="prjLng">
+      <div id="prjMiniMap" style="display:none;height:200px;border-radius:10px;border:1px solid var(--bd);margin-top:8px"></div>
     </div>
+    <label><?= h(t('prj_f_region')) ?><br><input id="prjRegion" name="region" required maxlength="120" placeholder="Paterson, NJ" style="width:100%"></label>
     <div>
       <?= h(t('prj_f_trades')) ?><br>
       <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:6px">
@@ -115,6 +126,77 @@ layout_top(t('prj_post_title'));
   </form>
   <p id="aiFill" class="muted" style="display:none;margin-top:10px;font-weight:700;color:#7fe3b0"></p>
 </div>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// 📍 ENDEREÇO DA OBRA com GPS confirmado: autocomplete (OpenStreetMap/Nominatim),
+// pin no mini-mapa (ARRASTÁVEL p/ ajuste fino) e região (Cidade, UF) automática.
+// Sem endereço confirmado o servidor recusa a publicação.
+(function () {
+  var inp = document.getElementById('prjAddr'), sug = document.getElementById('prjAddrSug');
+  var stt = document.getElementById('prjAddrStatus'), reg = document.getElementById('prjRegion');
+  var lat = document.getElementById('prjLat'), lng = document.getElementById('prjLng');
+  var mapDiv = document.getElementById('prjMiniMap');
+  if (!inp) return;
+  var T_SEARCH = <?= json_encode(t('prj_addr_searching'), JSON_UNESCAPED_UNICODE) ?>;
+  var T_PICK = <?= json_encode(t('prj_addr_pick'), JSON_UNESCAPED_UNICODE) ?>;
+  var T_OK = <?= json_encode(t('prj_addr_ok'), JSON_UNESCAPED_UNICODE) ?>;
+  var T_HINT = <?= json_encode(t('prj_addr_hint'), JSON_UNESCAPED_UNICODE) ?>;
+  var map = null, marker = null, deb = null;
+
+  function setPin(la, lo) {
+    lat.value = la.toFixed(6); lng.value = lo.toFixed(6);
+    mapDiv.style.display = 'block';
+    if (!window.L) return;
+    if (!map) {
+      map = L.map('prjMiniMap').setView([la, lo], 16);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+      marker = L.marker([la, lo], { draggable: true }).addTo(map);
+      marker.on('dragend', function () { var p = marker.getLatLng(); lat.value = p.lat.toFixed(6); lng.value = p.lng.toFixed(6); });
+    } else { map.setView([la, lo], 16); marker.setLatLng([la, lo]); }
+    setTimeout(function () { try { map.invalidateSize(); } catch (e) {} }, 150);
+  }
+  function pick(it) {
+    sug.style.display = 'none';
+    inp.value = it.display_name.slice(0, 255);
+    var a = it.address || {};
+    var city = a.city || a.town || a.village || a.hamlet || a.municipality || '';
+    var iso = a['ISO3166-2-lvl4'] || '';                       // ex.: US-NJ
+    var uf = iso.indexOf('US-') === 0 ? iso.slice(3) : '';
+    if (city || uf) reg.value = (city ? city + ', ' : '') + uf;
+    setPin(parseFloat(it.lat), parseFloat(it.lon));
+    stt.innerHTML = '✅ ' + T_OK;
+  }
+  function search(q) {
+    stt.textContent = '🔎 ' + T_SEARCH;
+    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=us&addressdetails=1&q=' + encodeURIComponent(q))
+      .then(function (r) { return r.json(); })
+      .then(function (list) {
+        sug.innerHTML = '';
+        if (!list.length) { sug.style.display = 'none'; stt.textContent = T_HINT; return; }
+        list.forEach(function (it) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.style.cssText = 'display:block;width:100%;text-align:left;padding:9px 12px;background:none;border:0;border-bottom:1px solid rgba(255,255,255,.07);color:inherit;cursor:pointer;font-size:13px';
+          b.textContent = '📍 ' + it.display_name;
+          b.addEventListener('click', function () { pick(it); });
+          sug.appendChild(b);
+        });
+        sug.style.display = 'block';
+        stt.textContent = '⬇️ ' + T_PICK;
+      }).catch(function () { stt.textContent = T_HINT; });
+  }
+  inp.addEventListener('input', function () {
+    lat.value = ''; lng.value = '';                            // mudou o texto → GPS precisa reconfirmar
+    stt.textContent = T_HINT;
+    clearTimeout(deb);
+    var q = inp.value.trim();
+    if (q.length < 5) { sug.style.display = 'none'; return; }
+    deb = setTimeout(function () { search(q); }, 650);
+  });
+  document.addEventListener('click', function (e) { if (!sug.contains(e.target) && e.target !== inp) sug.style.display = 'none'; });
+})();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 // ✨ IA de preenchimento: ao escolher o PDF, lê as primeiras folhas NO NAVEGADOR

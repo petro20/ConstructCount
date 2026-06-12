@@ -170,7 +170,7 @@ layout_top($p['title']);
     <span style="flex:1"></span>
     <span class="muted"><?= h(t('prj_bids')) ?>: <b><?= $nBids ?></b></span>
   </div>
-  <p class="muted" style="margin:8px 0 0">📍 <?= h($p['region']) ?> · 🏢 <?= h($p['company']) ?>
+  <p class="muted" style="margin:8px 0 0">📍 <?= h(($isOwner || $canBid) && !empty($p['address']) ? $p['address'] : $p['region']) ?> · 🏢 <?= h($p['company']) ?>
     <?php if (!empty($p['deadline'])): ?> · ⏳ <?= h(t('prj_deadline')) ?>: <?= h(fmt_date($p['deadline'])) ?><?php endif; ?></p>
   <p style="margin:8px 0 0"><?php foreach ($trades as $tr): ?><span class="badge" style="margin-right:6px"><?= h(prj_trade_label($tr)) ?></span><?php endforeach; ?></p>
   <?php if (!empty($p['descr'])): ?><p style="margin-top:10px;white-space:pre-wrap"><?= h($p['descr']) ?></p><?php endif; ?>
