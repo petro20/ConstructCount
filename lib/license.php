@@ -2,6 +2,15 @@
 declare(strict_types=1);
 require_once __DIR__ . '/db.php';
 
+/** Garante colunas novas na tabela `licenses` (auto-migração — bancos antigos
+    foram criados sem `modules`, o que quebrava entitlements por pacote). */
+function lic_ensure_schema(): void {
+  static $done = false;
+  if ($done) return;
+  $done = true;
+  try { db()->exec("ALTER TABLE licenses ADD COLUMN IF NOT EXISTS modules VARCHAR(255) DEFAULT NULL"); } catch (Throwable $e) {}
+}
+
 function lic_secret(): string { cfg_loaded(); return defined('LIC_SECRET') ? (string) LIC_SECRET : ''; }
 function lic_grace_days(): int { cfg_loaded(); return defined('LIC_GRACE_DAYS') ? (int) LIC_GRACE_DAYS : 7; }
 
@@ -28,6 +37,7 @@ function lic_log(?int $id, string $dev, string $action, ?string $reason = null):
 
 /** Cria uma licença para um usuário (usado pelo Stripe e pelo admin). */
 function lic_create(?int $userId, string $plan, ?string $expiresAt, int $maxDevices = 1, ?string $subId = null): string {
+  lic_ensure_schema();
   $key = lic_gen_key();
   db()->prepare('INSERT INTO licenses (user_id,license_key,plan,status,expires_at,max_devices,stripe_subscription_id) VALUES (?,?,?,?,?,?,?)')
       ->execute([$userId, $key, $plan, 'active', $expiresAt, $maxDevices, $subId]);
@@ -36,6 +46,7 @@ function lic_create(?int $userId, string $plan, ?string $expiresAt, int $maxDevi
 
 /** Renova/atualiza a licença de uma assinatura Stripe (cria se não existir). */
 function lic_upsert_by_subscription(?int $userId, string $subId, string $plan, ?string $expiresAt, string $status, int $maxDevices = 1, ?string $modules = null): void {
+  lic_ensure_schema();
   $st = db()->prepare('SELECT id FROM licenses WHERE stripe_subscription_id = ? LIMIT 1');
   $st->execute([$subId]);
   $row = $st->fetch();
