@@ -29,6 +29,30 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
     flash(t('prj_working_flash'));
     redirect(url('projeto.php?id=' . $id . '&t=' . $tok));
   }
+  // GC PRORROGA as datas (até 1 mês além da original = grátis; depois US$5/mês, recalculado do total)
+  if ($isOwner && ($_POST['act'] ?? '') === 'extend' && in_array($p['status'], ['open', 'awarded'], true)) {
+    $nd = trim((string) ($_POST['deadline'] ?? ''));
+    $nn = trim((string) ($_POST['negotiation_deadline'] ?? ''));
+    $nc = trim((string) ($_POST['contract_deadline'] ?? ''));
+    if ($nd && $nn && $nc && $nn >= $nd && $nc >= $nn) {
+      $orig = (string) ($p['contract_deadline_orig'] ?: $p['contract_deadline']);
+      $fee = prj_extension_fee($orig, $nc);
+      db()->prepare('UPDATE projects SET deadline=?, negotiation_deadline=?, contract_deadline=?, contract_deadline_orig=COALESCE(contract_deadline_orig, ?) WHERE id=?')
+          ->execute([$nd, $nn, $nc, $p['contract_deadline'], $id]);
+      if ($fee > 0) {
+        $st = db()->prepare("SELECT id FROM violations WHERE project_id=? AND kind='extension' LIMIT 1");
+        $st->execute([$id]);
+        if ($row = $st->fetch()) db()->prepare("UPDATE violations SET fee=?, status='pending' WHERE id=?")->execute([$fee, (int) $row['id']]);
+        else db()->prepare("INSERT INTO violations (project_id,party,user_id,email,kind,fee) VALUES (?,'owner',NULL,?,'extension',?)")->execute([$id, (string) $p['contact_email'], $fee]);
+        flash(str_replace('{fee}', number_format($fee, 2), t('prj_extend_fee_flash')));
+      } else {
+        flash(t('prj_extend_flash'));
+      }
+    } else {
+      flash(t('prj_dates_err'));
+    }
+    redirect(url('projeto.php?id=' . $id . '&t=' . $tok));
+  }
   // GC ACEITA uma proposta (award) — começa o prazo de contrato
   if ($isOwner && ($_POST['act'] ?? '') === 'award' && in_array($p['status'], ['open'], true)) {
     if (prj_award($p, (int) ($_POST['proposal_id'] ?? 0))) flash(t('prj_award_flash'));
@@ -188,6 +212,22 @@ layout_top($p['title']);
           <?php else: ?><span class="badge b-ok">✓ <?= h(t('prj_signed')) ?> (<?= h(t('prj_f_company')) ?>)</span><?php endif; ?>
         </div>
       <?php endif; ?>
+    <?php endif; ?>
+    <?php $due = prj_storage_due($p); if ($due > 0): ?>
+      <p style="margin-top:10px" class="muted">💾 <?= h(str_replace(['{due}', '{months}', '{mb}'], [number_format($due, 2), (string) prj_storage_months($p), (string) round(((int) $p['pdf_size']) / 1048576)], t('prj_storage_due'))) ?></p>
+    <?php endif; ?>
+    <?php if (in_array($p['status'], ['open', 'awarded'], true)): ?>
+      <details style="margin-top:12px">
+        <summary style="cursor:pointer;font-weight:700">📅 <?= h(t('prj_extend_title')) ?></summary>
+        <p class="muted" style="font-size:12.5px;margin:6px 0"><?= h(str_replace('{fee}', number_format(prj_fee(), 2), t('prj_rule_extension'))) ?></p>
+        <form method="post" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end">
+          <?= csrf_field() ?><input type="hidden" name="t" value="<?= h($tok) ?>"><input type="hidden" name="act" value="extend">
+          <label><?= h(t('prj_f_deadline')) ?><br><input type="date" name="deadline" required value="<?= h((string) $p['deadline']) ?>" style="width:100%"></label>
+          <label><?= h(t('prj_f_neg_deadline')) ?><br><input type="date" name="negotiation_deadline" required value="<?= h((string) $p['negotiation_deadline']) ?>" style="width:100%"></label>
+          <label><?= h(t('prj_f_con_deadline')) ?><br><input type="date" name="contract_deadline" required value="<?= h((string) $p['contract_deadline']) ?>" style="width:100%"></label>
+          <button class="btn ghost"><?= h(t('prj_extend_btn')) ?></button>
+        </form>
+      </details>
     <?php endif; ?>
     <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
       <?php if ($p['status'] === 'open'): ?>

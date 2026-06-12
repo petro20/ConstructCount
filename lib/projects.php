@@ -50,7 +50,8 @@ function prj_ensure_schema(): void {
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
   try { db()->exec("ALTER TABLE projects ADD COLUMN IF NOT EXISTS lat DECIMAL(9,6) NULL, ADD COLUMN IF NOT EXISTS lng DECIMAL(9,6) NULL, ADD COLUMN IF NOT EXISTS pdf_link VARCHAR(500) NULL, ADD COLUMN IF NOT EXISTS closed_at DATETIME NULL,
     ADD COLUMN IF NOT EXISTS negotiation_deadline DATE NULL, ADD COLUMN IF NOT EXISTS contract_deadline DATE NULL,
-    ADD COLUMN IF NOT EXISTS awarded_at DATETIME NULL, ADD COLUMN IF NOT EXISTS awarded_proposal_id INT NULL, ADD COLUMN IF NOT EXISTS contract_gc_at DATETIME NULL"); } catch (Throwable $e) {}
+    ADD COLUMN IF NOT EXISTS awarded_at DATETIME NULL, ADD COLUMN IF NOT EXISTS awarded_proposal_id INT NULL, ADD COLUMN IF NOT EXISTS contract_gc_at DATETIME NULL,
+    ADD COLUMN IF NOT EXISTS pdf_size BIGINT NULL, ADD COLUMN IF NOT EXISTS contract_deadline_orig DATE NULL"); } catch (Throwable $e) {}
   try { db()->exec("ALTER TABLE proposals ADD COLUMN IF NOT EXISTS contract_bidder_at DATETIME NULL"); } catch (Throwable $e) {}
   db()->exec("CREATE TABLE IF NOT EXISTS violations (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -188,8 +189,30 @@ function prj_notify_subscribers(array $p): void {
   }
 }
 
-/** Taxa por prazo descumprido (US$). Pode sobrescrever no config.php: define('PRJ_PENALTY_FEE', 25.00). */
-function prj_fee(): float { cfg_loaded(); return defined('PRJ_PENALTY_FEE') ? (float) PRJ_PENALTY_FEE : 25.00; }
+/** Taxa por prazo descumprido (US$ 5). Sobrescreve no config.php: define('PRJ_PENALTY_FEE', 5.00). */
+function prj_fee(): float { cfg_loaded(); return defined('PRJ_PENALTY_FEE') ? (float) PRJ_PENALTY_FEE : 5.00; }
+
+/** Armazenamento: PDF acima de 25 MB paga US$ 5/mês, da publicação até a data final. */
+const PRJ_STORAGE_FREE = 26214400;   // 25 MB
+function prj_storage_fee(): float { cfg_loaded(); return defined('PRJ_STORAGE_FEE') ? (float) PRJ_STORAGE_FEE : 5.00; }
+function prj_storage_months(array $p): int {
+  if (empty($p['contract_deadline'])) return 1;
+  $days = (strtotime((string) $p['contract_deadline']) - strtotime((string) $p['created_at'])) / 86400;
+  return max(1, (int) ceil($days / 30));
+}
+function prj_storage_due(array $p): float {
+  if (empty($p['pdf_path']) || (int) ($p['pdf_size'] ?? 0) <= PRJ_STORAGE_FREE) return 0.0;
+  return prj_storage_months($p) * prj_storage_fee();
+}
+
+/** Multa de PRORROGAÇÃO: até 1 mês além da data ORIGINAL do contrato é grátis;
+    passou de 1 mês → US$ 5 por CADA mês de prorrogação (contado da data original). */
+function prj_extension_fee(string $origContract, string $newContract): float {
+  $days = (strtotime($newContract) - strtotime($origContract)) / 86400;
+  if ($days <= 0) return 0.0;
+  $months = (int) ceil($days / 30);
+  return $months > 1 ? $months * prj_fee() : 0.0;
+}
 
 /** Registra uma violação de prazo (1x por tipo/projeto) e avisa a parte por e-mail. */
 function prj_violation(array $p, string $party, string $kind, ?int $userId, string $email): void {

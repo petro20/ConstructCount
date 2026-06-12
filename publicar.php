@@ -36,8 +36,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
       if ($err === '') {
         $tok = bin2hex(random_bytes(16));
         $geo = prj_geocode($region);   // pin no mapa da landing
-        db()->prepare('INSERT INTO projects (title,company,contact_name,contact_email,region,trades,deadline,negotiation_deadline,contract_deadline,descr,pdf_path,pdf_link,manage_token,lat,lng) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-            ->execute([$title, $company, $cname, $cemail, $region, implode(',', $trades), $deadline, $negDeadline, $conDeadline, $descr, $pdf, ($pdfLink ?: null), $tok, $geo['lat'] ?? null, $geo['lng'] ?? null]);
+        $pdfSize = ($pdf !== null) ? (int) ($_FILES['pdf']['size'] ?? 0) : null;
+        db()->prepare('INSERT INTO projects (title,company,contact_name,contact_email,region,trades,deadline,negotiation_deadline,contract_deadline,contract_deadline_orig,descr,pdf_path,pdf_size,pdf_link,manage_token,lat,lng) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+            ->execute([$title, $company, $cname, $cemail, $region, implode(',', $trades), $deadline, $negDeadline, $conDeadline, $conDeadline, $descr, $pdf, $pdfSize, ($pdfLink ?: null), $tok, $geo['lat'] ?? null, $geo['lng'] ?? null]);
         $id = (int) db()->lastInsertId();
         // OFERTA o link a todos os assinantes do pacote Mural (e-mail broadcast)
         prj_notify_subscribers(['id' => $id, 'title' => $title, 'region' => $region, 'trades' => implode(',', $trades), 'deadline' => $deadline]);
@@ -56,6 +57,15 @@ layout_top(t('prj_post_title'));
 <div class="card" style="max-width:760px;margin:0 auto">
   <h2><?= h(t('prj_post_title')) ?></h2>
   <p class="muted"><?= h(t('prj_post_sub')) ?></p>
+  <div style="margin-top:10px;padding:12px 14px;border:1px solid #b58a2a;border-radius:10px;background:rgba(217,160,42,.08)">
+    <b>⚖️ <?= h(t('prj_rules_title')) ?></b>
+    <ul style="margin:8px 0 0;padding-left:18px;font-size:13px;line-height:1.6">
+      <li><?= h(str_replace('{fee}', number_format(prj_fee(), 2), t('prj_rule_fee'))) ?></li>
+      <li><?= h(str_replace('{fee}', number_format(prj_fee(), 2), t('prj_rule_extension'))) ?></li>
+      <li><?= h(str_replace('{fee}', number_format(prj_storage_fee(), 2), t('prj_rule_storage'))) ?></li>
+      <li><?= h(t('prj_rule_block')) ?></li>
+    </ul>
+  </div>
   <?php if ($err): ?><p class="err"><?= h($err) ?></p><?php endif; ?>
   <form method="post" enctype="multipart/form-data" style="display:grid;gap:12px;margin-top:10px">
     <?= csrf_field() ?>
@@ -85,7 +95,8 @@ layout_top(t('prj_post_title'));
         <label><?= h(t('prj_f_con_deadline')) ?><br><input type="date" name="contract_deadline" required style="width:100%"></label>
       </div>
     </div>
-    <label><?= h(t('prj_f_pdf')) ?><br><input type="file" name="pdf" accept="application/pdf" style="width:100%"></label>
+    <label><?= h(t('prj_f_pdf')) ?><br><input type="file" name="pdf" accept="application/pdf" style="width:100%">
+      <span class="muted" style="font-size:12px">💾 <?= h(str_replace('{fee}', number_format(prj_storage_fee(), 2), t('prj_rule_storage'))) ?></span></label>
     <label><?= h(t('prj_f_link')) ?><br><input type="url" name="pdf_link" placeholder="https://drive.google.com/…" style="width:100%"></label>
     <label><?= h(t('prj_f_descr')) ?><br><textarea name="descr" rows="4" style="width:100%"></textarea></label>
     <button class="btn"><?= h(t('prj_post_btn')) ?></button>
