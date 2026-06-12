@@ -124,7 +124,12 @@
     const pfs = $('#pkgFrSubscribe'); if (pfs) pfs.addEventListener('click', () => { window.open('https://constructcount.com/checkout.php?plan=parede', '_blank'); });
     const pfa = $('#pkgFrActivate'); if (pfa) pfa.addEventListener('click', () => { if (F.openLicenseGate) F.openLicenseGate(); else openLic(); });
     const pft = $('#pkgFrTrial'); if (pft) pft.addEventListener('click', () => { window.open('https://constructcount.com/trial.php', '_blank'); });
-    document.querySelectorAll('.pkg-trade-sub').forEach(b => b.addEventListener('click', () => { const t = b.getAttribute('data-trade'); window.open('https://constructcount.com/checkout.php?plan=' + t, '_blank'); }));
+    document.querySelectorAll('.pkg-trade-sub').forEach(b => b.addEventListener('click', () => {
+      const t = b.getAttribute('data-trade');
+      // Mural é POR REGIÃO (1/3/6/12 meses) → abre o seletor de regiões do site
+      const url = t === 'board' ? 'https://constructcount.com/board-regioes.php' : 'https://constructcount.com/checkout.php?plan=' + t;
+      window.open(url, '_blank');
+    }));
   }
 
   // ----------------------------------------------------------------- aba Pacote: status da assinatura
@@ -166,7 +171,15 @@
       const own = !F.hasPackage || F.hasPackage(t);
       card.classList.toggle('is-owned', own);
       const lbl = card.querySelector('.pkg-trade-sub span:last-child');
-      if (lbl) lbl.textContent = own ? F.tr('Ativo') : F.tr('Assinar');
+      if (!lbl) return;
+      if (t === 'board') {                                  // mural: mostra as REGIÕES ativas
+        const regs = F.boardRegions ? F.boardRegions() : [];
+        if (own && regs.indexOf('*') >= 0) lbl.textContent = F.tr('Ativo') + ' — ' + F.tr('todas as regiões');
+        else if (own && regs.length) lbl.textContent = F.tr('Ativo') + ': ' + regs.join(', ') + ' · ' + F.tr('adicionar região');
+        else lbl.textContent = F.tr('Escolher regiões');
+      } else {
+        lbl.textContent = own ? F.tr('Ativo') : F.tr('Assinar');
+      }
     });
   }
   F._renderPackage = renderPackage;

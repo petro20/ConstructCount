@@ -85,7 +85,16 @@
     if (e.indexOf('all') >= 0) return true;
     if (id === 'wall') return e.indexOf('wall_combo') >= 0 || WALL_TRADES.some(function (t) { return e.indexOf(t) >= 0; });   // qualquer ofício de parede
     if (WALL_TRADES.indexOf(id) >= 0 && e.indexOf('wall_combo') >= 0) return true;   // combo libera os 4 ofícios
+    if (id === 'board') return e.some(function (m) { return m === 'board' || String(m).indexOf('board:') === 0; });   // mural por REGIÃO (board:UF; 'board' legado = todas)
     return e.indexOf(id) >= 0;
+  };
+  // Regiões (UFs) do Mural na licença: ['*'] = todas (board legado/all); [] = nenhuma
+  F.boardRegions = function () {
+    var e = F.entitlements;
+    if (e == null || e.indexOf('all') >= 0 || e.indexOf('board') >= 0) return ['*'];
+    var out = [];
+    e.forEach(function (m) { if (String(m).indexOf('board:') === 0) out.push(String(m).slice(6).toUpperCase()); });
+    return out;
   };
   function applyPackageGates() {
     var nodes = document.querySelectorAll('[data-pkg]');
