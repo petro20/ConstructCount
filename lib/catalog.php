@@ -30,8 +30,10 @@ function cc_plan_catalog(): array {
     // Pacote: Mural de projetos — vendido POR REGIÃO (UF). O checkout exige
     // &region=XX e o webhook grava o módulo "board:XX" (módulo 'board' puro = legado/todas).
     'board'      => ['name' => 'Mural de projetos — mensal', 'amount' => 10.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['board']],
-    // Add-on: Preços por região (IA busca tamanhos/preços de material na web p/ a região da obra)
-    'region'     => ['name' => 'Preços por região — mensal', 'amount' => 10.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['region']],
+    // Add-on: Pesquisa de preços (IA) — busca tamanhos/preços de material na web
+    // p/ a região da obra e preenche o takeoff. NÃO confundir com o Mural por região:
+    // este é US$ 10/mês FIXO, vale pra qualquer obra.
+    'region'     => ['name' => 'Pesquisa de preços (IA) — mensal', 'amount' => 10.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['region']],
   ];
   $cfg = defined('DITE_PLAN_CATALOG') ? DITE_PLAN_CATALOG : [];
   return array_merge($defaults, $cfg);   // config sobrescreve chaves iguais; novas vêm do default
@@ -66,7 +68,7 @@ function cc_portal_packages(): array {
       'name' => 'Mural de projetos', 'name_en' => 'Project board', 'name_es' => 'Mural de proyectos',
       'desc' => 'Dê preço nas obras publicadas: escolha suas regiões (US$ 10/mês cada), baixe a planta, levante no app e envie sua proposta.', 'desc_en' => 'Bid on posted jobs: pick your regions (US$ 10/mo each), download the plans, take off in the app and send your proposal.', 'desc_es' => 'Da precio a las obras publicadas: elige tus regiones (US$ 10/mes cada una), descarga el plano, computa en la app y envía tu propuesta.'],
     ['plan' => 'region', 'price' => '$10',
-      'name' => 'Preços por região (add-on)', 'name_en' => 'Regional pricing (add-on)', 'name_es' => 'Precios por región (add-on)',
-      'desc' => 'A IA busca na web tamanhos e preços de material da região da obra — você confirma tudo. Liga em qualquer pacote.', 'desc_en' => 'AI fetches material sizes and prices online for the job\'s region — you confirm everything. Add to any package.', 'desc_es' => 'La IA busca en la web tamaños y precios de material de la región de la obra — tú confirmas todo. En cualquier paquete.'] + $pm,
+      'name' => 'Pesquisa de preços (IA)', 'name_en' => 'AI price lookup', 'name_es' => 'Búsqueda de precios (IA)',
+      'desc' => 'A IA busca na web os preços de material da obra e preenche o takeoff: Material + M.O. + sobra % + imposto → Custo → Ganho % → Venda. Vale pra qualquer obra, em qualquer pacote.', 'desc_en' => 'AI fetches material prices online for your job and fills the takeoff: Material + Labor + waste % + tax → Cost → Markup % → Sale. Works on any job, with any package.', 'desc_es' => 'La IA busca en la web los precios de material de la obra y llena el cómputo: Material + M.O. + merma % + impuesto → Costo → Ganancia % → Venta. Vale para cualquier obra, en cualquier paquete.'] + $pm,
   ];
 }

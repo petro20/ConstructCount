@@ -49,6 +49,21 @@ function lic_upsert_by_subscription(?int $userId, string $subId, string $plan, ?
   }
 }
 
+/** Regiões (UFs) de um pacote REGIONAL ('board' ou 'region') nas licenças ativas
+    do usuário. ['*'] = todas as regiões (módulo sem região = legado, ou 'all'). */
+function lic_user_regions(int $userId, string $pkg): array {
+  $out = [];
+  foreach (lic_for_user($userId) as $l) {
+    $exp = !empty($l['expires_at']) && strtotime((string) $l['expires_at']) < time();
+    if ($l['status'] !== 'active' || $exp) continue;
+    foreach (lic_packages($l) as $m) {
+      if ($m === 'all' || $m === $pkg) return ['*'];
+      if (stripos($m, $pkg . ':') === 0) $out[strtoupper(substr($m, strlen($pkg) + 1))] = true;
+    }
+  }
+  return array_keys($out);
+}
+
 /** Status (sem registrar dispositivo) — portal/dashboard. */
 function lic_status_only(string $key): array {
   $key = trim($key);

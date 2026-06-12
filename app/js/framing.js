@@ -598,7 +598,7 @@
     { var fp = ov.querySelector('#ftFetchPrices'); if (fp) fp.addEventListener('click', function () {
       var st = ov.querySelector('#ftPriceStatus');
       if (F.hasPackage && !F.hasPackage('region')) {   // add-on não assinado → upsell (nada grátis)
-        if (st) st.innerHTML = '🔒 ' + tr('Preços por região é um add-on (US$ 10/mês).') + ' <a href="https://constructcount.com/checkout.php?plan=region" target="_blank" style="color:#e3b653;font-weight:700">' + tr('Assinar') + '</a>';
+        if (st) st.innerHTML = '🔒 ' + tr('Pesquisa de preços (IA) é um add-on (US$ 10/mês).') + ' <a href="https://constructcount.com/checkout.php?plan=region" target="_blank" style="color:#e3b653;font-weight:700">' + tr('Assinar') + '</a>';
         return;
       }
       var reg = (ov.querySelector('#ftRegion') || {}).value || FR.region;
