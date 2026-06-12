@@ -78,6 +78,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
   // assinante envia/atualiza a PROPOSTA (respeitando prazo e multas pendentes)
   if ($u && $canBid && ($_POST['act'] ?? '') === 'bid' && $p['status'] === 'open'
       && (empty($p['deadline']) || $p['deadline'] >= date('Y-m-d'))
+      && !prj_is_banned((int) $u['id'], (string) $u['email'])
       && !prj_pending_fees('bidder', (int) $u['id'])) {
     $amount = (float) str_replace(',', '.', (string) ($_POST['amount'] ?? '0'));
     $msg = trim((string) ($_POST['message'] ?? ''));
@@ -257,6 +258,8 @@ layout_top($p['title']);
       <p class="muted"><?= h(t('prj_bid_needs_sub')) ?></p>
       <a class="btn" href="<?= h(url('checkout.php?plan=board')) ?>"><?= h(t('prj_bid_subscribe')) ?></a>
       <a class="btn ghost" href="<?= h(url('dashboard.php')) ?>"><?= h(t('prj_see_plans')) ?></a>
+    <?php elseif (prj_is_banned((int) $u['id'], (string) $u['email'])): ?>
+      <p class="err">🚫 <?= h(t('prj_banned')) ?></p>
     <?php elseif (!empty($p['deadline']) && $p['deadline'] < date('Y-m-d')): ?>
       <p class="muted">⏳ <?= h(t('prj_bids_closed')) ?></p>
     <?php elseif ($fees = prj_pending_fees('bidder', (int) $u['id'])): ?>

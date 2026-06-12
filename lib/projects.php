@@ -67,6 +67,15 @@ function prj_ensure_schema(): void {
     INDEX (email), INDEX (status)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
   try { db()->exec("ALTER TABLE violations ADD COLUMN IF NOT EXISTS purged_at DATETIME NULL"); } catch (Throwable $e) {}
+  db()->exec("CREATE TABLE IF NOT EXISTS bans (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(190) NOT NULL,
+    user_id INT NULL,
+    reason VARCHAR(60) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_ban (email),
+    INDEX (user_id)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
   db()->exec("CREATE TABLE IF NOT EXISTS proposals (
     id INT AUTO_INCREMENT PRIMARY KEY,
     project_id INT NOT NULL,
@@ -270,6 +279,31 @@ function prj_check_deadlines(): void {
   prj_purge_overdue();   // 30 dias sem quitar → dados apagados (bloqueio permanece)
 }
 
+/** BANIMENTO DEFINITIVO: empresa que deixou a multa vencer (purga) não publica nem
+    dá preço NUNCA MAIS neste sistema (por e-mail e, se houver, por conta). */
+function prj_ban(string $email, ?int $userId, string $reason): void {
+  try {
+    db()->prepare('INSERT IGNORE INTO bans (email, user_id, reason) VALUES (?,?,?)')
+        ->execute([strtolower(trim($email)), $userId, $reason]);
+  } catch (Throwable $e) {}
+}
+function prj_is_banned(?int $userId, string $email = ''): bool {
+  prj_ensure_schema();
+  try {
+    if ($userId) {
+      $st = db()->prepare('SELECT 1 FROM bans WHERE user_id = ? LIMIT 1');
+      $st->execute([$userId]);
+      if ($st->fetch()) return true;
+    }
+    if ($email !== '') {
+      $st = db()->prepare('SELECT 1 FROM bans WHERE email = ? LIMIT 1');
+      $st->execute([strtolower(trim($email))]);
+      if ($st->fetch()) return true;
+    }
+  } catch (Throwable $e) {}
+  return false;
+}
+
 /** PURGA por inadimplência: multa pendente há 30+ dias sem quitar → os dados são
     APAGADOS definitivamente (avisado no e-mail da multa). Owner: projeto inteiro
     (PDFs + propostas + registro). Bidder: as propostas dele naquele projeto.
@@ -298,6 +332,7 @@ function prj_purge_overdue(): void {
         }
       }
       db()->prepare('UPDATE violations SET purged_at = NOW() WHERE id=?')->execute([(int) $v['id']]);
+      prj_ban((string) $v['email'], $v['user_id'] ? (int) $v['user_id'] : null, 'fee_unpaid_30d');   // bloqueio DEFINITIVO
       if (!empty($v['email'])) {
         @mail((string) $v['email'], 'ConstructCount — ' . t('prj_purged_subject'),
               t('prj_purged_mail'),

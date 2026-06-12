@@ -23,6 +23,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
       $err = t('err_fields');
     } elseif (!$deadline || !$negDeadline || !$conDeadline || $negDeadline < $deadline || $conDeadline < $negDeadline) {
       $err = t('prj_dates_err');                      // calendário obrigatório e em ordem
+    } elseif (prj_is_banned(null, $cemail)) {
+      $err = t('prj_banned');                          // empresa banida — definitivo
     } elseif (prj_pending_fees('owner', null, $cemail)) {
       $err = t('prj_blocked_owner');                  // multa pendente → não publica
     } else {
