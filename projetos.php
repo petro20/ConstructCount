@@ -12,6 +12,8 @@ $q = trim((string) ($_GET['q'] ?? ''));
 $rows = prj_list($trade, $q);
 $u = current_user();
 $mods = $u ? prj_user_modules((int) $u['id']) : [];
+$regionBoard = ($q === '' && $trade === '') ? prj_region_board() : [];   // quadro só na visão geral
+$tradePlan = ['framing' => 'framing', 'drywall' => 'drywall', 'insulation' => 'insulation', 'paint' => 'paint', 'windows_doors' => 'mensal'];
 
 layout_top(t('prj_board_title'));
 ?>
@@ -34,6 +36,33 @@ layout_top(t('prj_board_title'));
     <button class="btn ghost"><?= h(t('prj_search')) ?></button>
   </form>
 </div>
+
+<?php if ($regionBoard): ?>
+  <div class="card" style="margin-top:12px">
+    <h3 style="margin:0 0 4px">📍 <?= h(t('prj_region_tbl')) ?></h3>
+    <p class="muted" style="margin:0 0 10px;font-size:12.5px"><?= h(t('prj_region_board_hint')) ?></p>
+    <table style="width:100%">
+      <tr><th><?= h(t('prj_t_region')) ?></th><th style="text-align:center">⏳ <?= h(t('prj_s_waiting')) ?></th><th><?= h(t('prj_f_trades')) ?></th><th></th></tr>
+      <?php foreach ($regionBoard as $rg): ?>
+        <tr>
+          <td><b><?= h((string) $rg['region']) ?></b></td>
+          <td style="text-align:center"><b><?= (int) $rg['open_n'] ?></b></td>
+          <td>
+            <?php foreach ($rg['trades'] as $tr => $n): $owned = $u && in_array($tr, $mods, true); ?>
+              <span style="display:inline-flex;align-items:center;gap:4px;margin:2px 6px 2px 0">
+                <a class="badge<?= $owned ? ' b-ok' : '' ?>" href="<?= h(url('projetos.php?trade=' . $tr . '&q=' . urlencode((string) $rg['region']))) ?>"><?= h(prj_trade_label($tr)) ?> · <?= (int) $n ?></a>
+                <?php if ($u && !$owned && isset($tradePlan[$tr])): ?>
+                  <a href="<?= h(url('checkout.php?plan=' . $tradePlan[$tr])) ?>" title="<?= h(t('prj_buy_pkg')) ?>">🛒</a>
+                <?php endif; ?>
+              </span>
+            <?php endforeach; ?>
+          </td>
+          <td style="text-align:right;white-space:nowrap"><a href="<?= h(url('projetos.php?q=' . urlencode((string) $rg['region']))) ?>"><?= h(t('prj_see')) ?> →</a></td>
+        </tr>
+      <?php endforeach; ?>
+    </table>
+  </div>
+<?php endif; ?>
 
 <?php if (!$rows): ?>
   <div class="card"><p class="muted"><?= h(t('prj_empty')) ?></p></div>

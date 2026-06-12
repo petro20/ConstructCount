@@ -222,6 +222,8 @@ $GLOBALS['I18N'] = [
   'prj_t_region'   => ['Região', 'Region', 'Región'],
   'prj_t_total'    => ['Total', 'Total', 'Total'],
   'prj_see'        => ['ver', 'see', 'ver'],
+  'prj_region_board_hint' => ['Veja onde a demanda está — e qual pacote vale assinar pra dar preço. Clique no ofício pra filtrar; 🛒 = assinar o pacote que falta.', 'See where the demand is — and which package is worth subscribing to bid. Click a trade to filter; 🛒 = subscribe to the missing package.', 'Mira dónde está la demanda — y qué paquete vale suscribir para dar precio. Haz clic en el oficio para filtrar; 🛒 = suscribir el paquete que falta.'],
+  'prj_buy_pkg'    => ['Assinar este pacote', 'Subscribe to this package', 'Suscribir este paquete'],
   'cta_plans' => ['Ver planos', 'See plans', 'Ver planes'],
   'feat_title'=> ['Tudo para o levantamento e o orçamento', 'Everything for takeoff and quoting', 'Todo para el cómputo y la cotización'],
   'f1_t'=>['Leitura por IA','AI reading','Lectura por IA'], 'f1_d'=>['Extrai esquadrias e tipos de parede do PDF do projeto.','Extracts windows/doors and wall types from the project PDF.','Extrae carpinterías y tipos de pared del PDF del proyecto.'],

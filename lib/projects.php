@@ -439,6 +439,25 @@ function prj_region_counts(int $limit = 12): array {
   } catch (Throwable $e) { return []; }
 }
 
+/** Quadro do MURAL: regiões com projetos ABERTOS + demanda por ofício —
+    ajuda o assinante a decidir ONDE e QUAL pacote vale assinar pra dar preço. */
+function prj_region_board(int $limit = 15): array {
+  prj_ensure_schema();
+  try { $rows = db()->query("SELECT region, trades FROM projects WHERE status='open'")->fetchAll(); }
+  catch (Throwable $e) { return []; }
+  $agg = [];
+  foreach ($rows as $r) {
+    $rg = (string) $r['region'];
+    if (!isset($agg[$rg])) $agg[$rg] = ['region' => $rg, 'open_n' => 0, 'trades' => []];
+    $agg[$rg]['open_n']++;
+    foreach (array_filter(explode(',', (string) $r['trades'])) as $t) {
+      $agg[$rg]['trades'][$t] = ($agg[$rg]['trades'][$t] ?? 0) + 1;
+    }
+  }
+  usort($agg, function ($a, $b) { return $b['open_n'] <=> $a['open_n']; });
+  return array_slice(array_values($agg), 0, $limit);
+}
+
 /** Projetos com coordenadas (pins do mapa). */
 function prj_geo_list(): array {
   prj_ensure_schema();
