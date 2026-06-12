@@ -66,6 +66,8 @@
     const needItems = () => { if (!hasItems()) { alert(F.tr('Abra um projeto e consolide o levantamento antes de gerar este documento.')); return false; } return true; };
     // documentos saíram daqui → tudo na Central de relatórios (aba Relatórios)
     const mrh = $('#miReportsHub'); if (mrh) mrh.addEventListener('click', () => { closeMenus(); if (F.openReportsHub) F.openReportsHub(); });
+    // mural de projetos (captação) — obras esperando preço no site
+    const mbd = $('#miBoard'); if (mbd) mbd.addEventListener('click', () => { closeMenus(); window.open('https://constructcount.com/projetos.php', '_blank'); });
 
     // ----- Central de relatórios (aba Relatórios) -----
     const rw = (id, fn) => { const b = $(id); if (b) b.addEventListener('click', fn); };

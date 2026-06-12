@@ -1348,6 +1348,7 @@ window.ConstructCount = window.ConstructCount || {};
   // ---- Central de relatórios (aba Relatórios) ----
   Object.assign(DICT, {
     'Central de relatórios': { en: 'Reports hub', es: 'Central de informes' },
+    'Mural de projetos': { en: 'Project board', es: 'Mural de proyectos' },
     'Abrir a Central de relatórios': { en: 'Open the Reports hub', es: 'Abrir la Central de informes' },
     'Todos os documentos agora ficam na Central de relatórios.': { en: 'All documents now live in the Reports hub.', es: 'Todos los documentos ahora están en la Central de informes.' },
     'Orçamento, Proposta, Pedido, Quadro Resumo e Planta Marcada — organizados por pacote.': { en: 'Quote, Proposal, Order, Summary Table and Marked Plan — organized by package.', es: 'Cotización, Propuesta, Pedido, Cuadro Resumen y Plano Marcado — organizados por paquete.' },

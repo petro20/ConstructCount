@@ -4,6 +4,9 @@ config.php
 # casos de aprendizado coletados dos apps (dados de projeto — fora do Git)
 app/api/learn/
 
+# PDFs do mural de projetos (dados de clientes — fora do Git)
+uploads/
+
 # Banco local / temporários
 data/
 *.sqlite

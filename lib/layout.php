@@ -18,6 +18,7 @@ function layout_top(string $title): void {
     $cls = $code === $L ? 'lg on' : 'lg';
     echo '<a class="' . $cls . '" href="' . h($here . $sep . 'lang=' . $code) . '">' . $lbl . '</a>';
   }
+  echo '<a class="btn ghost" href="' . h(url('projetos.php')) . '">📋 ' . h(t('prj_nav')) . '</a>';
   if ($u) {
     echo '<a class="btn ghost" href="' . h(url('dashboard.php')) . '">' . h(t('dashboard')) . '</a>';
     echo '<a class="btn ghost" href="' . h(url('logout.php')) . '">' . h(t('logout')) . '</a>';
