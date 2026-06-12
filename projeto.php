@@ -109,6 +109,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
       && !prj_is_banned((int) $u['id'], (string) $u['email'])
       && !prj_pending_fees('bidder', (int) $u['id'])) {
     if (empty($_POST['accept_terms'])) { flash(t('terms_required_bid')); redirect(url('projeto.php?id=' . $id)); }
+    $company = trim((string) ($_POST['company'] ?? ''));
+    if ($company === '') { flash(t('prj_company_req')); redirect(url('projeto.php?id=' . $id)); }   // empresa real (vai em contrato/lien)
     $amount = (float) str_replace(',', '.', (string) ($_POST['amount'] ?? '0'));
     $msg = trim((string) ($_POST['message'] ?? ''));
     $report = null;
@@ -116,7 +118,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
       $report = prj_save_pdf($_FILES['report'], 'proposal', $rerr);
       if ($report === null) { flash(t('prj_pdf_err')); redirect(url('projeto.php?id=' . $id)); }
     }
-    $company = trim((string) ($_POST['company'] ?? '')) ?: (string) ($u['name'] ?: $u['email']);
     $st = db()->prepare('SELECT id, report_path FROM proposals WHERE project_id=? AND user_id=? LIMIT 1');
     $st->execute([$id, (int) $u['id']]);
     if ($old = $st->fetch()) {
@@ -340,7 +341,7 @@ layout_top($p['title']);
       <form method="post" enctype="multipart/form-data" style="display:grid;gap:12px;margin-top:8px">
         <?= csrf_field() ?><input type="hidden" name="act" value="bid">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <label><?= h(t('prj_f_yourcompany')) ?><br><input name="company" maxlength="120" value="<?= h($myBid['company'] ?? ($u['name'] ?? '')) ?>" style="width:100%"></label>
+          <label><?= h(t('prj_f_yourcompany')) ?><br><input name="company" required maxlength="120" value="<?= h($myBid['company'] ?? ($u['name'] ?? '')) ?>" style="width:100%"></label>
           <label><?= h(t('prj_f_amount')) ?><br><input name="amount" required inputmode="decimal" placeholder="45000.00" value="<?= h($myBid ? (string) $myBid['amount'] : '') ?>" style="width:100%"></label>
         </div>
         <label><?= h(t('prj_f_message')) ?><br><textarea name="message" rows="3" style="width:100%"><?= h((string) ($myBid['message'] ?? '')) ?></textarea></label>
