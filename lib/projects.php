@@ -79,6 +79,15 @@ function prj_ensure_schema(): void {
     UNIQUE KEY uniq_ban (email),
     INDEX (user_id)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+  db()->exec("CREATE TABLE IF NOT EXISTS prj_chat (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    project_id INT NOT NULL,
+    user_id INT NOT NULL,                  -- conta de quem dá preço (a outra ponta é o dono do projeto)
+    sender VARCHAR(6) NOT NULL,            -- 'owner' | 'bidder'
+    body VARCHAR(2000) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX (project_id, user_id), INDEX (created_at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
   db()->exec("CREATE TABLE IF NOT EXISTS proposals (
     id INT AUTO_INCREMENT PRIMARY KEY,
     project_id INT NOT NULL,
@@ -283,7 +292,56 @@ function prj_check_deadlines(): void {
       if (empty($p['contract_bidder_at'])) prj_violation($p, 'bidder', 'no_contract_bidder', (int) $p['bidder_id'], (string) $p['bidder_email']);
     }
   } catch (Throwable $e) {}
+  prj_chat_autoclose();  // chats parados 7+ dias → transcrição por e-mail + limpeza
   prj_purge_overdue();   // 30 dias sem quitar → dados apagados (bloqueio permanece)
+}
+
+/* ---------- CHAT TEMPORÁRIO (dúvidas entre ofertante e quem dá preço) ----------
+   NADA fica guardado no site: ao encerrar (botão de qualquer lado, encerramento
+   do projeto ou 7 dias sem mensagem) a conversa COMPLETA é enviada por e-mail
+   para os DOIS envolvidos e as mensagens são APAGADAS do banco. */
+function prj_chat_msgs(int $projectId, int $bidderId, int $afterId = 0): array {
+  try {
+    $st = db()->prepare('SELECT id, sender, body, created_at FROM prj_chat WHERE project_id=? AND user_id=? AND id>? ORDER BY id LIMIT 200');
+    $st->execute([$projectId, $bidderId, $afterId]);
+    return $st->fetchAll();
+  } catch (Throwable $e) { return []; }
+}
+
+/** Encerra a conversa: transcrição por e-mail p/ os dois + apaga as mensagens. */
+function prj_chat_end(array $p, int $bidderId): void {
+  $msgs = prj_chat_msgs((int) $p['id'], $bidderId);
+  if (!$msgs) return;
+  try {
+    $st = db()->prepare('SELECT name, email FROM users WHERE id=? LIMIT 1');
+    $st->execute([$bidderId]);
+    $b = $st->fetch() ?: ['name' => '—', 'email' => ''];
+    $ownerName = (string) (($p['contact_name'] ?? '') ?: $p['company']);
+    $lines = [];
+    foreach ($msgs as $m) {
+      $who = $m['sender'] === 'owner' ? $ownerName : (string) $b['name'];
+      $lines[] = '[' . date('d/m H:i', strtotime((string) $m['created_at'])) . '] ' . $who . ': ' . $m['body'];
+    }
+    $body = t('chat_mail_body') . ' "' . $p['title'] . "\"\n\n" . implode("\n", $lines)
+          . "\n\n" . url('projeto.php?id=' . (int) $p['id']);
+    $hdr = "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8";
+    if (!empty($p['contact_email'])) @mail((string) $p['contact_email'], 'ConstructCount — ' . t('chat_mail_subject'), $body, $hdr);
+    if (!empty($b['email'])) @mail((string) $b['email'], 'ConstructCount — ' . t('chat_mail_subject'), $body, $hdr);
+    db()->prepare('DELETE FROM prj_chat WHERE project_id=? AND user_id=?')->execute([(int) $p['id'], $bidderId]);
+  } catch (Throwable $e) {}
+}
+
+/** Conversa parada há 7+ dias encerra sozinha (sistema vivo — roda no cron/fiscal). */
+function prj_chat_autoclose(): void {
+  try {
+    $st = db()->query("SELECT project_id, user_id, MAX(created_at) last FROM prj_chat
+                       GROUP BY project_id, user_id HAVING last < (NOW() - INTERVAL 7 DAY) LIMIT 20");
+    foreach ($st->fetchAll() as $r) {
+      $p = prj_get((int) $r['project_id']);
+      if ($p) prj_chat_end($p, (int) $r['user_id']);
+      else db()->prepare('DELETE FROM prj_chat WHERE project_id=?')->execute([(int) $r['project_id']]);
+    }
+  } catch (Throwable $e) {}
 }
 
 /** BANIMENTO DEFINITIVO: empresa que deixou a multa vencer (purga) não publica nem
@@ -328,6 +386,7 @@ function prj_purge_overdue(): void {
           $q->execute([$pid]);
           foreach ($q->fetchAll() as $r) { $f = __DIR__ . '/../' . $r['report_path']; if (is_file($f)) @unlink($f); }
           db()->prepare('DELETE FROM proposals WHERE project_id=?')->execute([$pid]);
+          db()->prepare('DELETE FROM prj_chat WHERE project_id=?')->execute([$pid]);
           db()->prepare('DELETE FROM projects WHERE id=?')->execute([$pid]);
         }
       } else {
@@ -337,6 +396,7 @@ function prj_purge_overdue(): void {
           if (!empty($r['report_path'])) { $f = __DIR__ . '/../' . $r['report_path']; if (is_file($f)) @unlink($f); }
           db()->prepare('DELETE FROM proposals WHERE id=?')->execute([(int) $r['id']]);
         }
+        db()->prepare('DELETE FROM prj_chat WHERE project_id=? AND user_id=?')->execute([$pid, (int) $v['user_id']]);
       }
       db()->prepare('UPDATE violations SET purged_at = NOW() WHERE id=?')->execute([(int) $v['id']]);
       prj_ban((string) $v['email'], $v['user_id'] ? (int) $v['user_id'] : null, 'fee_unpaid_30d');   // bloqueio DEFINITIVO

@@ -22,4 +22,5 @@ echo json_encode([
   'purged' => $c("SELECT COUNT(*) c FROM violations WHERE purged_at IS NOT NULL"),
   'bans' => $c('SELECT COUNT(*) c FROM bans'),
   'open_projects' => $c("SELECT COUNT(*) c FROM projects WHERE status='open'"),
+  'open_chats' => $c('SELECT COUNT(DISTINCT project_id, user_id) c FROM prj_chat'),
 ], JSON_UNESCAPED_UNICODE);

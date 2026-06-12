@@ -22,6 +22,12 @@ $trades = array_filter(explode(',', (string) $p['trades']));
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
   // GC muda o status (negociação concluída → obra em andamento → encerrado)
   if ($isOwner && ($_POST['act'] ?? '') === 'close') {
+    // encerrar o projeto também ENCERRA os chats: transcrição por e-mail + limpeza
+    try {
+      $st = db()->prepare('SELECT DISTINCT user_id FROM prj_chat WHERE project_id=?');
+      $st->execute([$id]);
+      foreach ($st->fetchAll() as $r) prj_chat_end($p, (int) $r['user_id']);
+    } catch (Throwable $e) {}
     db()->prepare("UPDATE projects SET status='closed', closed_at=NOW() WHERE id=?")->execute([$id]);
     flash(t('prj_closed_flash'));
     redirect(url('projeto.php?id=' . $id . '&t=' . $tok));
@@ -109,10 +115,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
 }
 
 $bids = [];
+$chatThreads = [];
 if ($isOwner) {
   $st = db()->prepare('SELECT * FROM proposals WHERE project_id=? ORDER BY amount ASC, created_at ASC');
   $st->execute([$id]);
   $bids = $st->fetchAll();
+  try {   // conversas abertas (inclui quem perguntou ANTES de propor)
+    $st = db()->prepare('SELECT c.user_id, COALESCE(us.name, "—") name, COUNT(*) n, MAX(c.created_at) last
+                         FROM prj_chat c LEFT JOIN users us ON us.id = c.user_id
+                         WHERE c.project_id=? GROUP BY c.user_id ORDER BY last DESC');
+    $st->execute([$id]);
+    $chatThreads = $st->fetchAll();
+  } catch (Throwable $e) {}
 }
 $myBid = null;
 if ($u) {
@@ -183,6 +197,12 @@ layout_top($p['title']);
       <?php endif; ?>
     </div>
   <?php endif; ?>
+  <?php if (!$isOwner && $u && ($canBid || $myBid) && $p['status'] !== 'closed' && !prj_is_banned((int) $u['id'], (string) $u['email'])): ?>
+    <div style="margin-top:10px">
+      <a class="btn ghost" href="<?= h(url('chat.php?id=' . $id)) ?>">💬 <?= h(t('chat_btn_ask')) ?></a>
+      <span class="muted" style="font-size:12px;margin-left:6px"><?= h(t('chat_hint')) ?></span>
+    </div>
+  <?php endif; ?>
 </div>
 
 <?php if ($isOwner): ?>
@@ -200,8 +220,11 @@ layout_top($p['title']);
             <td style="max-width:280px"><?= h((string) $b['message']) ?></td>
             <td><?php if (!empty($b['report_path'])): ?><a href="<?= h(url('baixar.php?k=proposal&id=' . (int) $b['id'] . '&t=' . $tok)) ?>">📄 PDF</a><?php else: ?>—<?php endif; ?></td>
             <td><a href="mailto:<?= h($b['email']) ?>"><?= h($b['email']) ?></a></td>
-            <td><?php if ($p['status'] === 'open'): ?>
-              <form method="post" onsubmit="return confirm('<?= h(t('prj_award_confirm')) ?>')"><?= csrf_field() ?><input type="hidden" name="t" value="<?= h($tok) ?>"><input type="hidden" name="act" value="award"><input type="hidden" name="proposal_id" value="<?= (int) $b['id'] ?>"><button class="btn"><?= h(t('prj_award_btn')) ?></button></form>
+            <td style="white-space:nowrap"><?php if ($p['status'] === 'open'): ?>
+              <form method="post" style="display:inline-block" onsubmit="return confirm('<?= h(t('prj_award_confirm')) ?>')"><?= csrf_field() ?><input type="hidden" name="t" value="<?= h($tok) ?>"><input type="hidden" name="act" value="award"><input type="hidden" name="proposal_id" value="<?= (int) $b['id'] ?>"><button class="btn"><?= h(t('prj_award_btn')) ?></button></form>
+            <?php endif; ?>
+            <?php if ($p['status'] !== 'closed'): ?>
+              <a class="btn ghost" style="display:inline-block" href="<?= h(url('chat.php?id=' . $id . '&u=' . (int) $b['user_id'] . ($tok !== '' ? '&t=' . $tok : ''))) ?>">💬 <?= h(t('chat_btn_owner')) ?></a>
             <?php endif; ?></td>
           </tr>
         <?php endforeach; ?>
@@ -215,6 +238,17 @@ layout_top($p['title']);
           <?php else: ?><span class="badge b-ok">✓ <?= h(t('prj_signed')) ?> (<?= h(t('prj_f_company')) ?>)</span><?php endif; ?>
         </div>
       <?php endif; ?>
+    <?php endif; ?>
+    <?php if ($chatThreads): ?>
+      <div style="margin-top:12px;padding:12px;border:1px solid var(--bd);border-radius:10px">
+        <b>💬 <?= h(t('chat_threads')) ?></b>
+        <p class="muted" style="margin:4px 0 8px;font-size:12.5px"><?= h(t('chat_hint')) ?></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <?php foreach ($chatThreads as $ct): ?>
+            <a class="btn ghost" href="<?= h(url('chat.php?id=' . $id . '&u=' . (int) $ct['user_id'] . ($tok !== '' ? '&t=' . $tok : ''))) ?>">💬 <?= h((string) $ct['name']) ?> <span class="muted">(<?= (int) $ct['n'] ?>)</span></a>
+          <?php endforeach; ?>
+        </div>
+      </div>
     <?php endif; ?>
     <?php $due = prj_storage_due($p); if ($due > 0): ?>
       <p style="margin-top:10px" class="muted">💾 <?= h(str_replace(['{due}', '{months}', '{mb}'], [number_format($due, 2), (string) prj_storage_months($p), (string) round(((int) $p['pdf_size']) / 1048576)], t('prj_storage_due'))) ?></p>
