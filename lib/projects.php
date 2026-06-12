@@ -126,14 +126,37 @@ function prj_save_pdf(array $file, string $kind, ?string &$err = null): ?string 
 }
 
 /** Dar preço exige o PACOTE "Mural de projetos" (módulo 'board') ativo. */
-function prj_can_bid(int $userId): bool {
+/** Chave de REGIÃO do mural = o ESTADO (UF) — "Paterson, NJ" → "NJ".
+    Sem UF reconhecível, usa a string inteira normalizada. */
+function prj_region_key(string $region): string {
+  if (preg_match_all('/,\s*([A-Za-z]{2})\b/', $region, $m) && $m[1]) {
+    return strtoupper((string) end($m[1]));
+  }
+  return strtoupper(substr(trim($region), 0, 24));
+}
+
+/** Módulos board do usuário: ['*'] = todas as regiões (board legado/all); senão lista de UFs. */
+function prj_user_board_regions(int $userId): array {
+  $out = [];
   foreach (lic_for_user($userId) as $l) {
     $exp = !empty($l['expires_at']) && strtotime((string) $l['expires_at']) < time();
     if ($l['status'] !== 'active' || $exp) continue;
-    $mods = lic_packages($l);
-    if (in_array('board', $mods, true) || in_array('all', $mods, true)) return true;
+    foreach (lic_packages($l) as $m) {
+      if ($m === 'all' || $m === 'board') return ['*'];           // acesso total (legado)
+      if (strpos($m, 'board:') === 0) $out[strtoupper(substr($m, 6))] = true;
+    }
   }
-  return false;
+  return array_keys($out);
+}
+
+/** Dar preço exige o pacote Mural ATIVO **da região do projeto** (US$/mês POR REGIÃO).
+    $region = região do projeto; null = tem o mural de ALGUMA região (acesso genérico). */
+function prj_can_bid(int $userId, ?string $region = null): bool {
+  $regs = prj_user_board_regions($userId);
+  if (!$regs) return false;
+  if (in_array('*', $regs, true)) return true;
+  if ($region === null) return true;                              // tem ao menos 1 região
+  return in_array(prj_region_key($region), $regs, true);
 }
 
 /** Geocodifica a região (Nominatim/OSM, gratuito) — lat/lng pro mapa da landing. */
@@ -194,9 +217,14 @@ function prj_notify_subscribers(array $p): void {
                          WHERE l.status = 'active' AND (l.expires_at IS NULL OR l.expires_at > NOW())")->fetchAll();
   } catch (Throwable $e) { return; }
   $emails = [];
+  $rk = prj_region_key((string) ($p['region'] ?? ''));
   foreach ($rows as $l) {
     $mods = lic_packages($l);
-    if (in_array('board', $mods, true) || in_array('all', $mods, true)) $emails[strtolower((string) $l['email'])] = true;
+    $hit = in_array('board', $mods, true) || in_array('all', $mods, true);       // legado = todas as regiões
+    foreach ($mods as $m) {                                                       // assinante DESTA região
+      if (stripos($m, 'board:') === 0 && strtoupper(substr($m, 6)) === $rk) { $hit = true; break; }
+    }
+    if ($hit) $emails[strtolower((string) $l['email'])] = true;
   }
   $emails = array_keys($emails);
   if (!$emails) return;

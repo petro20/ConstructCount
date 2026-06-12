@@ -59,18 +59,21 @@ function dite_plan_def(string $plan): ?array {
  * usa plan_id (plano cadastrado no painel).
  * external_reference = "user_<id>" (o webhook usa isso p/ achar o usuário).
  */
-function dite_create_subscription(array $user, string $plan): ?array {
+function dite_create_subscription(array $user, string $plan, ?string $region = null): ?array {
   cfg_loaded();
+  // external_reference carrega usuário + plano (+ região do mural) — o webhook
+  // parseia isso pra emitir a licença certa mesmo com plano enviado inline.
+  $extRef = 'user_' . (int) $user['id'] . '|plan_' . $plan . ($region !== null && $region !== '' ? '|region_' . $region : '');
   $payload = [
     'customer'           => ['name' => $user['name'] ?: $user['email'], 'email' => $user['email']],
-    'external_reference' => 'user_' . (int) $user['id'],
+    'external_reference' => $extRef,
     'success_url'        => url('success.php'),
     'cancel_url'         => url('cancel.php'),
   ];
   $def = dite_plan_def($plan);
   if ($def) {
     $payload['plan'] = [
-      'name'     => (string) $def['name'],
+      'name'     => (string) $def['name'] . ($region ? ' — ' . $region : ''),
       'amount'   => (float) $def['amount'],
       'currency' => (string) $def['currency'],
       'interval' => (string) $def['interval'],   // "month" | "year"

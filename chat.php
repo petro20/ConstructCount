@@ -27,7 +27,7 @@ if ($isOwner) {
     $st->execute([$id, (int) $u['id']]);
     $hasBid = (bool) $st->fetch();
   } catch (Throwable $e) {}
-  if ((!prj_can_bid((int) $u['id']) && !$hasBid) || prj_is_banned((int) $u['id'], (string) $u['email'])) {
+  if ((!prj_can_bid((int) $u['id'], (string) $p['region']) && !$hasBid) || prj_is_banned((int) $u['id'], (string) $u['email'])) {
     flash(t('chat_need_board'));
     redirect(url('projeto.php?id=' . $id));
   }

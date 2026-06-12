@@ -16,7 +16,7 @@ $u = current_user();
 // dono = link com token OU a CONTA que publicou (login p/ ambos os lados)
 $isOwner = ($tok !== '' && hash_equals((string) $p['manage_token'], $tok))
         || ($u && !empty($p['owner_user_id']) && (int) $p['owner_user_id'] === (int) $u['id']);
-$canBid = $u ? prj_can_bid((int) $u['id']) : false;
+$canBid = $u ? prj_can_bid((int) $u['id'], (string) $p['region']) : false;   // mural é POR REGIÃO
 $trades = array_filter(explode(',', (string) $p['trades']));
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
@@ -290,10 +290,10 @@ layout_top($p['title']);
       <p class="muted"><?= h(t('prj_bid_login')) ?></p>
       <a class="btn" href="<?= h(url('login.php')) ?>"><?= h(t('login')) ?></a>
       <a class="btn ghost" href="<?= h(url('register.php')) ?>"><?= h(t('register')) ?></a>
-    <?php elseif (!$canBid): ?>
-      <p class="muted"><?= h(t('prj_bid_needs_sub')) ?></p>
-      <a class="btn" href="<?= h(url('checkout.php?plan=board')) ?>"><?= h(t('prj_bid_subscribe')) ?></a>
-      <a class="btn ghost" href="<?= h(url('dashboard.php')) ?>"><?= h(t('prj_see_plans')) ?></a>
+    <?php elseif (!$canBid): $rk = prj_region_key((string) $p['region']); ?>
+      <p class="muted"><?= h(str_replace('{region}', $rk, t('prj_bid_needs_region'))) ?></p>
+      <a class="btn" href="<?= h(url('checkout.php?plan=board&region=' . urlencode($rk))) ?>">💳 <?= h(str_replace('{region}', $rk, t('prj_bid_sub_region'))) ?></a>
+      <a class="btn ghost" href="<?= h(url('board-regioes.php')) ?>"><?= h(t('prj_region_pick_title')) ?></a>
     <?php elseif (prj_is_banned((int) $u['id'], (string) $u['email'])): ?>
       <p class="err">🚫 <?= h(t('prj_banned')) ?></p>
     <?php elseif (!empty($p['deadline']) && $p['deadline'] < date('Y-m-d')): ?>

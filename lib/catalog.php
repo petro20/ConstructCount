@@ -27,7 +27,8 @@ function cc_plan_catalog(): array {
     'parede_trial' => ['name' => 'Parede completa — teste 7 dias', 'amount' => 0, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['wall_combo', 'framing', 'drywall', 'insulation', 'paint']],
     // Add-on Relatórios (sempre à parte)
     'reports'    => ['name' => 'Relatórios — mensal', 'amount' => 15.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['reports']],
-    // Pacote: Mural de projetos (dar preço nas obras publicadas no mural)
+    // Pacote: Mural de projetos — vendido POR REGIÃO (UF). O checkout exige
+    // &region=XX e o webhook grava o módulo "board:XX" (módulo 'board' puro = legado/todas).
     'board'      => ['name' => 'Mural de projetos — mensal', 'amount' => 10.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['board']],
     // Add-on: Preços por região (IA busca tamanhos/preços de material na web p/ a região da obra)
     'region'     => ['name' => 'Preços por região — mensal', 'amount' => 10.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['region']],
@@ -61,8 +62,9 @@ function cc_portal_packages(): array {
       'name' => 'Relatórios (add-on)', 'name_en' => 'Reports (add-on)', 'name_es' => 'Informes (add-on)',
       'desc' => 'Orçamento, materiais, planta marcada + editores + texto por IA. Liga em qualquer pacote.', 'desc_en' => 'Quote, materials, marked plan + editors + AI text. Add to any package.', 'desc_es' => 'Cotización, materiales, plano marcado + editores + texto por IA. En cualquier paquete.'] + $pm,
     ['plan' => 'board', 'price' => '$10',
+      'per' => '/mês por região', 'per_en' => '/mo per region', 'per_es' => '/mes por región',
       'name' => 'Mural de projetos', 'name_en' => 'Project board', 'name_es' => 'Mural de proyectos',
-      'desc' => 'Dê preço nas obras publicadas: baixe a planta, levante no app e envie sua proposta.', 'desc_en' => 'Bid on posted jobs: download the plans, take off in the app and send your proposal.', 'desc_es' => 'Da precio a las obras publicadas: descarga el plano, computa en la app y envía tu propuesta.'] + $pm,
+      'desc' => 'Dê preço nas obras publicadas: escolha suas regiões (US$ 10/mês cada), baixe a planta, levante no app e envie sua proposta.', 'desc_en' => 'Bid on posted jobs: pick your regions (US$ 10/mo each), download the plans, take off in the app and send your proposal.', 'desc_es' => 'Da precio a las obras publicadas: elige tus regiones (US$ 10/mes cada una), descarga el plano, computa en la app y envía tu propuesta.'],
     ['plan' => 'region', 'price' => '$10',
       'name' => 'Preços por região (add-on)', 'name_en' => 'Regional pricing (add-on)', 'name_es' => 'Precios por región (add-on)',
       'desc' => 'A IA busca na web tamanhos e preços de material da região da obra — você confirma tudo. Liga em qualquer pacote.', 'desc_en' => 'AI fetches material sizes and prices online for the job\'s region — you confirm everything. Add to any package.', 'desc_es' => 'La IA busca en la web tamaños y precios de material de la región de la obra — tú confirmas todo. En cualquier paquete.'] + $pm,

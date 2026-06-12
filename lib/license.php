@@ -35,17 +35,17 @@ function lic_create(?int $userId, string $plan, ?string $expiresAt, int $maxDevi
 }
 
 /** Renova/atualiza a licença de uma assinatura Stripe (cria se não existir). */
-function lic_upsert_by_subscription(?int $userId, string $subId, string $plan, ?string $expiresAt, string $status, int $maxDevices = 1): void {
+function lic_upsert_by_subscription(?int $userId, string $subId, string $plan, ?string $expiresAt, string $status, int $maxDevices = 1, ?string $modules = null): void {
   $st = db()->prepare('SELECT id FROM licenses WHERE stripe_subscription_id = ? LIMIT 1');
   $st->execute([$subId]);
   $row = $st->fetch();
   if ($row) {
-    db()->prepare('UPDATE licenses SET status=?, expires_at=?, plan=? WHERE id=?')
-        ->execute([$status, $expiresAt, $plan, (int) $row['id']]);
+    db()->prepare('UPDATE licenses SET status=?, expires_at=?, plan=?, modules=COALESCE(?, modules) WHERE id=?')
+        ->execute([$status, $expiresAt, $plan, $modules, (int) $row['id']]);
     lic_log((int) $row['id'], '', 'sub_update', $status);
   } else {
     $key = lic_create($userId, $plan, $expiresAt, $maxDevices, $subId);
-    db()->prepare('UPDATE licenses SET status=? WHERE license_key=?')->execute([$status, $key]);
+    db()->prepare('UPDATE licenses SET status=?, modules=? WHERE license_key=?')->execute([$status, $modules, $key]);
   }
 }
 

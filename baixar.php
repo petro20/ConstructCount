@@ -17,7 +17,7 @@ if ($k === 'project') {
   $u = current_user();
   $isOwner = ($tok !== '' && hash_equals((string) $p['manage_token'], $tok))
           || ($u && !empty($p['owner_user_id']) && (int) $p['owner_user_id'] === (int) $u['id']);
-  if (!$isOwner && !($u && prj_can_bid((int) $u['id']))) { http_response_code(403); exit('assinatura necessária'); }
+  if (!$isOwner && !($u && prj_can_bid((int) $u['id'], (string) $p['region']))) { http_response_code(403); exit('assinatura necessária'); }
   $path = $p['pdf_path']; $fname = 'projeto-' . $id . '.pdf';
 } elseif ($k === 'proposal') {
   $st = db()->prepare('SELECT pr.report_path, p.manage_token, p.owner_user_id FROM proposals pr JOIN projects p ON p.id = pr.project_id WHERE pr.id = ? LIMIT 1');

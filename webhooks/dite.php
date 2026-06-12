@@ -36,11 +36,20 @@ $status  = (string) (_dg($obj, ['status']) ?? '');
 $userId = null;
 if ($extRef && preg_match('/user_(\d+)/', (string) $extRef, $m)) $userId = (int) $m[1];
 
-// plano pelo plan_id (reverso de DITE_PLANS); senão 'mensal'
+// plano: 1º do external_reference (planos inline levam "plan_<chave>"); senão
+// pelo plan_id (reverso de DITE_PLANS); senão 'mensal'
 $plan = 'mensal';
-if (defined('DITE_PLANS') && $planId !== null) {
+if ($extRef && preg_match('/\|plan_([a-z0-9_]+)/i', (string) $extRef, $m)) {
+  $plan = strtolower($m[1]);
+} elseif (defined('DITE_PLANS') && $planId !== null) {
   $rev = array_flip(DITE_PLANS);
   if (isset($rev[(int) $planId])) $plan = (string) $rev[(int) $planId];
+}
+
+// região do MURAL (board é vendido POR REGIÃO): módulo vira "board:UF"
+$modules = null;
+if ($extRef && preg_match('/\|region_([A-Za-z0-9 .\-]{2,24})/', (string) $extRef, $m) && $plan === 'board') {
+  $modules = 'board:' . strtoupper(trim($m[1]));
 }
 
 // vencimento: tenta vários campos; senão calcula pelo plano
@@ -56,7 +65,7 @@ if (!$expires) {
 
 try {
   if (in_array($type, ['subscription.activated', 'subscription.renewed'], true)) {
-    if ($subId) lic_upsert_by_subscription($userId, (string) $subId, $plan, $expires, 'active', 1);
+    if ($subId) lic_upsert_by_subscription($userId, (string) $subId, $plan, $expires, 'active', 1, $modules);
   } elseif ($type === 'subscription.past_due') {
     if ($subId) db()->prepare('UPDATE licenses SET status="past_due" WHERE stripe_subscription_id=?')->execute([(string) $subId]);
   } elseif ($type === 'subscription.canceled') {

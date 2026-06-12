@@ -810,6 +810,8 @@ window.ConstructCount = window.ConstructCount || {};
     'Não achei o endereço na planta — digite a região.': { en: 'Address not found in the plan — type the region.', es: 'No encontré la dirección en el plano — escribe la región.' },
     'Não consegui buscar preços: ': { en: 'Could not fetch prices: ', es: 'No pude buscar precios: ' },
     'Preços por região é um add-on (US$ 10/mês).': { en: 'Regional pricing is an add-on (US$ 10/mo).', es: 'Precios por región es un add-on (US$ 10/mes).' },
+    '/mês por região': { en: '/mo per region', es: '/mes por región' },
+    'Dê preço nas obras publicadas: escolha suas regiões, baixe a planta, levante no app e envie sua proposta.': { en: 'Bid on posted jobs: pick your regions, download the plans, take off in the app and send your proposal.', es: 'Da precio a las obras publicadas: elige tus regiones, descarga el plano, computa en la app y envía tu propuesta.' },
     'Preços por região': { en: 'Regional pricing', es: 'Precios por región' },
     'A IA busca na web tamanhos e preços de material da região da obra — você confirma tudo.': { en: 'AI fetches material sizes and prices online for the job\'s region — you confirm everything.', es: 'La IA busca en la web tamaños y precios de material de la región de la obra — tú confirmas todo.' },
     'Obra / endereço': { en: 'Project / address', es: 'Obra / dirección' },

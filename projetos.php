@@ -13,6 +13,8 @@ $rows = prj_list($trade, $q);
 $u = current_user();
 $mods = $u ? prj_user_modules((int) $u['id']) : [];
 $regionBoard = ($q === '' && $trade === '') ? prj_region_board() : [];   // quadro só na visão geral
+$boardRegs = $u ? prj_user_board_regions((int) $u['id']) : [];           // regiões do Mural já assinadas
+$boardAll = in_array('*', $boardRegs, true);
 $tradePlan = ['framing' => 'framing', 'drywall' => 'drywall', 'insulation' => 'insulation', 'paint' => 'paint', 'windows_doors' => 'mensal'];
 
 layout_top(t('prj_board_title'));
@@ -45,7 +47,11 @@ layout_top(t('prj_board_title'));
       <tr><th><?= h(t('prj_t_region')) ?></th><th style="text-align:center">⏳ <?= h(t('prj_s_waiting')) ?></th><th><?= h(t('prj_f_trades')) ?></th><th></th></tr>
       <?php foreach ($regionBoard as $rg): ?>
         <tr>
-          <td><b><?= h((string) $rg['region']) ?></b></td>
+          <?php $uf = prj_region_key((string) $rg['region']); $ownReg = $boardAll || in_array($uf, $boardRegs, true); ?>
+          <td><b><?= h((string) $rg['region']) ?></b>
+            <?php if ($u && $ownReg): ?><span class="badge b-ok" style="margin-left:6px">✓ <?= h($uf) ?></span>
+            <?php elseif ($u): ?><a class="badge" style="margin-left:6px" href="<?= h(url('checkout.php?plan=board&region=' . urlencode($uf))) ?>" title="<?= h(str_replace('{region}', $uf, t('prj_bid_sub_region'))) ?>">🛒 <?= h($uf) ?></a><?php endif; ?>
+          </td>
           <td style="text-align:center"><b><?= (int) $rg['open_n'] ?></b></td>
           <td>
             <?php foreach ($rg['trades'] as $tr => $n): $owned = $u && in_array($tr, $mods, true); ?>
