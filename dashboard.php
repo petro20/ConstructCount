@@ -102,6 +102,16 @@ $pkgBtns = function () use ($L) {
     </div>
   <?php endif; ?>
 </div>
+<?php if (!$myProjects): ?>
+<div class="card" style="margin-top:16px">
+  <h3 style="margin:0 0 4px">🏗️ <?= h(t('dash_gc_title')) ?></h3>
+  <p class="muted" style="margin:0 0 10px"><?= h(t('dash_gc_hint')) ?></p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <a class="btn" href="<?= h(url('publicar.php')) ?>">＋ <?= h(t('prj_post_btn_short')) ?></a>
+    <a class="btn ghost" href="<?= h(url('projetos.php')) ?>">📋 <?= h(t('prj_board_title')) ?></a>
+  </div>
+</div>
+<?php endif; ?>
 <?php if ($myProjects): ?>
 <div class="card" style="margin-top:16px">
   <h3 style="margin:0 0 6px">🏗️ <?= h(t('dash_my_projects')) ?></h3>

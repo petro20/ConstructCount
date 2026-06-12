@@ -55,6 +55,8 @@ $GLOBALS['I18N'] = [
   'prj_post_note'      => ['O projeto fica ligado à sua conta (gerencie pelo painel) e você também recebe o link de gestão por e-mail.', 'The project is tied to your account (manage it from the dashboard) and you also get the management link by e-mail.', 'El proyecto queda ligado a tu cuenta (gestiónalo desde el panel) y también recibes el enlace de gestión por e-mail.'],
   'prj_f_email_acct'   => ['O contato é o e-mail da sua conta.', 'The contact is your account e-mail.', 'El contacto es el e-mail de tu cuenta.'],
   'dash_my_projects'   => ['Meus projetos publicados', 'My posted projects', 'Mis proyectos publicados'],
+  'dash_gc_title'      => ['Tem uma obra pra orçar?', 'Have a job to price?', '¿Tienes una obra para cotizar?'],
+  'dash_gc_hint'       => ['Publique GRÁTIS no mural: estimadores assinantes baixam a planta, levantam no app e enviam propostas com o orçamento pronto. Você gerencia tudo por aqui.', 'Post it for FREE on the board: subscriber estimators download the plans, take off in the app and send bids with the estimate ready. You manage everything from here.', 'Publica GRATIS en el mural: estimadores suscriptores descargan el plano, computan en la app y envían propuestas con el presupuesto listo. Gestionas todo desde aquí.'],
   'dash_my_projects_hint' => ['Projetos que você publicou no mural — clique para ver as propostas e gerenciar.', 'Projects you posted on the board — click to see bids and manage.', 'Proyectos que publicaste en el mural — haz clic para ver propuestas y gestionar.'],
   'prj_t_bids'         => ['Propostas', 'Bids', 'Propuestas'],
   // ---- chat temporário entre os envolvidos ----
