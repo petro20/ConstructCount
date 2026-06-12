@@ -2,8 +2,10 @@
 /* =========================================================================
    projects.php — MURAL DE PROJETOS (captação): quem tem obra publica o
    projeto (PDF + ofícios + região + prazo); os ASSINANTES dão preço enviando
-   proposta (valor + relatório) pelo site. GC gerencia por link com token
-   (sem precisar de conta). Propor exige assinatura ATIVA (qualquer pacote).
+   proposta (valor + relatório) pelo site. LOGIN OBRIGATÓRIO P/ AMBOS os lados
+   (multas e ban exigem identidade): publicar liga o projeto à conta
+   (owner_user_id) + link de gestão com token (acesso secundário/e-mail).
+   Propor exige assinatura ATIVA com o pacote board.
    Tabelas criadas automaticamente (CREATE IF NOT EXISTS) — zero migração.
    ========================================================================= */
 declare(strict_types=1);
@@ -51,7 +53,8 @@ function prj_ensure_schema(): void {
   try { db()->exec("ALTER TABLE projects ADD COLUMN IF NOT EXISTS lat DECIMAL(9,6) NULL, ADD COLUMN IF NOT EXISTS lng DECIMAL(9,6) NULL, ADD COLUMN IF NOT EXISTS pdf_link VARCHAR(500) NULL, ADD COLUMN IF NOT EXISTS closed_at DATETIME NULL,
     ADD COLUMN IF NOT EXISTS negotiation_deadline DATE NULL, ADD COLUMN IF NOT EXISTS contract_deadline DATE NULL,
     ADD COLUMN IF NOT EXISTS awarded_at DATETIME NULL, ADD COLUMN IF NOT EXISTS awarded_proposal_id INT NULL, ADD COLUMN IF NOT EXISTS contract_gc_at DATETIME NULL,
-    ADD COLUMN IF NOT EXISTS pdf_size BIGINT NULL, ADD COLUMN IF NOT EXISTS contract_deadline_orig DATE NULL"); } catch (Throwable $e) {}
+    ADD COLUMN IF NOT EXISTS pdf_size BIGINT NULL, ADD COLUMN IF NOT EXISTS contract_deadline_orig DATE NULL,
+    ADD COLUMN IF NOT EXISTS owner_user_id INT NULL"); } catch (Throwable $e) {}
   try { db()->exec("ALTER TABLE proposals ADD COLUMN IF NOT EXISTS contract_bidder_at DATETIME NULL"); } catch (Throwable $e) {}
   db()->exec("CREATE TABLE IF NOT EXISTS violations (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -246,6 +249,10 @@ function prj_pending_fees(string $party, ?int $userId, string $email = ''): arra
     if ($party === 'bidder' && $userId) {
       $st = db()->prepare("SELECT * FROM violations WHERE party='bidder' AND user_id=? AND status='pending'");
       $st->execute([$userId]);
+    } elseif ($userId) {
+      // owner com conta: pega pela conta OU pelo e-mail (cobre projetos antigos sem conta)
+      $st = db()->prepare("SELECT * FROM violations WHERE party='owner' AND status='pending' AND (user_id=? OR email=?)");
+      $st->execute([$userId, $email]);
     } else {
       $st = db()->prepare("SELECT * FROM violations WHERE party='owner' AND email=? AND status='pending'");
       $st->execute([$email]);
@@ -265,14 +272,14 @@ function prj_check_deadlines(): void {
     $st = db()->prepare("SELECT p.* FROM projects p WHERE p.status='open' AND p.negotiation_deadline IS NOT NULL AND p.negotiation_deadline < ?
                          AND p.awarded_proposal_id IS NULL AND 0 < (SELECT COUNT(*) FROM proposals pr WHERE pr.project_id = p.id) LIMIT 25");
     $st->execute([$today]);
-    foreach ($st->fetchAll() as $p) prj_violation($p, 'owner', 'no_award', null, (string) $p['contact_email']);
+    foreach ($st->fetchAll() as $p) prj_violation($p, 'owner', 'no_award', !empty($p['owner_user_id']) ? (int) $p['owner_user_id'] : null, (string) $p['contact_email']);
     // contrato vencido sem confirmação
     $st = db()->prepare("SELECT p.*, pr.user_id bidder_id, pr.email bidder_email, pr.contract_bidder_at
                          FROM projects p JOIN proposals pr ON pr.id = p.awarded_proposal_id
                          WHERE p.status='awarded' AND p.contract_deadline IS NOT NULL AND p.contract_deadline < ? LIMIT 25");
     $st->execute([$today]);
     foreach ($st->fetchAll() as $p) {
-      if (empty($p['contract_gc_at'])) prj_violation($p, 'owner', 'no_contract_owner', null, (string) $p['contact_email']);
+      if (empty($p['contract_gc_at'])) prj_violation($p, 'owner', 'no_contract_owner', !empty($p['owner_user_id']) ? (int) $p['owner_user_id'] : null, (string) $p['contact_email']);
       if (empty($p['contract_bidder_at'])) prj_violation($p, 'bidder', 'no_contract_bidder', (int) $p['bidder_id'], (string) $p['bidder_email']);
     }
   } catch (Throwable $e) {}

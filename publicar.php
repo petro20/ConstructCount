@@ -1,9 +1,11 @@
 <?php
-/* publicar.php — quem TEM OBRA publica o projeto no mural (sem precisar de conta).
-   Gera um link de gestão com token (vê propostas / fecha) + e-mail de confirmação. */
+/* publicar.php — quem TEM OBRA publica o projeto no mural. EXIGE CONTA (grátis):
+   com multas e banimento definitivo, os dois lados precisam de identidade real.
+   O projeto fica ligado à conta (owner_user_id) + link de gestão com token. */
 require __DIR__ . '/lib/layout.php';
 require __DIR__ . '/lib/projects.php';
 prj_ensure_schema();
+$u = require_login();   // login obrigatório p/ AMBOS os lados (volta pra cá após entrar)
 
 $err = '';
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
@@ -11,8 +13,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
   else {
     $title = trim((string) ($_POST['title'] ?? ''));
     $company = trim((string) ($_POST['company'] ?? ''));
-    $cname = trim((string) ($_POST['contact_name'] ?? ''));
-    $cemail = trim((string) ($_POST['contact_email'] ?? ''));
+    $cname = trim((string) ($_POST['contact_name'] ?? '')) ?: (string) $u['name'];
+    $cemail = (string) $u['email'];   // o contato é SEMPRE o e-mail da conta (responsabilização)
     $region = trim((string) ($_POST['region'] ?? ''));
     $deadline = trim((string) ($_POST['deadline'] ?? ''));
     $negDeadline = trim((string) ($_POST['negotiation_deadline'] ?? ''));
@@ -23,9 +25,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
       $err = t('err_fields');
     } elseif (!$deadline || !$negDeadline || !$conDeadline || $negDeadline < $deadline || $conDeadline < $negDeadline) {
       $err = t('prj_dates_err');                      // calendário obrigatório e em ordem
-    } elseif (prj_is_banned(null, $cemail)) {
+    } elseif (prj_is_banned((int) $u['id'], $cemail)) {
       $err = t('prj_banned');                          // empresa banida — definitivo
-    } elseif (prj_pending_fees('owner', null, $cemail)) {
+    } elseif (prj_pending_fees('owner', (int) $u['id'], $cemail)) {
       $err = t('prj_blocked_owner');                  // multa pendente → não publica
     } else {
       $pdf = null;
@@ -39,8 +41,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $tok = bin2hex(random_bytes(16));
         $geo = prj_geocode($region);   // pin no mapa da landing
         $pdfSize = ($pdf !== null) ? (int) ($_FILES['pdf']['size'] ?? 0) : null;
-        db()->prepare('INSERT INTO projects (title,company,contact_name,contact_email,region,trades,deadline,negotiation_deadline,contract_deadline,contract_deadline_orig,descr,pdf_path,pdf_size,pdf_link,manage_token,lat,lng) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-            ->execute([$title, $company, $cname, $cemail, $region, implode(',', $trades), $deadline, $negDeadline, $conDeadline, $conDeadline, $descr, $pdf, $pdfSize, ($pdfLink ?: null), $tok, $geo['lat'] ?? null, $geo['lng'] ?? null]);
+        db()->prepare('INSERT INTO projects (title,company,contact_name,contact_email,owner_user_id,region,trades,deadline,negotiation_deadline,contract_deadline,contract_deadline_orig,descr,pdf_path,pdf_size,pdf_link,manage_token,lat,lng) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+            ->execute([$title, $company, $cname, $cemail, (int) $u['id'], $region, implode(',', $trades), $deadline, $negDeadline, $conDeadline, $conDeadline, $descr, $pdf, $pdfSize, ($pdfLink ?: null), $tok, $geo['lat'] ?? null, $geo['lng'] ?? null]);
         $id = (int) db()->lastInsertId();
         // OFERTA o link a todos os assinantes do pacote Mural (e-mail broadcast)
         prj_notify_subscribers(['id' => $id, 'title' => $title, 'region' => $region, 'trades' => implode(',', $trades), 'deadline' => $deadline]);
@@ -77,7 +79,7 @@ layout_top(t('prj_post_title'));
       <label><?= h(t('prj_f_contact')) ?><br><input name="contact_name" maxlength="120" style="width:100%"></label>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <label><?= h(t('prj_f_email')) ?><br><input type="email" name="contact_email" required maxlength="190" style="width:100%"></label>
+      <label><?= h(t('prj_f_email')) ?><br><input type="email" value="<?= h((string) $u['email']) ?>" disabled style="width:100%;opacity:.7" title="<?= h(t('prj_f_email_acct')) ?>"></label>
       <label><?= h(t('prj_f_region')) ?><br><input name="region" required maxlength="120" placeholder="Paterson, NJ" style="width:100%"></label>
     </div>
     <div>

@@ -12,8 +12,10 @@ $id = (int) ($_GET['id'] ?? 0);
 $p = prj_get($id);
 if (!$p) { flash(t('prj_not_found')); redirect(url('projetos.php')); }
 $tok = (string) ($_GET['t'] ?? ($_POST['t'] ?? ''));
-$isOwner = $tok !== '' && hash_equals((string) $p['manage_token'], $tok);
 $u = current_user();
+// dono = link com token OU a CONTA que publicou (login p/ ambos os lados)
+$isOwner = ($tok !== '' && hash_equals((string) $p['manage_token'], $tok))
+        || ($u && !empty($p['owner_user_id']) && (int) $p['owner_user_id'] === (int) $u['id']);
 $canBid = $u ? prj_can_bid((int) $u['id']) : false;
 $trades = array_filter(explode(',', (string) $p['trades']));
 

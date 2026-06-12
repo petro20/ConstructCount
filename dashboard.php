@@ -11,6 +11,14 @@ try {
   $st->execute([(int) $u['id']]);
   $myBids = $st->fetchAll();
 } catch (Throwable $e) {}
+$myProjects = [];   // projetos que ESTA conta publicou no mural (login p/ ambos os lados)
+try {
+  $st = db()->prepare('SELECT p.id, p.title, p.region, p.status, p.created_at, p.manage_token,
+                       (SELECT COUNT(*) FROM proposals pr WHERE pr.project_id = p.id) bids
+                       FROM projects p WHERE p.owner_user_id = ? ORDER BY p.created_at DESC LIMIT 20');
+  $st->execute([(int) $u['id']]);
+  $myProjects = $st->fetchAll();
+} catch (Throwable $e) {}
 $badge = function ($l) {
   $exp = !empty($l['expires_at']) && strtotime((string) $l['expires_at']) < time();
   if ($l['status'] === 'active' && !$exp) return ['b-ok', '✓ ' . t('approved')];
@@ -94,4 +102,23 @@ $pkgBtns = function () use ($L) {
     </div>
   <?php endif; ?>
 </div>
+<?php if ($myProjects): ?>
+<div class="card" style="margin-top:16px">
+  <h3 style="margin:0 0 6px">🏗️ <?= h(t('dash_my_projects')) ?></h3>
+  <p class="muted" style="margin:0 0 8px;font-size:12.5px"><?= h(t('dash_my_projects_hint')) ?></p>
+  <table>
+    <tr><th><?= h(t('prj_f_title')) ?></th><th><?= h(t('prj_t_bids')) ?></th><th><?= h(t('status')) ?></th><th></th></tr>
+    <?php foreach ($myProjects as $mp): $stMap = ['open' => ['b-ok', t('prj_open')], 'awarded' => ['b-warn', t('prj_awarded')], 'working' => ['b-warn', t('prj_working')], 'closed' => ['b-bad', t('prj_closed')]];
+          [$c3, $t3] = $stMap[$mp['status']] ?? ['b-bad', $mp['status']]; ?>
+      <tr>
+        <td><a href="<?= h(url('projeto.php?id=' . (int) $mp['id'])) ?>"><?= h($mp['title']) ?></a> <span class="muted">· <?= h($mp['region']) ?></span></td>
+        <td><?= (int) $mp['bids'] ?></td>
+        <td><span class="badge <?= $c3 ?>"><?= h($t3) ?></span></td>
+        <td><span class="muted"><?= h(fmt_date($mp['created_at'])) ?></span></td>
+      </tr>
+    <?php endforeach; ?>
+  </table>
+  <div style="margin-top:10px"><a class="btn ghost" href="<?= h(url('publicar.php')) ?>">＋ <?= h(t('prj_post_title')) ?></a></div>
+</div>
+<?php endif; ?>
 <?php layout_bottom(); ?>
