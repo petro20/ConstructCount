@@ -1190,6 +1190,7 @@ window.ConstructCount = window.ConstructCount || {};
     '✨ IA: detectando paredes…': { en: '✨ AI: detecting walls…', es: '✨ IA: detectando paredes…' },
     '🧠 IA: lendo os tipos de parede desta folha…': { en: '🧠 AI: reading the wall types on this sheet…', es: '🧠 IA: leyendo los tipos de pared de esta hoja…' },
     'Formato não reconhecido — lendo com IA de visão (nuvem)…': { en: 'Format not recognized — reading with vision AI (cloud)…', es: 'Formato no reconocido — leyendo con IA de visión (nube)…' },
+    '🔄 Atualização do app disponível — baixe a nova versão no portal (constructcount.com).': { en: '🔄 App update available — download the new version at the portal (constructcount.com).', es: '🔄 Actualización de la app disponible — descarga la nueva versión en el portal (constructcount.com).' },
     '📐 ✓ Folha de medidas': { en: '📐 ✓ Measure sheet', es: '📐 ✓ Hoja de medidas' }
   });
 

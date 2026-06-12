@@ -1353,7 +1353,14 @@
       if (!r || !(r.walls || []).length) {
         markSaved(F.tr('Formato não reconhecido — lendo com IA de visão (nuvem)…'));
         const r2 = await cloudReadWalls();
-        if (r2 && (r2.walls || []).length) r = r2;
+        if (r2 && (r2.walls || []).length) {
+          r = r2;
+          // caso de APRENDIZADO: a visão leu o que o parser local não reconheceu —
+          // o resultado vira material p/ novos padrões (learn/ no servidor)
+          try {
+            fetch('api/learn_walls.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'vision_success', page: S.page, walls: r2.walls.map(w => ({ type_id: w.type_id || '', name: w.name, material: w.material, stud_size: w.stud_size, components: w.components || [] })) }) });
+          } catch (e) {}
+        }
         else if (r2 && r2.error && !(r && r.walls && r.walls.length)) r = r2;
       }
     } catch (e) { S.busy = false; markSaved(F.tr('Falha na leitura dos tipos de parede')); return; }

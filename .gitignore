@@ -1,6 +1,9 @@
 # Segredos do portal — NUNCA versionar
 config.php
 
+# casos de aprendizado coletados dos apps (dados de projeto — fora do Git)
+app/api/learn/
+
 # Banco local / temporários
 data/
 *.sqlite

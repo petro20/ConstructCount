@@ -306,7 +306,19 @@
   }
   F._runCvAnnotate = runCvAnnotate;
 
-  if (window.pywebview && window.pywebview.api) init();
-  else window.addEventListener('pywebviewready', init);
+  // aviso de ATUALIZAÇÃO: compara a versão do motor local com a publicada no servidor
+  async function checkEngineUpdate() {
+    try {
+      const local = await window.pywebview.api.engine_version();
+      const r = await fetch('api/engine-version.json?cb=' + Date.now());
+      const remote = await r.json();
+      if (local && remote && remote.engine && local.engine && remote.engine > local.engine) {
+        setTimeout(() => { if (F.flashExport) F.flashExport(F.tr('🔄 Atualização do app disponível — baixe a nova versão no portal (constructcount.com).')); }, 4000);
+      }
+    } catch (e) {}
+  }
+
+  if (window.pywebview && window.pywebview.api) { init(); checkEngineUpdate(); }
+  else window.addEventListener('pywebviewready', () => { init(); checkEngineUpdate(); });
 
 })(window.ConstructCount);
