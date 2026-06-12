@@ -14,7 +14,8 @@ try {
 $myProjects = [];   // projetos que ESTA conta publicou no mural (login p/ ambos os lados)
 try {
   $st = db()->prepare('SELECT p.id, p.title, p.region, p.status, p.created_at, p.manage_token,
-                       (SELECT COUNT(*) FROM proposals pr WHERE pr.project_id = p.id) bids
+                       (SELECT COUNT(*) FROM proposals pr WHERE pr.project_id = p.id) bids,
+                       (SELECT COUNT(DISTINCT c.user_id) FROM prj_chat c WHERE c.project_id = p.id) chats
                        FROM projects p WHERE p.owner_user_id = ? ORDER BY p.created_at DESC LIMIT 20');
   $st->execute([(int) $u['id']]);
   $myProjects = $st->fetchAll();
@@ -121,7 +122,9 @@ $pkgBtns = function () use ($L) {
     <?php foreach ($myProjects as $mp): $stMap = ['open' => ['b-ok', t('prj_open')], 'awarded' => ['b-warn', t('prj_awarded')], 'working' => ['b-warn', t('prj_working')], 'closed' => ['b-bad', t('prj_closed')]];
           [$c3, $t3] = $stMap[$mp['status']] ?? ['b-bad', $mp['status']]; ?>
       <tr>
-        <td><a href="<?= h(url('projeto.php?id=' . (int) $mp['id'])) ?>"><?= h($mp['title']) ?></a> <span class="muted">· <?= h($mp['region']) ?></span></td>
+        <td><a href="<?= h(url('projeto.php?id=' . (int) $mp['id'])) ?>"><?= h($mp['title']) ?></a> <span class="muted">· <?= h($mp['region']) ?></span>
+          <?php if ((int) $mp['chats'] > 0): ?><a class="badge b-warn" style="margin-left:6px" href="<?= h(url('projeto.php?id=' . (int) $mp['id'])) ?>" title="<?= h(t('chat_threads')) ?>">💬 <?= (int) $mp['chats'] ?></a><?php endif; ?>
+        </td>
         <td><?= (int) $mp['bids'] ?></td>
         <td><span class="badge <?= $c3 ?>"><?= h($t3) ?></span></td>
         <td><span class="muted"><?= h(fmt_date($mp['created_at'])) ?></span></td>
