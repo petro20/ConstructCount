@@ -75,6 +75,14 @@ layout_top(t('app_name'));
   .nav .lg{font-size:15px;padding:5px 9px}
   .nav .btn{font-size:15px;padding:10px 18px}
   .nav{padding-top:16px;padding-bottom:16px}
+/* card do Mural de projetos pulsando (destaque do marketplace) */
+@keyframes boardPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(227,182,83,.55)}
+  50%{box-shadow:0 0 30px 8px rgba(227,182,83,.28)}
+}
+.pulse-board{animation:boardPulse 2.2s ease-in-out infinite;border:1px solid rgba(227,182,83,.7)!important;position:relative;overflow:visible}
+.pulse-board .ribbon-new{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#e3b653,#f1d488);color:#1a1408;font-weight:800;font-size:12px;padding:3px 14px;border-radius:999px;letter-spacing:.05em;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.45)}
+@media (prefers-reduced-motion: reduce){.pulse-board{animation:none}}
 </style>
 <video class="bgfix-vid" autoplay muted loop playsinline preload="auto" poster="assets/hero.png">
   <source src="assets/video/hero-office-ny.mp4" type="video/mp4">
@@ -174,7 +182,8 @@ layout_top(t('app_name'));
         $name = $p['name_' . $L] ?? ($p['name'] ?? '');
         $desc = $p['desc_' . $L] ?? ($p['desc'] ?? '');
         $badge = $p['badge_' . $L] ?? ($p['badge'] ?? ''); ?>
-        <div class="card plan center<?= !empty($p['featured']) ? ' hot' : '' ?>">
+        <div class="card plan center<?= !empty($p['featured']) ? ' hot' : '' ?><?= ($p['plan'] ?? '') === 'board' ? ' pulse-board' : '' ?>">
+          <?php if (($p['plan'] ?? '') === 'board'): ?><span class="ribbon-new">✨ <?= h(t('badge_new')) ?></span><?php endif; ?>
           <?php if (!empty($p['featured'])): ?><span class="ribbon"><?= h(t('best')) ?></span><?php endif; ?>
           <h3><?= h($name) ?></h3>
           <div class="price"><?= h($p['price']) ?><small><?= h($per) ?></small></div>
