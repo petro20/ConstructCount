@@ -10,7 +10,15 @@
 (function () {
   'use strict';
   var F = window.ConstructCount = window.ConstructCount || {};
-  var tr = function (s, v) { return F.tr ? F.tr(s, v) : s; };
+  var DOCL = null;   // idioma do DOCUMENTO em geração (do seletor) — null = idioma da UI
+  var tr = function (s, v) { return F.tr ? F.tr(s, v, DOCL || undefined) : s; };
+  var pickL = async function () {   // pergunta o idioma e LIGA a tradução do documento
+    DOCL = null;
+    var L = F.pickDocLang ? await F.pickDocLang() : (F.getLang ? F.getLang() : 'pt');
+    if (!L) return null;            // cancelado no seletor
+    DOCL = L;
+    return L;
+  };
   var money = function (n) { return F.money ? F.money(n) : ('$ ' + (Number(n) || 0).toFixed(2)); };
   var num = function (v) { v = parseFloat(v); return isFinite(v) ? v : 0; };
   var fname = function (base, ext) { return 'framing-' + base + '.' + ext; };
@@ -22,7 +30,7 @@
   F.framingExportQuotePDF = async function () {
     if (!needLib(window.jspdf)) return;
     var d = F.framingReportData(); if (!d.types.length) return noData();
-    var L = F.pickDocLang ? await F.pickDocLang() : 'pt';
+    var L = await pickL(); if (!L) return;
     var jsPDF = window.jspdf.jsPDF, doc = new jsPDF();
     if (F._pdfBrandHeader) F._pdfBrandHeader(doc, tr('Orçamento — Framing · Drywall · Insulation · Paint'));
     var py = 36;
@@ -51,6 +59,7 @@
     doc.text(tr('Valores estimados em USD. Quantidades levantadas da planta; preços conforme a região.'), 14, 286);
     if (F._pdfBrandFooterAll) F._pdfBrandFooterAll(doc);
     await F.saveBytes(fname('orcamento', 'pdf'), doc.output('arraybuffer'));
+    DOCL = null;
     if (F.flashExport) F.flashExport('✓ ' + tr('Orçamento') + ' (PDF) ✓');
   };
 
@@ -58,6 +67,7 @@
   F.framingExportMaterialsXLSX = async function () {
     if (!needLib(window.XLSX)) return;
     var d = F.framingReportData(); if (!d.types.length) return noData();
+    var L = await pickL(); if (!L) return;
     var sz = d.sizes || {}, w = d.waste || {}, T = d.totals;
     var withWaste = function (q, k) { return q * (1 + num(w[k]) / 100); };
     var aoa = [[tr('LISTA DE MATERIAIS / PEDIDO') + (d.region ? (' — ' + d.region) : '')], [], [tr('Material'), tr('Tamanho'), tr('Unidade'), tr('Quantidade'), tr('Qtd c/ sobra')]];
@@ -83,6 +93,7 @@
     window.XLSX.utils.book_append_sheet(wb, ws, tr('Materiais').slice(0, 31));
     var u8 = window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     await F.saveBytes(fname('materiais', 'xlsx'), u8);
+    DOCL = null;
     if (F.flashExport) F.flashExport('✓ ' + tr('Lista de materiais') + ' (Excel) ✓');
   };
 
@@ -90,7 +101,7 @@
   F.framingExportSummaryPDF = async function () {
     if (!needLib(window.jspdf)) return;
     var d = F.framingReportData(); if (!d.types.length) return noData();
-    var L = F.pickDocLang ? await F.pickDocLang() : 'pt';
+    var L = await pickL(); if (!L) return;
     var jsPDF = window.jspdf.jsPDF, doc = new jsPDF({ orientation: 'landscape' });
     if (F._pdfBrandHeader) F._pdfBrandHeader(doc, tr('Resumo do takeoff — Framing'));
     var body = d.types.map(function (x) {
@@ -109,6 +120,7 @@
     });
     if (F._pdfBrandFooterAll) F._pdfBrandFooterAll(doc);
     await F.saveBytes(fname('resumo', 'pdf'), doc.output('arraybuffer'));
+    DOCL = null;
     if (F.flashExport) F.flashExport('✓ ' + tr('Resumo do takeoff') + ' (PDF) ✓');
   };
 
@@ -118,7 +130,7 @@
     if (!F._framingPagesWithLines || !F._framingPageRender) { if (F.flashExport) F.flashExport(tr('Disponível no app de desktop.')); return; }
     var pages = F._framingPagesWithLines(); if (!pages.length) return noData();
     var d = F.framingReportData();
-    var L = F.pickDocLang ? await F.pickDocLang() : 'pt';
+    var L = await pickL(); if (!L) return;
     if (F.flashExport) F.flashExport(tr('Gerando planta marcada…'));
     var jsPDF = window.jspdf.jsPDF, doc = new jsPDF({ orientation: 'landscape' }), first = true;
     var PW = 297, PH = 210;
@@ -144,6 +156,7 @@
     });
     if (F._pdfBrandFooterAll) F._pdfBrandFooterAll(doc);
     await F.saveBytes(fname('planta-marcada', 'pdf'), doc.output('arraybuffer'));
+    DOCL = null;
     if (F.flashExport) F.flashExport('✓ ' + tr('Planta marcada') + ' (PDF) ✓');
   };
 
@@ -168,6 +181,7 @@
     if (!F.framingReportByFloor) return noData();
     var floors = F.framingReportByFloor(); if (!floors.length) return noData();
     var d = F.framingReportData();
+    var L = await pickL(); if (!L) return;
     var aoa = [[tr('MATERIAL POR PISO') + (d.region ? (' — ' + d.region) : '')], []];
     floors.forEach(function (fl) {
       aoa.push([tr('Piso') + ': ' + fl.floor + '   (' + fl.m.totalLF.toFixed(0) + ' LF · ' + fl.m.wallSf.toFixed(0) + ' SF)']);
@@ -178,6 +192,7 @@
     var ws = window.XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [{ wch: 32 }, { wch: 16 }, { wch: 9 }, { wch: 12 }];
     var wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, tr('Por piso').slice(0, 31));
     await F.saveBytes(fname('material-por-piso', 'xlsx'), window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
+    DOCL = null;
     if (F.flashExport) F.flashExport('✓ ' + tr('Material por piso') + ' (Excel) ✓');
   };
 
@@ -185,6 +200,7 @@
   F.framingExportSupplierRFQXLSX = async function () {
     if (!needLib(window.XLSX)) return;
     var d = F.framingReportData(); if (!d.types.length) return noData();
+    var L = await pickL(); if (!L) return;
     var rows = buildMatRows(valsFromT(d.totals), d.studsBySize, d);
     var aoa = [[tr('PEDIDO DE COTAÇÃO — FORNECEDOR') + (d.region ? (' — ' + d.region) : '')], [tr('Preencha o "Preço unit." — o Total calcula sozinho.')], [],
       [tr('Material'), tr('Tamanho'), tr('Unidade'), tr('Quantidade'), tr('Preço unit.'), tr('Total')]];
@@ -197,6 +213,7 @@
     ws['!cols'] = [{ wch: 32 }, { wch: 16 }, { wch: 9 }, { wch: 12 }, { wch: 12 }, { wch: 14 }];
     var wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, tr('Cotação').slice(0, 31));
     await F.saveBytes(fname('cotacao-fornecedor', 'xlsx'), window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
+    DOCL = null;
     if (F.flashExport) F.flashExport('✓ ' + tr('Cotação ao fornecedor') + ' (Excel) ✓');
   };
 
@@ -204,7 +221,7 @@
   F.framingExportOwnerPDF = async function () {
     if (!needLib(window.jspdf)) return;
     var d = F.framingReportData(); if (!d.types.length) return noData();
-    var L = F.pickDocLang ? await F.pickDocLang() : 'pt';
+    var L = await pickL(); if (!L) return;
     var jsPDF = window.jspdf.jsPDF, doc = new jsPDF();
     if (F._pdfBrandHeader) F._pdfBrandHeader(doc, tr('Análise do proprietário — Custo × Venda · CONFIDENCIAL'));
     var T = d.totals, lucro = T.sale - T.cost, margem = T.sale ? (lucro / T.sale * 100) : 0;
@@ -237,6 +254,7 @@
     doc.setFontSize(8); doc.setTextColor(150); doc.text(tr('Documento interno — não enviar ao cliente.'), 14, 286);
     if (F._pdfBrandFooterAll) F._pdfBrandFooterAll(doc);
     await F.saveBytes(fname('proprietario-custo-venda', 'pdf'), doc.output('arraybuffer'));
+    DOCL = null;
     if (F.flashExport) F.flashExport('✓ ' + tr('Análise do proprietário') + ' (PDF) ✓');
   };
 

@@ -14,19 +14,20 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
   var TPL_KEY = 'cc_framing_report_tpl';
 
+  // labels em pt — traduzidos NA RENDERIZAÇÃO (tr aqui congelaria o idioma do load)
   var CATALOG = [
-    { type: 'logo', label: tr('Logo / marca') },
-    { type: 'title', label: tr('Título') },
-    { type: 'client', label: tr('Dados do cliente / obra') },
-    { type: 'region', label: tr('Resumo (região + totais)') },
-    { type: 'quoteTable', label: tr('Tabela do orçamento (por tipo)') },
-    { type: 'materialsTable', label: tr('Tabela de materiais') },
-    { type: 'summaryTable', label: tr('Resumo técnico (LF/SF)') },
-    { type: 'totals', label: tr('Totais (custo → venda)') },
-    { type: 'terms', label: tr('Condições de pagamento') },
-    { type: 'image', label: tr('Imagem / Foto / logo') },
-    { type: 'notes', label: tr('Observações') },
-    { type: 'signature', label: tr('Assinatura') }
+    { type: 'logo', label: 'Logo / marca' },
+    { type: 'title', label: 'Título' },
+    { type: 'client', label: 'Dados do cliente / obra' },
+    { type: 'region', label: 'Resumo (região + totais)' },
+    { type: 'quoteTable', label: 'Tabela do orçamento (por tipo)' },
+    { type: 'materialsTable', label: 'Tabela de materiais' },
+    { type: 'summaryTable', label: 'Resumo técnico (LF/SF)' },
+    { type: 'totals', label: 'Totais (custo → venda)' },
+    { type: 'terms', label: 'Condições de pagamento' },
+    { type: 'image', label: 'Imagem / Foto / logo' },
+    { type: 'notes', label: 'Observações' },
+    { type: 'signature', label: 'Assinatura' }
   ];
   // redimensiona a imagem escolhida (mantém leve p/ salvar/imprimir)
   function downscaleImg(file, cb) {
@@ -142,7 +143,7 @@
       doc.appendChild(wrap);
     });
   }
-  function blockLabel(type) { var f = CATALOG.filter(function (c) { return c.type === type; })[0]; return f ? f.label : type; }
+  function blockLabel(type) { var f = CATALOG.filter(function (c) { return c.type === type; })[0]; return f ? tr(f.label) : type; }
 
   // barra de formatação (rich text) — atua na seleção dentro do documento editável
   function buildToolbar(modal, doc) {
@@ -235,7 +236,7 @@
     document.body.appendChild(modal);
     var doc = modal.querySelector('#freDoc');
     var pal = modal.querySelector('#frePalList');
-    CATALOG.forEach(function (c) { var b = document.createElement('button'); b.className = 'fre-pal-item'; b.textContent = '+ ' + c.label; b.addEventListener('click', function () { st.tpl.blocks.push({ type: c.type }); renderDoc(doc, d); doc.scrollTop = doc.scrollHeight; }); pal.appendChild(b); });
+    CATALOG.forEach(function (c) { var b = document.createElement('button'); b.className = 'fre-pal-item'; b.textContent = '+ ' + tr(c.label); b.addEventListener('click', function () { st.tpl.blocks.push({ type: c.type }); renderDoc(doc, d); doc.scrollTop = doc.scrollHeight; }); pal.appendChild(b); });
     renderDoc(doc, d);
     buildToolbar(modal, doc);
     applyOrient(doc, modal);
