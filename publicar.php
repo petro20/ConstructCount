@@ -23,6 +23,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $trades = array_values(array_intersect((array) ($_POST['trades'] ?? []), PRJ_TRADES));
     if ($title === '' || $company === '' || $cemail === '' || $region === '' || !$trades || !filter_var($cemail, FILTER_VALIDATE_EMAIL)) {
       $err = t('err_fields');
+    } elseif (empty($_POST['accept_terms'])) {
+      $err = t('terms_required');                      // contrato de uso do Mural é obrigatório
     } elseif (!$deadline || !$negDeadline || !$conDeadline || $negDeadline < $deadline || $conDeadline < $negDeadline) {
       $err = t('prj_dates_err');                      // calendário obrigatório e em ordem
     } elseif (prj_is_banned((int) $u['id'], $cemail)) {
@@ -41,8 +43,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $tok = bin2hex(random_bytes(16));
         $geo = prj_geocode($region);   // pin no mapa da landing
         $pdfSize = ($pdf !== null) ? (int) ($_FILES['pdf']['size'] ?? 0) : null;
-        db()->prepare('INSERT INTO projects (title,company,contact_name,contact_email,owner_user_id,region,trades,deadline,negotiation_deadline,contract_deadline,contract_deadline_orig,descr,pdf_path,pdf_size,pdf_link,manage_token,lat,lng) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-            ->execute([$title, $company, $cname, $cemail, (int) $u['id'], $region, implode(',', $trades), $deadline, $negDeadline, $conDeadline, $conDeadline, $descr, $pdf, $pdfSize, ($pdfLink ?: null), $tok, $geo['lat'] ?? null, $geo['lng'] ?? null]);
+        db()->prepare('INSERT INTO projects (title,company,contact_name,contact_email,owner_user_id,region,trades,deadline,negotiation_deadline,contract_deadline,contract_deadline_orig,descr,pdf_path,pdf_size,pdf_link,manage_token,lat,lng,terms_accepted_at,terms_version) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?)')
+            ->execute([$title, $company, $cname, $cemail, (int) $u['id'], $region, implode(',', $trades), $deadline, $negDeadline, $conDeadline, $conDeadline, $descr, $pdf, $pdfSize, ($pdfLink ?: null), $tok, $geo['lat'] ?? null, $geo['lng'] ?? null, '2026-06-12']);
         $id = (int) db()->lastInsertId();
         // OFERTA o link a todos os assinantes do pacote Mural (e-mail broadcast)
         prj_notify_subscribers(['id' => $id, 'title' => $title, 'region' => $region, 'trades' => implode(',', $trades), 'deadline' => $deadline]);
@@ -69,6 +71,7 @@ layout_top(t('prj_post_title'));
       <li><?= h(str_replace('{fee}', number_format(prj_storage_fee(), 2), t('prj_rule_storage'))) ?></li>
       <li><?= h(t('prj_rule_block')) ?></li>
     </ul>
+    <p style="margin:8px 0 0;font-size:12.5px"><a href="<?= h(url('termos-mural.php')) ?>" target="_blank">📜 <?= h(t('terms_title')) ?> »</a></p>
   </div>
   <?php if ($err): ?><p class="err"><?= h($err) ?></p><?php endif; ?>
   <form method="post" enctype="multipart/form-data" style="display:grid;gap:12px;margin-top:10px">
@@ -103,6 +106,10 @@ layout_top(t('prj_post_title'));
       <span class="muted" style="font-size:12px">💾 <?= h(str_replace('{fee}', number_format(prj_storage_fee(), 2), t('prj_rule_storage'))) ?></span></label>
     <label><?= h(t('prj_f_link')) ?><br><input type="url" name="pdf_link" placeholder="https://drive.google.com/…" style="width:100%"></label>
     <label><?= h(t('prj_f_descr')) ?><br><textarea name="descr" rows="4" style="width:100%"></textarea></label>
+    <label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;padding:10px 12px;border:1px solid var(--bd);border-radius:10px">
+      <input type="checkbox" name="accept_terms" value="1" required style="margin-top:3px">
+      <span><?= h(t('terms_accept')) ?> <a href="<?= h(url('termos-mural.php')) ?>" target="_blank"><b><?= h(t('terms_title')) ?></b></a> — <?= h(t('terms_accept2')) ?></span>
+    </label>
     <button class="btn"><?= h(t('prj_post_btn')) ?></button>
     <p class="muted" style="font-size:12.5px"><?= h(t('prj_post_note')) ?></p>
   </form>

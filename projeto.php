@@ -346,7 +346,7 @@ layout_top($p['title']);
         <label><?= h(t('prj_f_report')) ?><br><input type="file" name="report" accept="application/pdf" style="width:100%"></label>
         <button class="btn"><?= h(t('prj_bid_btn')) ?></button>
         <p class="muted" style="font-size:12.5px"><?= h(t('prj_bid_note')) ?></p>
-        <p class="muted" style="font-size:12px">⚖️ <?= h(str_replace('{fee}', number_format(prj_fee(), 2), t('prj_bid_terms'))) ?></p>
+        <p class="muted" style="font-size:12px">⚖️ <?= h(str_replace('{fee}', number_format(prj_fee(), 2), t('prj_bid_terms'))) ?> · <a href="<?= h(url('termos-mural.php')) ?>" target="_blank"><?= h(t('terms_title')) ?></a></p>
       </form>
     <?php endif; ?>
   </div>
