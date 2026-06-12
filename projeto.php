@@ -272,17 +272,19 @@ layout_top($p['title']);
         </div>
       <?php endif; ?>
     <?php endif; ?>
-    <?php if ($chatThreads): ?>
-      <div style="margin-top:12px;padding:12px;border:1px solid var(--bd);border-radius:10px">
-        <b>💬 <?= h(t('chat_threads')) ?></b>
-        <p class="muted" style="margin:4px 0 8px;font-size:12.5px"><?= h(t('chat_hint')) ?></p>
+    <div style="margin-top:12px;padding:12px;border:1px solid var(--bd);border-radius:10px">
+      <b>💬 <?= h(t('chat_threads')) ?></b>
+      <p class="muted" style="margin:4px 0 8px;font-size:12.5px"><?= h(t('chat_hint')) ?></p>
+      <?php if ($chatThreads): ?>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <?php foreach ($chatThreads as $ct): ?>
             <a class="btn ghost" href="<?= h(url('chat.php?id=' . $id . '&u=' . (int) $ct['user_id'] . ($tok !== '' ? '&t=' . $tok : ''))) ?>">💬 <?= h((string) $ct['name']) ?> <span class="muted">(<?= (int) $ct['n'] ?>)</span></a>
           <?php endforeach; ?>
         </div>
-      </div>
-    <?php endif; ?>
+      <?php else: ?>
+        <p class="muted" style="margin:0;font-size:12.5px">⏳ <?= h(t('chat_none_owner')) ?></p>
+      <?php endif; ?>
+    </div>
     <?php $due = prj_storage_due($p); if ($due > 0): ?>
       <p style="margin-top:10px" class="muted">💾 <?= h(str_replace(['{due}', '{months}', '{mb}'], [number_format($due, 2), (string) prj_storage_months($p), (string) round(((int) $p['pdf_size']) / 1048576)], t('prj_storage_due'))) ?></p>
     <?php endif; ?>
