@@ -4,7 +4,8 @@
 require __DIR__ . '/lib/layout.php';
 require __DIR__ . '/lib/projects.php';
 prj_ensure_schema();
-prj_cleanup();   // retenção: solta os PDFs de projetos encerrados há 60+ dias
+prj_cleanup();           // retenção: solta os PDFs de projetos encerrados há 60+ dias
+prj_check_deadlines();   // fiscal dos prazos (multas por descumprimento)
 
 $trade = (string) ($_GET['trade'] ?? '');
 $q = trim((string) ($_GET['q'] ?? ''));

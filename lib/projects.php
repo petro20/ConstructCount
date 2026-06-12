@@ -48,7 +48,23 @@ function prj_ensure_schema(): void {
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX (status), INDEX (created_at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-  try { db()->exec("ALTER TABLE projects ADD COLUMN IF NOT EXISTS lat DECIMAL(9,6) NULL, ADD COLUMN IF NOT EXISTS lng DECIMAL(9,6) NULL, ADD COLUMN IF NOT EXISTS pdf_link VARCHAR(500) NULL, ADD COLUMN IF NOT EXISTS closed_at DATETIME NULL"); } catch (Throwable $e) {}
+  try { db()->exec("ALTER TABLE projects ADD COLUMN IF NOT EXISTS lat DECIMAL(9,6) NULL, ADD COLUMN IF NOT EXISTS lng DECIMAL(9,6) NULL, ADD COLUMN IF NOT EXISTS pdf_link VARCHAR(500) NULL, ADD COLUMN IF NOT EXISTS closed_at DATETIME NULL,
+    ADD COLUMN IF NOT EXISTS negotiation_deadline DATE NULL, ADD COLUMN IF NOT EXISTS contract_deadline DATE NULL,
+    ADD COLUMN IF NOT EXISTS awarded_at DATETIME NULL, ADD COLUMN IF NOT EXISTS awarded_proposal_id INT NULL, ADD COLUMN IF NOT EXISTS contract_gc_at DATETIME NULL"); } catch (Throwable $e) {}
+  try { db()->exec("ALTER TABLE proposals ADD COLUMN IF NOT EXISTS contract_bidder_at DATETIME NULL"); } catch (Throwable $e) {}
+  db()->exec("CREATE TABLE IF NOT EXISTS violations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    project_id INT NOT NULL,
+    party VARCHAR(10) NOT NULL,            -- 'owner' (quem oferece) | 'bidder' (quem deu preço)
+    user_id INT NULL,
+    email VARCHAR(190) NOT NULL,
+    kind VARCHAR(24) NOT NULL,             -- no_award | no_contract_owner | no_contract_bidder
+    fee DECIMAL(10,2) NOT NULL,
+    status VARCHAR(10) NOT NULL DEFAULT 'pending',   -- pending | paid | waived
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_v (project_id, kind),
+    INDEX (email), INDEX (status)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
   db()->exec("CREATE TABLE IF NOT EXISTS proposals (
     id INT AUTO_INCREMENT PRIMARY KEY,
     project_id INT NOT NULL,
@@ -170,6 +186,78 @@ function prj_notify_subscribers(array $p): void {
     @mail('no-reply@constructcount.com', $subject, $body,
           "From: no-reply@constructcount.com\r\nBcc: " . implode(', ', $chunk) . "\r\nContent-Type: text/plain; charset=utf-8");
   }
+}
+
+/** Taxa por prazo descumprido (US$). Pode sobrescrever no config.php: define('PRJ_PENALTY_FEE', 25.00). */
+function prj_fee(): float { cfg_loaded(); return defined('PRJ_PENALTY_FEE') ? (float) PRJ_PENALTY_FEE : 25.00; }
+
+/** Registra uma violação de prazo (1x por tipo/projeto) e avisa a parte por e-mail. */
+function prj_violation(array $p, string $party, string $kind, ?int $userId, string $email): void {
+  try {
+    $st = db()->prepare('INSERT IGNORE INTO violations (project_id, party, user_id, email, kind, fee) VALUES (?,?,?,?,?,?)');
+    $st->execute([(int) $p['id'], $party, $userId, $email, $kind, prj_fee()]);
+    if ($st->rowCount() > 0 && $email !== '') {
+      @mail($email, 'ConstructCount — ' . t('prj_v_subject'),
+            t('prj_v_mail') . ' "' . $p['title'] . "\" — US$ " . number_format(prj_fee(), 2) .
+            "\n\n" . t('prj_v_mail2') . "\n" . url('projeto.php?id=' . (int) $p['id']),
+            "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8");
+    }
+  } catch (Throwable $e) {}
+}
+
+/** A parte tem multa pendente? (bloqueia publicar / dar preço até regularizar) */
+function prj_pending_fees(string $party, ?int $userId, string $email = ''): array {
+  prj_ensure_schema();
+  try {
+    if ($party === 'bidder' && $userId) {
+      $st = db()->prepare("SELECT * FROM violations WHERE party='bidder' AND user_id=? AND status='pending'");
+      $st->execute([$userId]);
+    } else {
+      $st = db()->prepare("SELECT * FROM violations WHERE party='owner' AND email=? AND status='pending'");
+      $st->execute([$email]);
+    }
+    return $st->fetchAll();
+  } catch (Throwable $e) { return []; }
+}
+
+/** FISCAL DOS PRAZOS (roda no mural/projeto — lazy cron):
+    • passou o prazo de NEGOCIAÇÃO sem proposta aceita (havendo propostas) → multa do OFERTANTE;
+    • passou o prazo de CONTRATO sem a confirmação de um lado → multa desse lado. */
+function prj_check_deadlines(): void {
+  prj_ensure_schema();
+  try {
+    $today = date('Y-m-d');
+    // negociação vencida sem award (só se houve ao menos 1 proposta)
+    $st = db()->prepare("SELECT p.* FROM projects p WHERE p.status='open' AND p.negotiation_deadline IS NOT NULL AND p.negotiation_deadline < ?
+                         AND p.awarded_proposal_id IS NULL AND 0 < (SELECT COUNT(*) FROM proposals pr WHERE pr.project_id = p.id) LIMIT 25");
+    $st->execute([$today]);
+    foreach ($st->fetchAll() as $p) prj_violation($p, 'owner', 'no_award', null, (string) $p['contact_email']);
+    // contrato vencido sem confirmação
+    $st = db()->prepare("SELECT p.*, pr.user_id bidder_id, pr.email bidder_email, pr.contract_bidder_at
+                         FROM projects p JOIN proposals pr ON pr.id = p.awarded_proposal_id
+                         WHERE p.status='awarded' AND p.contract_deadline IS NOT NULL AND p.contract_deadline < ? LIMIT 25");
+    $st->execute([$today]);
+    foreach ($st->fetchAll() as $p) {
+      if (empty($p['contract_gc_at'])) prj_violation($p, 'owner', 'no_contract_owner', null, (string) $p['contact_email']);
+      if (empty($p['contract_bidder_at'])) prj_violation($p, 'bidder', 'no_contract_bidder', (int) $p['bidder_id'], (string) $p['bidder_email']);
+    }
+  } catch (Throwable $e) {}
+}
+
+/** ACEITAR uma proposta (award): projeto vira 'awarded' e o vencedor é avisado. */
+function prj_award(array $p, int $proposalId): bool {
+  $st = db()->prepare('SELECT * FROM proposals WHERE id=? AND project_id=? LIMIT 1');
+  $st->execute([$proposalId, (int) $p['id']]);
+  $b = $st->fetch();
+  if (!$b) return false;
+  db()->prepare("UPDATE projects SET status='awarded', awarded_at=NOW(), awarded_proposal_id=? WHERE id=?")
+      ->execute([$proposalId, (int) $p['id']]);
+  @mail((string) $b['email'], 'ConstructCount — 🎉 ' . t('prj_won_subject'),
+        t('prj_won_mail') . ' "' . $p['title'] . "\"\n" . t('prj_won_mail2') .
+        (!empty($p['contract_deadline']) ? (' ' . t('prj_until') . ' ' . $p['contract_deadline']) : '') .
+        "\n\n" . url('projeto.php?id=' . (int) $p['id']),
+        "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8");
+  return true;
 }
 
 /** Projetos com coordenadas (pins do mapa). */

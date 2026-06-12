@@ -15,10 +15,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $cemail = trim((string) ($_POST['contact_email'] ?? ''));
     $region = trim((string) ($_POST['region'] ?? ''));
     $deadline = trim((string) ($_POST['deadline'] ?? ''));
+    $negDeadline = trim((string) ($_POST['negotiation_deadline'] ?? ''));
+    $conDeadline = trim((string) ($_POST['contract_deadline'] ?? ''));
     $descr = trim((string) ($_POST['descr'] ?? ''));
     $trades = array_values(array_intersect((array) ($_POST['trades'] ?? []), PRJ_TRADES));
     if ($title === '' || $company === '' || $cemail === '' || $region === '' || !$trades || !filter_var($cemail, FILTER_VALIDATE_EMAIL)) {
       $err = t('err_fields');
+    } elseif (!$deadline || !$negDeadline || !$conDeadline || $negDeadline < $deadline || $conDeadline < $negDeadline) {
+      $err = t('prj_dates_err');                      // calendário obrigatório e em ordem
+    } elseif (prj_pending_fees('owner', null, $cemail)) {
+      $err = t('prj_blocked_owner');                  // multa pendente → não publica
     } else {
       $pdf = null;
       if (!empty($_FILES['pdf']['name'])) {
@@ -30,8 +36,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
       if ($err === '') {
         $tok = bin2hex(random_bytes(16));
         $geo = prj_geocode($region);   // pin no mapa da landing
-        db()->prepare('INSERT INTO projects (title,company,contact_name,contact_email,region,trades,deadline,descr,pdf_path,pdf_link,manage_token,lat,lng) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)')
-            ->execute([$title, $company, $cname, $cemail, $region, implode(',', $trades), ($deadline ?: null), $descr, $pdf, ($pdfLink ?: null), $tok, $geo['lat'] ?? null, $geo['lng'] ?? null]);
+        db()->prepare('INSERT INTO projects (title,company,contact_name,contact_email,region,trades,deadline,negotiation_deadline,contract_deadline,descr,pdf_path,pdf_link,manage_token,lat,lng) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+            ->execute([$title, $company, $cname, $cemail, $region, implode(',', $trades), $deadline, $negDeadline, $conDeadline, $descr, $pdf, ($pdfLink ?: null), $tok, $geo['lat'] ?? null, $geo['lng'] ?? null]);
         $id = (int) db()->lastInsertId();
         // OFERTA o link a todos os assinantes do pacote Mural (e-mail broadcast)
         prj_notify_subscribers(['id' => $id, 'title' => $title, 'region' => $region, 'trades' => implode(',', $trades), 'deadline' => $deadline]);
@@ -70,10 +76,16 @@ layout_top(t('prj_post_title'));
         <?php endforeach; ?>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <label><?= h(t('prj_f_deadline')) ?><br><input type="date" name="deadline" style="width:100%"></label>
-      <label><?= h(t('prj_f_pdf')) ?><br><input type="file" name="pdf" accept="application/pdf" style="width:100%"></label>
+    <div>
+      <b>📅 <?= h(t('prj_calendar')) ?></b>
+      <p class="muted" style="margin:4px 0 8px;font-size:12.5px"><?= h(str_replace('{fee}', number_format(prj_fee(), 2), t('prj_calendar_hint'))) ?></p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <label><?= h(t('prj_f_deadline')) ?><br><input type="date" name="deadline" required style="width:100%"></label>
+        <label><?= h(t('prj_f_neg_deadline')) ?><br><input type="date" name="negotiation_deadline" required style="width:100%"></label>
+        <label><?= h(t('prj_f_con_deadline')) ?><br><input type="date" name="contract_deadline" required style="width:100%"></label>
+      </div>
     </div>
+    <label><?= h(t('prj_f_pdf')) ?><br><input type="file" name="pdf" accept="application/pdf" style="width:100%"></label>
     <label><?= h(t('prj_f_link')) ?><br><input type="url" name="pdf_link" placeholder="https://drive.google.com/…" style="width:100%"></label>
     <label><?= h(t('prj_f_descr')) ?><br><textarea name="descr" rows="4" style="width:100%"></textarea></label>
     <button class="btn"><?= h(t('prj_post_btn')) ?></button>
