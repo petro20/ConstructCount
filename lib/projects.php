@@ -56,7 +56,8 @@ function prj_ensure_schema(): void {
     ADD COLUMN IF NOT EXISTS pdf_size BIGINT NULL, ADD COLUMN IF NOT EXISTS contract_deadline_orig DATE NULL,
     ADD COLUMN IF NOT EXISTS owner_user_id INT NULL,
     ADD COLUMN IF NOT EXISTS terms_accepted_at DATETIME NULL, ADD COLUMN IF NOT EXISTS terms_version VARCHAR(16) NULL"); } catch (Throwable $e) {}
-  try { db()->exec("ALTER TABLE proposals ADD COLUMN IF NOT EXISTS contract_bidder_at DATETIME NULL"); } catch (Throwable $e) {}
+  try { db()->exec("ALTER TABLE proposals ADD COLUMN IF NOT EXISTS contract_bidder_at DATETIME NULL,
+    ADD COLUMN IF NOT EXISTS terms_accepted_at DATETIME NULL, ADD COLUMN IF NOT EXISTS terms_version VARCHAR(16) NULL"); } catch (Throwable $e) {}
   db()->exec("CREATE TABLE IF NOT EXISTS violations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     project_id INT NOT NULL,

@@ -109,6 +109,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
       && (empty($p['deadline']) || $p['deadline'] >= date('Y-m-d'))
       && !prj_is_banned((int) $u['id'], (string) $u['email'])
       && !prj_pending_fees('bidder', (int) $u['id'])) {
+    if (empty($_POST['accept_terms'])) { flash(t('terms_required_bid')); redirect(url('projeto.php?id=' . $id)); }
     $amount = (float) str_replace(',', '.', (string) ($_POST['amount'] ?? '0'));
     $msg = trim((string) ($_POST['message'] ?? ''));
     $report = null;
@@ -120,11 +121,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
     $st = db()->prepare('SELECT id, report_path FROM proposals WHERE project_id=? AND user_id=? LIMIT 1');
     $st->execute([$id, (int) $u['id']]);
     if ($old = $st->fetch()) {
-      db()->prepare('UPDATE proposals SET company=?, email=?, amount=?, message=?, report_path=COALESCE(?, report_path), created_at=NOW() WHERE id=?')
-          ->execute([$company, (string) $u['email'], $amount, $msg, $report, (int) $old['id']]);
+      db()->prepare('UPDATE proposals SET company=?, email=?, amount=?, message=?, report_path=COALESCE(?, report_path), created_at=NOW(), terms_accepted_at=NOW(), terms_version=? WHERE id=?')
+          ->execute([$company, (string) $u['email'], $amount, $msg, $report, '2026-06-12', (int) $old['id']]);
     } else {
-      db()->prepare('INSERT INTO proposals (project_id,user_id,company,email,amount,message,report_path) VALUES (?,?,?,?,?,?,?)')
-          ->execute([$id, (int) $u['id'], $company, (string) $u['email'], $amount, $msg, $report]);
+      db()->prepare('INSERT INTO proposals (project_id,user_id,company,email,amount,message,report_path,terms_accepted_at,terms_version) VALUES (?,?,?,?,?,?,?,NOW(),?)')
+          ->execute([$id, (int) $u['id'], $company, (string) $u['email'], $amount, $msg, $report, '2026-06-12']);
     }
     @mail((string) $p['contact_email'], 'ConstructCount — ' . t('prj_newbid_subject'),
           t('prj_newbid_mail') . ' "' . $p['title'] . '"' . "\nUS$ " . number_format($amount, 2) . ' — ' . $company .
@@ -344,9 +345,13 @@ layout_top($p['title']);
         </div>
         <label><?= h(t('prj_f_message')) ?><br><textarea name="message" rows="3" style="width:100%"><?= h((string) ($myBid['message'] ?? '')) ?></textarea></label>
         <label><?= h(t('prj_f_report')) ?><br><input type="file" name="report" accept="application/pdf" style="width:100%"></label>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;padding:10px 12px;border:1px solid var(--bd);border-radius:10px">
+          <input type="checkbox" name="accept_terms" value="1" required style="margin-top:3px">
+          <span><?= h(t('terms_accept')) ?> <a href="<?= h(url('termos-mural.php')) ?>" target="_blank"><b><?= h(t('terms_title')) ?></b></a> — <?= h(t('terms_accept2')) ?></span>
+        </label>
         <button class="btn"><?= h(t('prj_bid_btn')) ?></button>
         <p class="muted" style="font-size:12.5px"><?= h(t('prj_bid_note')) ?></p>
-        <p class="muted" style="font-size:12px">⚖️ <?= h(str_replace('{fee}', number_format(prj_fee(), 2), t('prj_bid_terms'))) ?> · <a href="<?= h(url('termos-mural.php')) ?>" target="_blank"><?= h(t('terms_title')) ?></a></p>
+        <p class="muted" style="font-size:12px">⚖️ <?= h(str_replace('{fee}', number_format(prj_fee(), 2), t('prj_bid_terms'))) ?></p>
       </form>
     <?php endif; ?>
   </div>
