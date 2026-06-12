@@ -63,8 +63,16 @@ layout_top(t('prj_region_pick_title'));
         <?php endforeach; ?>
       </select>
     </label>
-    <button class="btn">💳 <?= h(t('prj_region_pick_btn')) ?> — US$ <?= h($fee) ?><?= h(t('per_month_short')) ?></button>
+    <label><?= h(t('prj_region_months')) ?><br>
+      <select name="months" id="brMonths" style="min-width:200px">
+        <?php foreach ([1, 3, 6, 12] as $mo): ?>
+          <option value="<?= $mo ?>"><?= $mo ?> <?= h($mo === 1 ? t('prj_month_1') : t('prj_month_n')) ?> — US$ <?= h(rtrim(rtrim(number_format((float) $fee * $mo, 2), '0'), '.')) ?><?= $mo === 1 ? h(t('per_month_short')) : '' ?></option>
+        <?php endforeach; ?>
+      </select>
+    </label>
+    <button class="btn">💳 <?= h(t('prj_region_pick_btn')) ?></button>
   </form>
+  <p class="muted" style="margin-top:6px;font-size:12px"><?= h(t('prj_region_months_hint')) ?></p>
   <p class="muted" style="margin-top:12px;font-size:12.5px"><?= h(t('prj_region_pick_note')) ?></p>
   <p style="margin-top:8px"><a href="<?= h(url('projetos.php')) ?>">« <?= h(t('prj_board_title')) ?></a></p>
 </div>

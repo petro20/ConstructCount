@@ -92,6 +92,28 @@ function dite_create_subscription(array $user, string $plan, ?string $region = n
   return ['checkout_url' => $checkout, 'subscription_id' => $subId, 'plan' => $plan];
 }
 
+/** Pagamento ÚNICO no Dite (pré-pago de N meses do Mural por região).
+    external_reference leva user/plan/region/months — o webhook emite a licença
+    com vencimento = N meses, sem recorrência. */
+function dite_create_payment(array $user, string $plan, string $region, int $months, float $amount, string $name): ?array {
+  cfg_loaded();
+  $payload = [
+    'customer'           => ['name' => $user['name'] ?: $user['email'], 'email' => $user['email']],
+    'external_reference' => 'user_' . (int) $user['id'] . '|plan_' . $plan . '|region_' . $region . '|months_' . $months,
+    'success_url'        => url('success.php'),
+    'cancel_url'         => url('cancel.php'),
+    'amount'             => $amount,
+    'currency'           => 'USD',
+    'description'        => $name,
+    'name'               => $name,
+  ];
+  $r = dite_api('POST', '/api/v1/payments', $payload);
+  $d = _dite_data($r);
+  $checkout = $d['checkout_url'] ?? ($d['payment_url'] ?? null);
+  if (!$checkout) return null;
+  return ['checkout_url' => $checkout, 'payment_id' => $d['payment_id'] ?? ($d['id'] ?? null)];
+}
+
 /** Cancela uma assinatura no Dite. */
 function dite_cancel_subscription(string $subId): array {
   return dite_api('POST', '/api/v1/subscriptions/' . rawurlencode($subId) . '/cancel');

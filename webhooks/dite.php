@@ -51,6 +51,9 @@ $modules = null;
 if ($extRef && preg_match('/\|region_([A-Za-z0-9 .\-]{2,24})/', (string) $extRef, $m) && $plan === 'board') {
   $modules = 'board:' . strtoupper(trim($m[1]));
 }
+// meses pré-pagos (pagamento único do Mural por região)
+$months = 0;
+if ($extRef && preg_match('/\|months_(\d{1,2})/', (string) $extRef, $m)) $months = (int) $m[1];
 
 // vencimento: tenta vários campos; senão calcula pelo plano
 $expRaw = _dg($obj, ['current_period_end', 'next_billing_date', 'paid_until', 'expires_at', 'renews_at', 'period_end', 'ends_at']);
@@ -70,8 +73,17 @@ try {
     if ($subId) db()->prepare('UPDATE licenses SET status="past_due" WHERE stripe_subscription_id=?')->execute([(string) $subId]);
   } elseif ($type === 'subscription.canceled') {
     if ($subId) db()->prepare('UPDATE licenses SET status="revoked" WHERE stripe_subscription_id=?')->execute([(string) $subId]);
+  } elseif (in_array($type, ['payment.paid', 'payment.approved', 'payment.succeeded'], true)) {
+    // PAGAMENTO ÚNICO: Mural por região pré-pago de N meses (sem recorrência)
+    $payId = _dg($obj, ['payment_id', 'id']) ?? _dg($e, ['payment_id']);
+    if ($payId && $months > 0 && $plan === 'board') {
+      $exp = date('Y-m-d H:i:s', strtotime('+' . $months . ' months +1 day'));
+      lic_upsert_by_subscription($userId, 'pay_' . $payId, $plan, $exp, 'active', 1, $modules);
+    }
+  } elseif (in_array($type, ['payment.refunded', 'payment.chargeback'], true)) {
+    $payId = _dg($obj, ['payment_id', 'id']) ?? _dg($e, ['payment_id']);
+    if ($payId) db()->prepare('UPDATE licenses SET status="revoked" WHERE stripe_subscription_id=?')->execute(['pay_' . $payId]);
   }
-  // pagamento avulso (payment.paid/refunded/...) — não usado por enquanto
 } catch (Throwable $ex) {
   http_response_code(500);
   echo 'error';
