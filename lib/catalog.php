@@ -27,6 +27,8 @@ function cc_plan_catalog(): array {
     'parede_trial' => ['name' => 'Parede completa — teste 7 dias', 'amount' => 0, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['wall_combo', 'framing', 'drywall', 'insulation', 'paint']],
     // Add-on Relatórios (sempre à parte)
     'reports'    => ['name' => 'Relatórios — mensal', 'amount' => 15.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['reports']],
+    // Pacote: Mural de projetos (dar preço nas obras publicadas no mural)
+    'board'      => ['name' => 'Mural de projetos — mensal', 'amount' => 10.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['board']],
   ];
   $cfg = defined('DITE_PLAN_CATALOG') ? DITE_PLAN_CATALOG : [];
   return array_merge($defaults, $cfg);   // config sobrescreve chaves iguais; novas vêm do default
@@ -56,5 +58,8 @@ function cc_portal_packages(): array {
     ['plan' => 'reports', 'price' => '$15',
       'name' => 'Relatórios (add-on)', 'name_en' => 'Reports (add-on)', 'name_es' => 'Informes (add-on)',
       'desc' => 'Orçamento, materiais, planta marcada + editores + texto por IA. Liga em qualquer pacote.', 'desc_en' => 'Quote, materials, marked plan + editors + AI text. Add to any package.', 'desc_es' => 'Cotización, materiales, plano marcado + editores + texto por IA. En cualquier paquete.'] + $pm,
+    ['plan' => 'board', 'price' => '$10',
+      'name' => 'Mural de projetos', 'name_en' => 'Project board', 'name_es' => 'Mural de proyectos',
+      'desc' => 'Dê preço nas obras publicadas: baixe a planta, levante no app e envie sua proposta.', 'desc_en' => 'Bid on posted jobs: download the plans, take off in the app and send your proposal.', 'desc_es' => 'Da precio a las obras publicadas: descarga el plano, computa en la app y envía tu propuesta.'] + $pm,
   ];
 }

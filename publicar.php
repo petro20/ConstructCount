@@ -27,8 +27,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
       }
       if ($err === '') {
         $tok = bin2hex(random_bytes(16));
-        db()->prepare('INSERT INTO projects (title,company,contact_name,contact_email,region,trades,deadline,descr,pdf_path,manage_token) VALUES (?,?,?,?,?,?,?,?,?,?)')
-            ->execute([$title, $company, $cname, $cemail, $region, implode(',', $trades), ($deadline ?: null), $descr, $pdf, $tok]);
+        $geo = prj_geocode($region);   // pin no mapa da landing
+        db()->prepare('INSERT INTO projects (title,company,contact_name,contact_email,region,trades,deadline,descr,pdf_path,manage_token,lat,lng) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)')
+            ->execute([$title, $company, $cname, $cemail, $region, implode(',', $trades), ($deadline ?: null), $descr, $pdf, $tok, $geo['lat'] ?? null, $geo['lng'] ?? null]);
         $id = (int) db()->lastInsertId();
         $link = url('projeto.php?id=' . $id . '&t=' . $tok);
         @mail($cemail, 'ConstructCount — ' . t('prj_published_subject'),
@@ -73,5 +74,55 @@ layout_top(t('prj_post_title'));
     <button class="btn"><?= h(t('prj_post_btn')) ?></button>
     <p class="muted" style="font-size:12.5px"><?= h(t('prj_post_note')) ?></p>
   </form>
+  <p id="aiFill" class="muted" style="display:none;margin-top:10px;font-weight:700;color:#7fe3b0"></p>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+// ✨ IA de preenchimento: ao escolher o PDF, lê as primeiras folhas NO NAVEGADOR
+// (nada é enviado antes de você publicar) e preenche título, região e ofícios.
+(function () {
+  if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  var inp = document.querySelector('input[name="pdf"]');
+  if (!inp || !window.pdfjsLib) return;
+  var MSG = <?= json_encode(t('prj_ai_filled'), JSON_UNESCAPED_UNICODE) ?>;
+  var BUSY = <?= json_encode(t('prj_ai_reading'), JSON_UNESCAPED_UNICODE) ?>;
+  inp.addEventListener('change', async function () {
+    var f = inp.files && inp.files[0];
+    if (!f) return;
+    var el = document.getElementById('aiFill');
+    el.style.display = 'block'; el.textContent = '✨ ' + BUSY;
+    try {
+      var buf = await f.arrayBuffer();
+      var doc = await pdfjsLib.getDocument({ data: buf }).promise;
+      var text = '';
+      var n = Math.min(doc.numPages, 4);
+      for (var i = 1; i <= n; i++) {
+        var pg = await doc.getPage(i);
+        var tc = await pg.getTextContent();
+        text += tc.items.map(function (it) { return it.str; }).join(' ') + '\n';
+      }
+      var found = [];
+      // título: nome do arquivo humanizado
+      var tt = document.querySelector('input[name="title"]');
+      if (tt && !tt.value) { tt.value = f.name.replace(/\.pdf$/i, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160); found.push('título'); }
+      // região: "Cidade, UF 99999" no carimbo
+      var rg = document.querySelector('input[name="region"]');
+      var m = text.match(/([A-Z][A-Za-z.\- ']{2,28}),\s*([A-Z]{2})\.?\s+(\d{5})/);
+      if (rg && !rg.value && m) { rg.value = m[1].trim() + ', ' + m[2]; found.push('região'); }
+      // ofícios pelo conteúdo
+      var tradeRx = { framing: /\bstud|framing|joist/i, drywall: /gypsum|drywall|gwb|wallboard/i, insulation: /insulation|\bbatt\b/i, paint: /\bpaint|spackle/i, windows_doors: /window schedule|door schedule|fenestration/i };
+      var hits = [];
+      Object.keys(tradeRx).forEach(function (k) {
+        if (tradeRx[k].test(text)) {
+          var cb = document.querySelector('input[name="trades[]"][value="' + k + '"]');
+          if (cb && !cb.checked) { cb.checked = true; hits.push(k); }
+        }
+      });
+      if (hits.length) found.push('ofícios (' + hits.length + ')');
+      el.textContent = found.length ? ('✨ ' + MSG + ' ' + found.join(' · ')) : '';
+      if (!found.length) el.style.display = 'none';
+    } catch (e) { el.style.display = 'none'; }
+  });
+})();
+</script>
 <?php layout_bottom(); ?>

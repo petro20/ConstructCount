@@ -43,9 +43,12 @@ function prj_ensure_schema(): void {
     pdf_path VARCHAR(255) NULL,
     manage_token CHAR(32) NOT NULL,
     status VARCHAR(12) NOT NULL DEFAULT 'open',
+    lat DECIMAL(9,6) NULL,
+    lng DECIMAL(9,6) NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX (status), INDEX (created_at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+  try { db()->exec("ALTER TABLE projects ADD COLUMN IF NOT EXISTS lat DECIMAL(9,6) NULL, ADD COLUMN IF NOT EXISTS lng DECIMAL(9,6) NULL"); } catch (Throwable $e) {}
   db()->exec("CREATE TABLE IF NOT EXISTS proposals (
     id INT AUTO_INCREMENT PRIMARY KEY,
     project_id INT NOT NULL,
@@ -83,13 +86,60 @@ function prj_save_pdf(array $file, string $kind, ?string &$err = null): ?string 
   return ($kind === 'proposal' ? 'uploads/proposals/' : 'uploads/projects/') . $name;
 }
 
-/** Assinatura ATIVA (qualquer pacote) — exigida para dar preço. */
+/** Dar preço exige o PACOTE "Mural de projetos" (módulo 'board') ativo. */
 function prj_can_bid(int $userId): bool {
   foreach (lic_for_user($userId) as $l) {
     $exp = !empty($l['expires_at']) && strtotime((string) $l['expires_at']) < time();
-    if ($l['status'] === 'active' && !$exp) return true;
+    if ($l['status'] !== 'active' || $exp) continue;
+    $mods = lic_packages($l);
+    if (in_array('board', $mods, true) || in_array('all', $mods, true)) return true;
   }
   return false;
+}
+
+/** Geocodifica a região (Nominatim/OSM, gratuito) — lat/lng pro mapa da landing. */
+function prj_geocode(string $region): ?array {
+  $region = trim($region);
+  if ($region === '') return null;
+  $url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=' . urlencode($region);
+  $ctx = stream_context_create(['http' => ['timeout' => 6, 'header' => "User-Agent: ConstructCount/1.0 (constructcount.com)\r\n"]]);
+  $raw = @file_get_contents($url, false, $ctx);
+  $j = $raw ? json_decode($raw, true) : null;
+  if (is_array($j) && !empty($j[0]['lat'])) return ['lat' => (float) $j[0]['lat'], 'lng' => (float) $j[0]['lon']];
+  return null;
+}
+
+/** Números do quadro da landing: esperando · em negociação · em andamento · concluída. */
+function prj_stats(): array {
+  prj_ensure_schema();
+  $q = function (string $sql): int { return (int) (db()->query($sql)->fetch()['c'] ?? 0); };
+  return [
+    'waiting'     => $q("SELECT COUNT(*) c FROM projects p WHERE p.status='open' AND 0 = (SELECT COUNT(*) FROM proposals pr WHERE pr.project_id = p.id)"),
+    'negotiating' => $q("SELECT COUNT(*) c FROM projects p WHERE p.status='open' AND 0 < (SELECT COUNT(*) FROM proposals pr WHERE pr.project_id = p.id)"),
+    'working'     => $q("SELECT COUNT(*) c FROM projects WHERE status='working'"),
+    'done'        => $q("SELECT COUNT(*) c FROM projects WHERE status='closed'"),
+  ];
+}
+
+/** Contagem de projetos ABERTOS por disciplina (chips da landing). */
+function prj_trade_counts(): array {
+  prj_ensure_schema();
+  $out = [];
+  foreach (PRJ_TRADES as $tr) {
+    $st = db()->prepare("SELECT COUNT(*) c FROM projects WHERE status='open' AND trades LIKE ?");
+    $st->execute(['%' . $tr . '%']);
+    $out[$tr] = (int) ($st->fetch()['c'] ?? 0);
+  }
+  return $out;
+}
+
+/** Projetos com coordenadas (pins do mapa). */
+function prj_geo_list(): array {
+  prj_ensure_schema();
+  return db()->query("SELECT p.id, p.title, p.region, p.trades, p.status, p.lat, p.lng,
+      (SELECT COUNT(*) FROM proposals pr WHERE pr.project_id = p.id) AS n_bids
+      FROM projects p WHERE p.lat IS NOT NULL AND p.status IN ('open','working')
+      ORDER BY p.created_at DESC LIMIT 300")->fetchAll();
 }
 
 /** Módulos (pacotes) das licenças ativas do usuário — p/ destacar projetos que combinam. */

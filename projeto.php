@@ -16,10 +16,15 @@ $canBid = $u ? prj_can_bid((int) $u['id']) : false;
 $trades = array_filter(explode(',', (string) $p['trades']));
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
-  // GC fecha o projeto
+  // GC muda o status (negociação concluída → obra em andamento → encerrado)
   if ($isOwner && ($_POST['act'] ?? '') === 'close') {
     db()->prepare("UPDATE projects SET status='closed' WHERE id=?")->execute([$id]);
     flash(t('prj_closed_flash'));
+    redirect(url('projeto.php?id=' . $id . '&t=' . $tok));
+  }
+  if ($isOwner && ($_POST['act'] ?? '') === 'working') {
+    db()->prepare("UPDATE projects SET status='working' WHERE id=?")->execute([$id]);
+    flash(t('prj_working_flash'));
     redirect(url('projeto.php?id=' . $id . '&t=' . $tok));
   }
   // assinante envia/atualiza a PROPOSTA
@@ -70,7 +75,9 @@ layout_top($p['title']);
 <div class="card">
   <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap">
     <h2 style="margin:0"><?= h($p['title']) ?></h2>
-    <span class="badge <?= $p['status'] === 'open' ? 'b-ok' : 'b-bad' ?>"><?= h($p['status'] === 'open' ? t('prj_open') : t('prj_closed')) ?></span>
+    <?php $stMap = ['open' => ['b-ok', t('prj_open')], 'working' => ['b-warn', t('prj_working')], 'closed' => ['b-bad', t('prj_closed')]];
+          [$stCls, $stTxt] = $stMap[$p['status']] ?? ['b-bad', $p['status']]; ?>
+    <span class="badge <?= $stCls ?>"><?= h($stTxt) ?></span>
     <span style="flex:1"></span>
     <span class="muted"><?= h(t('prj_bids')) ?>: <b><?= $nBids ?></b></span>
   </div>
@@ -109,12 +116,20 @@ layout_top($p['title']);
         <?php endforeach; ?>
       </table>
     <?php endif; ?>
-    <?php if ($p['status'] === 'open'): ?>
-      <form method="post" style="margin-top:12px" onsubmit="return confirm('<?= h(t('prj_close_confirm')) ?>')">
-        <?= csrf_field() ?><input type="hidden" name="t" value="<?= h($tok) ?>"><input type="hidden" name="act" value="close">
-        <button class="btn ghost"><?= h(t('prj_close_btn')) ?></button>
-      </form>
-    <?php endif; ?>
+    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+      <?php if ($p['status'] === 'open'): ?>
+        <form method="post">
+          <?= csrf_field() ?><input type="hidden" name="t" value="<?= h($tok) ?>"><input type="hidden" name="act" value="working">
+          <button class="btn"><?= h(t('prj_working_btn')) ?></button>
+        </form>
+      <?php endif; ?>
+      <?php if ($p['status'] !== 'closed'): ?>
+        <form method="post" onsubmit="return confirm('<?= h(t('prj_close_confirm')) ?>')">
+          <?= csrf_field() ?><input type="hidden" name="t" value="<?= h($tok) ?>"><input type="hidden" name="act" value="close">
+          <button class="btn ghost"><?= h(t('prj_close_btn')) ?></button>
+        </form>
+      <?php endif; ?>
+    </div>
   </div>
 <?php endif; ?>
 
@@ -127,7 +142,8 @@ layout_top($p['title']);
       <a class="btn ghost" href="<?= h(url('register.php')) ?>"><?= h(t('register')) ?></a>
     <?php elseif (!$canBid): ?>
       <p class="muted"><?= h(t('prj_bid_needs_sub')) ?></p>
-      <a class="btn" href="<?= h(url('dashboard.php')) ?>"><?= h(t('prj_see_plans')) ?></a>
+      <a class="btn" href="<?= h(url('checkout.php?plan=board')) ?>"><?= h(t('prj_bid_subscribe')) ?></a>
+      <a class="btn ghost" href="<?= h(url('dashboard.php')) ?>"><?= h(t('prj_see_plans')) ?></a>
     <?php else: ?>
       <?php if ($myBid): ?><p class="badge b-ok">✓ <?= h(t('prj_bid_sent')) ?> — US$ <?= number_format((float) $myBid['amount'], 2) ?> (<?= h(t('prj_bid_update_hint')) ?>)</p><?php endif; ?>
       <form method="post" enctype="multipart/form-data" style="display:grid;gap:12px;margin-top:8px">
