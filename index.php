@@ -182,8 +182,9 @@ layout_top(t('app_name'));
         $name = $p['name_' . $L] ?? ($p['name'] ?? '');
         $desc = $p['desc_' . $L] ?? ($p['desc'] ?? '');
         $badge = $p['badge_' . $L] ?? ($p['badge'] ?? ''); ?>
-        <div class="card plan center<?= !empty($p['featured']) ? ' hot' : '' ?><?= ($p['plan'] ?? '') === 'board' ? ' pulse-board' : '' ?>">
+        <div class="card plan center<?= !empty($p['featured']) ? ' hot' : '' ?><?= in_array($p['plan'] ?? '', ['board', 'region'], true) ? ' pulse-board' : '' ?>">
           <?php if (($p['plan'] ?? '') === 'board'): ?><span class="ribbon-new">✨ <?= h(t('badge_new')) ?></span><?php endif; ?>
+          <?php if (($p['plan'] ?? '') === 'region'): ?><span class="ribbon-new">✨ <?= h(t('badge_new_region')) ?></span><?php endif; ?>
           <?php if (!empty($p['featured'])): ?><span class="ribbon"><?= h(t('best')) ?></span><?php endif; ?>
           <h3><?= h($name) ?></h3>
           <div class="price"><?= h($p['price']) ?><small><?= h($per) ?></small></div>

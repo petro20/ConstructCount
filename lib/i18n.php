@@ -217,6 +217,7 @@ $GLOBALS['I18N'] = [
   'cta_start' => ['Testar grátis por 7 dias', 'Try it free for 7 days', 'Prueba gratis por 7 días'],
   'cta_nocard'=> ['sem cartão de crédito', 'no credit card needed', 'sin tarjeta de crédito'],
   'badge_new' => ['NOVO — obras esperando seu preço', 'NEW — jobs waiting for your price', 'NUEVO — obras esperando tu precio'],
+  'badge_new_region' => ['NOVO — a IA busca os preços pra você', 'NEW — AI fetches the prices for you', 'NUEVO — la IA busca los precios por ti'],
   'cta_plans' => ['Ver planos', 'See plans', 'Ver planes'],
   'feat_title'=> ['Tudo para o levantamento e o orçamento', 'Everything for takeoff and quoting', 'Todo para el cómputo y la cotización'],
   'f1_t'=>['Leitura por IA','AI reading','Lectura por IA'], 'f1_d'=>['Extrai esquadrias e tipos de parede do PDF do projeto.','Extracts windows/doors and wall types from the project PDF.','Extrae carpinterías y tipos de pared del PDF del proyecto.'],
