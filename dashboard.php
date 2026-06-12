@@ -1,8 +1,16 @@
 <?php
 require __DIR__ . '/lib/layout.php';
 require __DIR__ . '/lib/license.php';
+require __DIR__ . '/lib/projects.php';
 $u = require_login();
 $lics = lic_for_user((int) $u['id']);
+prj_ensure_schema();
+$myBids = [];
+try {
+  $st = db()->prepare('SELECT pr.amount, pr.created_at, p.id pid, p.title, p.region, p.status FROM proposals pr JOIN projects p ON p.id = pr.project_id WHERE pr.user_id = ? ORDER BY pr.created_at DESC LIMIT 20');
+  $st->execute([(int) $u['id']]);
+  $myBids = $st->fetchAll();
+} catch (Throwable $e) {}
 $badge = function ($l) {
   $exp = !empty($l['expires_at']) && strtotime((string) $l['expires_at']) < time();
   if ($l['status'] === 'active' && !$exp) return ['b-ok', '✓ ' . t('approved')];
@@ -62,6 +70,23 @@ $pkgBtns = function () use ($L) {
       <p style="margin-top:8px;font-size:12.5px;line-height:1.5;color:#065f46;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:8px 10px"><?= h(t('data_safe')) ?></p>
     <?php endif; ?>
     <div style="margin-top:12px"><a class="btn ghost" href="<?= h(url('billing.php')) ?>" onclick="return confirm('<?= h(t('confirm_cancel')) ?>')"><?= h(t('cancel_sub')) ?></a></div>
+    <?php if ($myBids): ?>
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--bd)">
+        <h3 style="margin:0 0 6px">💲 <?= h(t('dash_my_bids')) ?></h3>
+        <table>
+          <tr><th><?= h(t('prj_f_title')) ?></th><th><?= h(t('prj_t_amount')) ?></th><th><?= h(t('status')) ?></th><th></th></tr>
+          <?php foreach ($myBids as $b): $stMap = ['open' => ['b-ok', t('prj_open')], 'working' => ['b-warn', t('prj_working')], 'closed' => ['b-bad', t('prj_closed')]];
+                [$c2, $t2] = $stMap[$b['status']] ?? ['b-bad', $b['status']]; ?>
+            <tr>
+              <td><a href="<?= h(url('projeto.php?id=' . (int) $b['pid'])) ?>"><?= h($b['title']) ?></a> <span class="muted">· <?= h($b['region']) ?></span></td>
+              <td>US$ <?= number_format((float) $b['amount'], 2) ?></td>
+              <td><span class="badge <?= $c2 ?>"><?= h($t2) ?></span></td>
+              <td><span class="muted"><?= h(fmt_date($b['created_at'])) ?></span></td>
+            </tr>
+          <?php endforeach; ?>
+        </table>
+      </div>
+    <?php endif; ?>
     <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--bd)">
       <h3 style="margin:0 0 2px"><?= h(t('add_packages')) ?></h3>
       <p class="muted" style="margin:0"><?= h(t('add_packages_hint')) ?></p>

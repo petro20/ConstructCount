@@ -19,6 +19,7 @@ layout_top(t('prj_board_title'));
     <h2 style="margin:0"><?= h(t('prj_board_title')) ?></h2>
     <span class="muted"><?= h(t('prj_board_sub')) ?></span>
     <span style="flex:1"></span>
+    <a class="btn ghost" href="<?= h(url('meus-projetos.php')) ?>"><?= h(t('prj_recover_link')) ?></a>
     <a class="btn" href="<?= h(url('publicar.php')) ?>">＋ <?= h(t('prj_post_btn_short')) ?></a>
   </div>
   <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 4px">
