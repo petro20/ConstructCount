@@ -19,14 +19,15 @@ define('LIC_SECRET', 'troque-string-longa-aleatoria-para-tokens-de-licenca'); //
 define('LIC_GRACE_DAYS', 7);                                                  // carência offline do app
 
 // ---- E-MAIL (SMTP autenticado da Hostinger) ----
-// 1) Crie a caixa no hPanel: E-mails → Contas de e-mail → no-reply@constructcount.com
-// 2) Preencha abaixo. Sem isto o sistema tenta o mail() do PHP (a Hostinger
-//    bloqueia se a caixa do remetente não existir — e-mails do mural não saem).
+// Caixas existentes: support@constructcount.com (remetente do sistema) e
+// contact@constructcount.com (contato). Preencha a senha da support@ abaixo.
+// Sem SMTP o sistema tenta o mail() do PHP (a Hostinger bloqueia remetente
+// de caixa inexistente).
 define('SMTP_HOST', 'smtp.hostinger.com');
 define('SMTP_PORT', 465);                              // 465 = SSL direto (587 = STARTTLS)
-define('SMTP_USER', 'no-reply@constructcount.com');
-define('SMTP_PASS', 'senha-da-caixa-no-reply');
-define('SMTP_FROM', 'no-reply@constructcount.com');    // opcional (padrão = SMTP_USER)
+define('SMTP_USER', 'support@constructcount.com');
+define('SMTP_PASS', 'senha-da-caixa-support');
+define('SMTP_FROM', 'support@constructcount.com');     // opcional (padrão = SMTP_USER)
 
 // ---- Dite Gateway (pay.diteads.com) — pagamento/assinatura ----
 // Gere a API key e o webhook secret no painel "Apps" do Dite e configure lá o

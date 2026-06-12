@@ -238,7 +238,7 @@ function prj_notify_subscribers(array $p): void {
           (!empty($p['deadline']) ? ("\n⏳ " . $p['deadline']) : '') .
           "\n\n" . url('projeto.php?id=' . (int) $p['id']);
   foreach (array_chunk($emails, 50) as $chunk) {
-    cc_mail('no-reply@constructcount.com', $subject, $body, $chunk);
+    cc_mail('support@constructcount.com', $subject, $body, $chunk);
   }
 }
 

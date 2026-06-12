@@ -12,15 +12,15 @@ $to = 'pbastosus@gmail.com';
 $ts = date('H:i:s');
 $out = ['ok' => true, 'ts' => $ts, 'tests' => []];
 
-// 1) igual ao mural hoje: From no-reply@constructcount.com
-$r1 = @mail($to, "CC mail-test 1/3 ($ts) — From no-reply", "Teste 1: cabecalho atual do mural (From: no-reply@constructcount.com).",
-            "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8");
-$out['tests'][] = ['test' => 'from_noreply', 'mail_returned' => $r1];
+// 1) From support@ (caixa REAL existente no hPanel)
+$r1 = @mail($to, "CC mail-test 1/3 ($ts) — From support", "Teste 1: From support@constructcount.com (caixa existente).",
+            "From: support@constructcount.com\r\nContent-Type: text/plain; charset=utf-8");
+$out['tests'][] = ['test' => 'from_support', 'mail_returned' => $r1];
 
-// 2) com envelope sender (-f) — exigido por alguns servidores da Hostinger
-$r2 = @mail($to, "CC mail-test 2/3 ($ts) — envelope -f", "Teste 2: com envelope sender -f.",
-            "From: no-reply@constructcount.com\r\nContent-Type: text/plain; charset=utf-8",
-            '-fno-reply@constructcount.com');
+// 2) support@ com envelope sender (-f) — exigido por alguns servidores da Hostinger
+$r2 = @mail($to, "CC mail-test 2/3 ($ts) — envelope -f", "Teste 2: support@ com envelope sender -f.",
+            "From: support@constructcount.com\r\nContent-Type: text/plain; charset=utf-8",
+            '-fsupport@constructcount.com');
 $out['tests'][] = ['test' => 'envelope_f', 'mail_returned' => $r2];
 
 // 3) sem From customizado (usa o padrão do servidor)

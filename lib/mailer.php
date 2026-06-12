@@ -16,7 +16,9 @@ require_once __DIR__ . '/db.php';
 
 function cc_mail(string $to, string $subject, string $body, array $bcc = []): bool {
   cfg_loaded();
-  $from = defined('SMTP_FROM') ? (string) SMTP_FROM : (defined('SMTP_USER') ? (string) SMTP_USER : 'no-reply@constructcount.com');
+  // remetente padrão = caixa REAL existente no hPanel (support@) — a Hostinger
+  // recusa envio de caixas inexistentes (era o no-reply@, que não existia)
+  $from = defined('SMTP_FROM') ? (string) SMTP_FROM : (defined('SMTP_USER') ? (string) SMTP_USER : 'support@constructcount.com');
   if (defined('SMTP_HOST') && defined('SMTP_USER') && defined('SMTP_PASS')) {
     $r = _cc_smtp($from, $to, $subject, $body, $bcc);
     if ($r) return true;                       // SMTP falhou? tenta o mail() abaixo
