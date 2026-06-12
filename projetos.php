@@ -4,6 +4,7 @@
 require __DIR__ . '/lib/layout.php';
 require __DIR__ . '/lib/projects.php';
 prj_ensure_schema();
+prj_cleanup();   // retenção: solta os PDFs de projetos encerrados há 60+ dias
 
 $trade = (string) ($_GET['trade'] ?? '');
 $q = trim((string) ($_GET['q'] ?? ''));
@@ -47,7 +48,7 @@ layout_top(t('prj_board_title'));
       <p class="muted" style="margin:6px 0 0">
         📍 <?= h($p['region']) ?> · 🏢 <?= h($p['company']) ?>
         <?php if (!empty($p['deadline'])): ?> · ⏳ <?= h(t('prj_deadline')) ?>: <?= h(fmt_date($p['deadline'])) ?><?php endif; ?>
-        <?php if (!empty($p['pdf_path'])): ?> · 📄 PDF<?php endif; ?>
+        <?php if (!empty($p['pdf_path'])): ?> · 📄 PDF<?php endif; ?><?php if (!empty($p['pdf_link'])): ?> · 🔗 link<?php endif; ?>
       </p>
       <p style="margin:8px 0 0">
         <?php foreach ($ptr as $tr): ?><span class="badge" style="margin-right:6px"><?= h(prj_trade_label($tr)) ?></span><?php endforeach; ?>

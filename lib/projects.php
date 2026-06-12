@@ -48,7 +48,7 @@ function prj_ensure_schema(): void {
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX (status), INDEX (created_at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-  try { db()->exec("ALTER TABLE projects ADD COLUMN IF NOT EXISTS lat DECIMAL(9,6) NULL, ADD COLUMN IF NOT EXISTS lng DECIMAL(9,6) NULL"); } catch (Throwable $e) {}
+  try { db()->exec("ALTER TABLE projects ADD COLUMN IF NOT EXISTS lat DECIMAL(9,6) NULL, ADD COLUMN IF NOT EXISTS lng DECIMAL(9,6) NULL, ADD COLUMN IF NOT EXISTS pdf_link VARCHAR(500) NULL, ADD COLUMN IF NOT EXISTS closed_at DATETIME NULL"); } catch (Throwable $e) {}
   db()->exec("CREATE TABLE IF NOT EXISTS proposals (
     id INT AUTO_INCREMENT PRIMARY KEY,
     project_id INT NOT NULL,
@@ -131,6 +131,45 @@ function prj_trade_counts(): array {
     $out[$tr] = (int) ($st->fetch()['c'] ?? 0);
   }
   return $out;
+}
+
+/** RETENÇÃO: apaga o PDF hospedado de projetos ENCERRADOS há 60+ dias (o registro
+    do projeto fica). Mantém o disco do hosting sob controle. Barato — roda no mural. */
+function prj_cleanup(): void {
+  prj_ensure_schema();
+  try {
+    $st = db()->query("SELECT id, pdf_path FROM projects WHERE status='closed' AND pdf_path IS NOT NULL AND closed_at IS NOT NULL AND closed_at < (NOW() - INTERVAL 60 DAY) LIMIT 20");
+    foreach ($st->fetchAll() as $r) {
+      $f = __DIR__ . '/../' . $r['pdf_path'];
+      if (is_file($f)) @unlink($f);
+      db()->prepare('UPDATE projects SET pdf_path = NULL WHERE id = ?')->execute([(int) $r['id']]);
+    }
+  } catch (Throwable $e) {}
+}
+
+/** BROADCAST: avisa por e-mail os assinantes do pacote Mural (board) sobre um
+    projeto novo — é assim que o link é OFERTADO a todos. BCC em lotes, best-effort. */
+function prj_notify_subscribers(array $p): void {
+  try {
+    $rows = db()->query("SELECT u.email, l.plan, l.modules FROM users u JOIN licenses l ON l.user_id = u.id
+                         WHERE l.status = 'active' AND (l.expires_at IS NULL OR l.expires_at > NOW())")->fetchAll();
+  } catch (Throwable $e) { return; }
+  $emails = [];
+  foreach ($rows as $l) {
+    $mods = lic_packages($l);
+    if (in_array('board', $mods, true) || in_array('all', $mods, true)) $emails[strtolower((string) $l['email'])] = true;
+  }
+  $emails = array_keys($emails);
+  if (!$emails) return;
+  $trades = implode(' · ', array_map('prj_trade_label', array_filter(explode(',', (string) $p['trades']))));
+  $subject = 'ConstructCount — ' . t('prj_notify_subject');
+  $body = t('prj_notify_body') . "\n\n" . $p['title'] . "\n📍 " . $p['region'] . "\n" . $trades .
+          (!empty($p['deadline']) ? ("\n⏳ " . $p['deadline']) : '') .
+          "\n\n" . url('projeto.php?id=' . (int) $p['id']);
+  foreach (array_chunk($emails, 50) as $chunk) {
+    @mail('no-reply@constructcount.com', $subject, $body,
+          "From: no-reply@constructcount.com\r\nBcc: " . implode(', ', $chunk) . "\r\nContent-Type: text/plain; charset=utf-8");
+  }
 }
 
 /** Projetos com coordenadas (pins do mapa). */

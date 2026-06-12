@@ -25,12 +25,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $pdf = prj_save_pdf($_FILES['pdf'], 'project', $perr);
         if ($pdf === null) $err = t('prj_pdf_err');
       }
+      $pdfLink = trim((string) ($_POST['pdf_link'] ?? ''));   // alternativa p/ planta grande: link Drive/Dropbox
+      if ($pdfLink !== '' && !filter_var($pdfLink, FILTER_VALIDATE_URL)) $err = t('prj_link_err');
       if ($err === '') {
         $tok = bin2hex(random_bytes(16));
         $geo = prj_geocode($region);   // pin no mapa da landing
-        db()->prepare('INSERT INTO projects (title,company,contact_name,contact_email,region,trades,deadline,descr,pdf_path,manage_token,lat,lng) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)')
-            ->execute([$title, $company, $cname, $cemail, $region, implode(',', $trades), ($deadline ?: null), $descr, $pdf, $tok, $geo['lat'] ?? null, $geo['lng'] ?? null]);
+        db()->prepare('INSERT INTO projects (title,company,contact_name,contact_email,region,trades,deadline,descr,pdf_path,pdf_link,manage_token,lat,lng) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)')
+            ->execute([$title, $company, $cname, $cemail, $region, implode(',', $trades), ($deadline ?: null), $descr, $pdf, ($pdfLink ?: null), $tok, $geo['lat'] ?? null, $geo['lng'] ?? null]);
         $id = (int) db()->lastInsertId();
+        // OFERTA o link a todos os assinantes do pacote Mural (e-mail broadcast)
+        prj_notify_subscribers(['id' => $id, 'title' => $title, 'region' => $region, 'trades' => implode(',', $trades), 'deadline' => $deadline]);
         $link = url('projeto.php?id=' . $id . '&t=' . $tok);
         @mail($cemail, 'ConstructCount — ' . t('prj_published_subject'),
               t('prj_published_mail') . "\n\n" . $link,
@@ -70,6 +74,7 @@ layout_top(t('prj_post_title'));
       <label><?= h(t('prj_f_deadline')) ?><br><input type="date" name="deadline" style="width:100%"></label>
       <label><?= h(t('prj_f_pdf')) ?><br><input type="file" name="pdf" accept="application/pdf" style="width:100%"></label>
     </div>
+    <label><?= h(t('prj_f_link')) ?><br><input type="url" name="pdf_link" placeholder="https://drive.google.com/…" style="width:100%"></label>
     <label><?= h(t('prj_f_descr')) ?><br><textarea name="descr" rows="4" style="width:100%"></textarea></label>
     <button class="btn"><?= h(t('prj_post_btn')) ?></button>
     <p class="muted" style="font-size:12.5px"><?= h(t('prj_post_note')) ?></p>

@@ -18,7 +18,7 @@ $trades = array_filter(explode(',', (string) $p['trades']));
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
   // GC muda o status (negociação concluída → obra em andamento → encerrado)
   if ($isOwner && ($_POST['act'] ?? '') === 'close') {
-    db()->prepare("UPDATE projects SET status='closed' WHERE id=?")->execute([$id]);
+    db()->prepare("UPDATE projects SET status='closed', closed_at=NOW() WHERE id=?")->execute([$id]);
     flash(t('prj_closed_flash'));
     redirect(url('projeto.php?id=' . $id . '&t=' . $tok));
   }
@@ -85,11 +85,16 @@ layout_top($p['title']);
     <?php if (!empty($p['deadline'])): ?> · ⏳ <?= h(t('prj_deadline')) ?>: <?= h(fmt_date($p['deadline'])) ?><?php endif; ?></p>
   <p style="margin:8px 0 0"><?php foreach ($trades as $tr): ?><span class="badge" style="margin-right:6px"><?= h(prj_trade_label($tr)) ?></span><?php endforeach; ?></p>
   <?php if (!empty($p['descr'])): ?><p style="margin-top:10px;white-space:pre-wrap"><?= h($p['descr']) ?></p><?php endif; ?>
-  <?php if (!empty($p['pdf_path'])): ?>
-    <div style="margin-top:12px">
-      <?php if ($u && $canBid || $isOwner): ?>
-        <a class="btn" href="<?= h(url('baixar.php?k=project&id=' . $id . ($isOwner ? '&t=' . $tok : ''))) ?>">📄 <?= h(t('prj_download_pdf')) ?></a>
-        <span class="muted" style="margin-left:8px;font-size:12.5px"><?= h(t('prj_open_in_app')) ?></span>
+  <?php if (!empty($p['pdf_path']) || !empty($p['pdf_link'])): ?>
+    <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <?php if (($u && $canBid) || $isOwner): ?>
+        <?php if (!empty($p['pdf_path'])): ?>
+          <a class="btn" href="<?= h(url('baixar.php?k=project&id=' . $id . ($isOwner ? '&t=' . $tok : ''))) ?>">📄 <?= h(t('prj_download_pdf')) ?></a>
+        <?php endif; ?>
+        <?php if (!empty($p['pdf_link'])): ?>
+          <a class="btn ghost" href="<?= h($p['pdf_link']) ?>" target="_blank" rel="noopener nofollow">🔗 <?= h(t('prj_link_open')) ?></a>
+        <?php endif; ?>
+        <span class="muted" style="font-size:12.5px"><?= h(t('prj_open_in_app')) ?></span>
       <?php else: ?>
         <span class="muted">📄 <?= h(t('prj_pdf_locked')) ?></span>
       <?php endif; ?>
