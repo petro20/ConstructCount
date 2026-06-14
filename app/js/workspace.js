@@ -1974,8 +1974,8 @@
   }
 
   // ---------- PAINEL INTELIGENTE (sequência lógica de uso + adaptativo) ----------
-  const ACC_ORDER = ['folha', 'camadas', 'escala', 'ferramentas', 'autocount', 'janela', 'medidas'];
-  const ACC_STEP = { folha: 1, camadas: 2, escala: 3, ferramentas: 4, autocount: 5, janela: 6, medidas: 7 };
+  const ACC_ORDER = ['folha', 'escala', 'camadas', 'ferramentas', 'autocount', 'janela', 'medidas'];
+  const ACC_STEP = { folha: 1, escala: 2, camadas: 3, ferramentas: 4, autocount: 5, janela: 6, medidas: 7 };
   function accHdr(name) { return document.querySelector('#wsRight [data-acc="' + name + '"]'); }
   function accSet(name, open) {
     const hdr = accHdr(name); if (!hdr) return;
