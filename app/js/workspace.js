@@ -1294,6 +1294,63 @@
   function areaPolys(ar) { return (ar && ar.parts && ar.parts.length) ? ar.parts : (ar && ar.path ? [ar.path] : []); }
   function areaSf(ar) { return areaPolys(ar).reduce((s, p) => s + polySf(p), 0); }
   function polyKey(poly) { return poly.map(p => Math.round(p[0] / 4) + ',' + Math.round(p[1] / 4)).join(';'); }   // ~4px de tolerância p/ achar partes repetidas
+  function pxToSf(areaPx) { return S.mmPerPx ? (areaPx * S.mmPerPx * S.mmPerPx / 92903.04) : 0; }
+  // ---- UNIÃO de retângulos eixo-alinhados → "1 formato só" (bordas comuns somem, sobreposição não conta 2x) ----
+  function polyIsRect(poly) {
+    if (!poly || poly.length !== 4) return false;
+    for (let i = 0; i < 4; i++) { const a = poly[i], b = poly[(i + 1) % 4]; if (Math.abs(a[0] - b[0]) > 0.6 && Math.abs(a[1] - b[1]) > 0.6) return false; }
+    return true;
+  }
+  function polyToRect(poly) { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; poly.forEach(p => { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); }); return [x0, y0, x1, y1]; }
+  function simplifyOrtho(poly) {                       // remove vértices colineares (só cantos)
+    const n = poly.length, out = [];
+    for (let i = 0; i < n; i++) {
+      const a = poly[(i - 1 + n) % n], b = poly[i], c = poly[(i + 1) % n];
+      if (Math.sign(b[0] - a[0]) !== Math.sign(c[0] - b[0]) || Math.sign(b[1] - a[1]) !== Math.sign(c[1] - b[1])) out.push(b);
+    }
+    return out;
+  }
+  function rectUnion(rects) {                          // {polys, areaPx} da UNIÃO (grade por compressão de coordenadas)
+    const xsS = new Set(), ysS = new Set();
+    rects.forEach(r => { xsS.add(r[0]); xsS.add(r[2]); ysS.add(r[1]); ysS.add(r[3]); });
+    const xs = [...xsS].sort((a, b) => a - b), ys = [...ysS].sort((a, b) => a - b);
+    const C = xs.length - 1, R = ys.length - 1;
+    if (C < 1 || R < 1) return null;
+    const cov = []; let areaPx = 0;
+    for (let r = 0; r < R; r++) { cov[r] = []; const cy = (ys[r] + ys[r + 1]) / 2; for (let c = 0; c < C; c++) { const cx = (xs[c] + xs[c + 1]) / 2; const v = rects.some(rc => rc[0] <= cx && cx <= rc[2] && rc[1] <= cy && cy <= rc[3]); cov[r][c] = v; if (v) areaPx += (xs[c + 1] - xs[c]) * (ys[r + 1] - ys[r]); } }
+    const edges = new Map();
+    const add = (ax, ay, bx, by) => { const k = ax + ',' + ay; if (!edges.has(k)) edges.set(k, []); edges.get(k).push([bx, by]); };
+    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+      if (!cov[r][c]) continue;
+      const x0 = xs[c], x1 = xs[c + 1], y0 = ys[r], y1 = ys[r + 1];
+      if (r === 0 || !cov[r - 1][c]) add(x0, y0, x1, y0);
+      if (c === C - 1 || !cov[r][c + 1]) add(x1, y0, x1, y1);
+      if (r === R - 1 || !cov[r + 1][c]) add(x1, y1, x0, y1);
+      if (c === 0 || !cov[r][c - 1]) add(x0, y1, x0, y0);
+    }
+    const polys = [];
+    for (const sk of [...edges.keys()]) {
+      while (edges.get(sk) && edges.get(sk).length) {
+        const poly = []; let curKey = sk, cur = sk.split(',').map(Number), guard = 0;
+        while (guard++ < 200000) {
+          const outs = edges.get(curKey); if (!outs || !outs.length) break;
+          const nxt = outs.shift(); poly.push(cur);
+          curKey = nxt[0] + ',' + nxt[1]; cur = nxt;
+          if (curKey === sk) break;
+        }
+        if (poly.length >= 4) { const sp = simplifyOrtho(poly); if (sp.length >= 3) polys.push(sp); }
+      }
+    }
+    return { polys: polys, areaPx: areaPx };
+  }
+  // junta um grupo de polígonos: se todos forem retângulos → UNIÃO (1 formato); senão concatena
+  function buildAreaGroup(polysList) {
+    if (polysList.length && polysList.every(polyIsRect)) {
+      const u = rectUnion(polysList.map(polyToRect));
+      if (u && u.polys.length) return { parts: u.polys, sf: pxToSf(u.areaPx) };
+    }
+    return { parts: polysList, sf: polysList.reduce((s, p) => s + polySf(p), 0) };
+  }
   // tipo de área: 'floor' (Piso, verde) | 'ceiling' (Teto/Forro, azul)
   function kindColor(k) { return k === 'ceiling' ? '#38bdf8' : '#22c55e'; }
   function kindFill(k, a) { return (k === 'ceiling' ? 'rgba(56,189,248,' : 'rgba(34,197,94,') + a + ')'; }
@@ -1662,11 +1719,11 @@
     const set = new Set(list);
     S.areas = (S.areas || []).filter(a => !set.has(a));
     const added = [];
-    if (pos.length) { const m = { parts: pos, sf: pos.reduce((s, p) => s + polySf(p), 0), page: S.page, kind: kind }; S.areas.push(m); added.push(m); }
-    if (neg.length) { const m = { parts: neg, sf: neg.reduce((s, p) => s + polySf(p), 0), page: S.page, kind: kind, neg: true }; S.areas.push(m); added.push(m); }
+    if (pos.length) { const g = buildAreaGroup(pos); const m = { parts: g.parts, sf: g.sf, page: S.page, kind: kind }; S.areas.push(m); added.push(m); }
+    if (neg.length) { const g = buildAreaGroup(neg); const m = { parts: g.parts, sf: g.sf, page: S.page, kind: kind, neg: true }; S.areas.push(m); added.push(m); }
     if (S.areaSel) { S.areaSel.clear(); added.forEach(m => S.areaSel.add(m)); }
     saveAreas(); updateAreaTot(); renderPagesList(); draw();
-    const net = pos.reduce((s, p) => s + polySf(p), 0) - neg.reduce((s, p) => s + polySf(p), 0);
+    const net = added.reduce((s, m) => s + (m.sf || 0) * (m.neg ? -1 : 1), 0);
     markSaved('🔗 ' + F.tr('{n} áreas unidas → {sf} SF', { n: list.length, sf: net.toFixed(1) }));
   }
   function deleteSelAreas() {
