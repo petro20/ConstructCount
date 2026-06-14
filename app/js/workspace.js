@@ -36,7 +36,7 @@
     S.labelIdx = {}; S.countMode = false; S.autoMode = false; S.delMode = false;
     S.calibMode = false; S.measMode = false; S.clickA = null; S.measures = [];
     S.lineMode = false; S.linePts = []; S.lines = []; S.lineSel = new Set(); S.hiddenTypes = new Set();
-    S.areas = []; S.areaSel = new Set();   // áreas (Piso/Forro) + seleção
+    S.areas = []; S.areaSel = new Set(); S.areaSeeds = [];   // áreas (Piso/Forro) + seleção + sementes da varinha em lote
     S.schedulePages = (opts.schedulePages || []).slice();
     S.sections = (opts.sections && opts.sections.length) ? opts.sections.slice() : ['Geral'];
     S.activeSection = opts.activeSection || S.sections[0];
@@ -834,6 +834,16 @@
         ctx.fillStyle = '#fff'; ctx.fillText(txt, cx - tw / 2, cy + 4);
       }
     }
+    // VARINHA EM LOTE: pontos marcados (seeds) esperando "Detectar (N)" — numerados
+    if (S.areaMode && S.areaAI && S.areaSeeds && S.areaSeeds.length) {
+      S.areaSeeds.forEach((s, i) => {
+        const x = s[0] * S.scale + S.ox, y = s[1] * S.scale + S.oy;
+        ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.fillStyle = 'rgba(16,185,129,.9)'; ctx.fill();
+        ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.font = '700 11px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(String(i + 1), x, y); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+      });
+    }
     // ÍMÃ (Snap ligado): anel laranja no vértice que o cursor vai grudar — vale ATÉ antes do 1º ponto
     if (S.areaMode && S.snap && S.curX != null) {
       const v = nearestAreaVertex(S.curX, S.curY);
@@ -1298,24 +1308,47 @@
     if (!S.areaPts) S.areaPts = [];
     S.areaPts.push(areaEffective(sx, sy).pt); draw();
   }
-  // ✨ VARINHA DE CÔMODO: 1 clique → a IA/CV preenche até as paredes e cria a área
-  async function detectRoomAt(sx, sy) {
+  // ✨ VARINHA DE CÔMODO (LOTE): cada clique marca um PONTO (seed); o botão
+  // "Detectar (N)" processa todos de uma vez (a IA/CV acha as paredes de cada um).
+  function addAreaSeed(sx, sy) {
     if (!S.mmPerPx) { alert(F.tr('Calibre a escala primeiro (📏 Calibrar escala).')); return; }
     const kind = S.areaKind || 'floor';
     if (!areaScopeOwned(kind)) { markSaved('🔒 ' + F.tr('{pkg} é um pacote à parte (US$ 12/mês) — assine na aba Pacote para liberar.', { pkg: kindName(kind) })); return; }
-    if (!(S.prov && S.prov.detectRoom)) { markSaved(F.tr('Detectar cômodo: disponível no app desktop.')); return; }
+    if (!(S.prov && (S.prov.detectRooms || S.prov.detectRoom))) { markSaved(F.tr('Detectar cômodo: disponível no app desktop.')); return; }
+    if (!S.areaSeeds) S.areaSeeds = [];
     const [ix, iy] = toImg(sx, sy);
-    markSaved(F.tr('✨ IA detectando o cômodo…'));
-    let r; try { r = await S.prov.detectRoom(S.page, Math.round(ix), Math.round(iy)); } catch (e) { markSaved(F.tr('Falha ao detectar o cômodo.')); return; }
-    if (!r || r.error || !r.poly || r.poly.length < 3) { markSaved('⚠️ ' + ((r && r.error) || F.tr('Não consegui delimitar o cômodo — desenhe manual.'))); return; }
-    pushUndo();
-    const path = r.poly.map(p => [p[0], p[1]]);
-    const sf = polySf(path);
+    S.areaSeeds.push([Math.round(ix), Math.round(iy)]);
+    updateDetectAllBtn(); draw();
+  }
+  function updateDetectAllBtn() {
+    const b = $('#wsAreaDetectAll'); if (!b) return;
+    const n = (S.areaSeeds && S.areaSeeds.length) || 0;
+    b.classList.toggle('hidden', !(S.areaAI && n > 0));
+    b.textContent = '✨ ' + F.tr('Detectar {n} cômodo(s)', { n: n });
+  }
+  async function detectAllRooms() {
+    const seeds = (S.areaSeeds || []).slice();
+    if (!seeds.length) { markSaved(F.tr('Marque os cômodos com cliques primeiro.')); return; }
+    const kind = S.areaKind || 'floor';
+    markSaved(F.tr('✨ IA detectando {n} cômodo(s)…', { n: seeds.length }));
+    let rooms = [];
+    try {
+      if (S.prov.detectRooms) { const r = await S.prov.detectRooms(S.page, seeds); rooms = (r && r.rooms) || []; }
+      else { for (const s of seeds) { try { rooms.push(await S.prov.detectRoom(S.page, s[0], s[1])); } catch (e) { rooms.push({ error: 'erro' }); } } }
+    } catch (e) { markSaved(F.tr('Falha ao detectar os cômodos.')); return; }
     if (!S.areas) S.areas = [];
-    S.areas.push({ path: path, sf: sf, page: S.page, kind: kind });
-    saveAreas(); updateAreaTot();
-    if (S.pageExp) S.pageExp.add(S.page); renderPagesList();
-    markSaved('✨ ' + kindName(kind) + ' — ' + sf.toFixed(1) + ' SF');
+    let ok = 0, fail = 0;
+    pushUndo();
+    rooms.forEach(r => {
+      if (r && r.poly && r.poly.length >= 3) {
+        const path = r.poly.map(p => [p[0], p[1]]);
+        S.areas.push({ path: path, sf: polySf(path), page: S.page, kind: kind });
+        ok++;
+      } else fail++;
+    });
+    S.areaSeeds = []; updateDetectAllBtn();
+    if (ok) { saveAreas(); updateAreaTot(); if (S.pageExp) S.pageExp.add(S.page); renderPagesList(); }
+    markSaved('✨ ' + F.tr('{ok} cômodo(s) detectado(s)', { ok: ok }) + (fail ? (' · ' + F.tr('{f} falhou(aram)', { f: fail })) : ''));
     draw();
   }
   function finishArea() {
@@ -2112,7 +2145,7 @@
         const ha = hitArea(e.offsetX, e.offsetY);
         if (ha) { pickArea(ha, e); draw(); return; }
       }
-      if (S.areaMode) { if (S.areaAI) detectRoomAt(e.offsetX, e.offsetY); else handleArea(e.offsetX, e.offsetY); return; }
+      if (S.areaMode) { if (S.areaAI) addAreaSeed(e.offsetX, e.offsetY); else handleArea(e.offsetX, e.offsetY); return; }
       if (S.lineMode) { handleLine(e.offsetX, e.offsetY); return; }
       if (S.calibMode || S.measMode) { handleRuler(e.offsetX, e.offsetY); return; }
       const m = hit(e.offsetX, e.offsetY);
@@ -2151,7 +2184,7 @@
       S.lineMode = which === 'linear' && !S.lineMode;
       S.areaMode = which === 'area' && !S.areaMode;
       if (which !== 'linear') S.linePts = [];
-      if (which !== 'area') { S.areaPts = []; S.areaAI = false; const wai = $('#wsAreaAI'); if (wai) { wai.classList.remove('ring-2', 'ring-emerald-300'); } }
+      if (which !== 'area') { S.areaPts = []; S.areaAI = false; S.areaSeeds = []; const wai = $('#wsAreaAI'); if (wai) { wai.classList.remove('ring-2', 'ring-emerald-300'); } if (typeof updateDetectAllBtn === 'function') updateDetectAllBtn(); }
       if (S.lineSel) S.lineSel.clear();
       if (S.areaSel) S.areaSel.clear();
       S.clickA = null; S.hover = null; S.maybeMarquee = false; S.marquee = null;
@@ -2221,11 +2254,14 @@
     { const wak = $('#wsAreaKind'); if (wak) { S.areaKind = wak.value || 'floor'; wak.addEventListener('change', () => { S.areaKind = wak.value || 'floor'; if (!areaScopeOwned(S.areaKind)) markSaved('🔒 ' + F.tr('{pkg} é um pacote à parte (US$ 12/mês) — assine na aba Pacote para liberar.', { pkg: kindName(S.areaKind) })); draw(); }); } }
     { const wai = $('#wsAreaAI'); if (wai) wai.addEventListener('click', () => {
       S.areaAI = !S.areaAI; S.areaPts = [];                    // alterna a varinha; limpa polígono manual em andamento
+      if (!S.areaAI) S.areaSeeds = [];                         // desligou → descarta os pontos marcados
       if (S.areaAI && !S.areaMode) setMode('area');            // liga o modo Área junto
       wai.classList.toggle('ring-2', S.areaAI); wai.classList.toggle('ring-emerald-300', S.areaAI);
-      markSaved(S.areaAI ? F.tr('✨ Varinha de cômodo: clique dentro do quarto') : F.tr('Varinha de cômodo: desligada'));
+      updateDetectAllBtn();
+      markSaved(S.areaAI ? F.tr('✨ Varinha: clique nos cômodos e depois Detectar') : F.tr('Varinha de cômodo: desligada'));
       draw();
     }); }
+    { const wda = $('#wsAreaDetectAll'); if (wda) wda.addEventListener('click', () => detectAllRooms()); }
     const wdm = $('#wsDelMeas'); if (wdm) wdm.addEventListener('click', deleteSelMeas);
     const wcm = $('#wsClearMeas'); if (wcm) wcm.addEventListener('click', () => {
       if (!S.measures.length) { markSaved(F.tr('Sem medidas')); return; }
@@ -2347,6 +2383,10 @@
         e.preventDefault(); finishArea();              // Enter fecha a Área
       } else if ((e.key === 'Enter' || e.key === 'n' || e.key === 'N') && !typing && S.lineMode && S.linePts.length) {
         e.preventDefault(); finishLine();              // Enter/N finaliza a linha e libera p/ começar OUTRA
+      } else if ((e.key === 'Enter') && !typing && S.areaMode && S.areaAI && S.areaSeeds && S.areaSeeds.length) {
+        e.preventDefault(); detectAllRooms();                                     // Enter → detectar todos os marcados
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.areaMode && S.areaAI && S.areaSeeds && S.areaSeeds.length) {
+        e.preventDefault(); S.areaSeeds.pop(); updateDetectAllBtn(); draw();       // tira o último ponto marcado
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.areaMode) {
         e.preventDefault();
         if (S.areaPts && S.areaPts.length) { S.areaPts.pop(); draw(); }           // desfaz último ponto
