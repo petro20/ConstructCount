@@ -821,13 +821,13 @@
       const k = ar.kind || 'floor', seld = S.areaSel && S.areaSel.has(ar), neg = !!ar.neg;
       const fillC = neg ? 'rgba(239,68,68,.20)' : kindFill(k, '.18');     // NEGATIVO = vermelho
       const strokeC = neg ? 'rgba(239,68,68,.95)' : kindFill(k, '.9');
+      // UM caminho com todas as partes + fill EVEN-ODD → buracos (anel/corredor) ficam VAZADOS
+      ctx.beginPath();
+      polys.forEach(poly => { poly.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }); ctx.closePath(); });
+      ctx.fillStyle = seld ? 'rgba(245,158,11,.22)' : fillC; ctx.fill('evenodd');
+      ctx.lineWidth = seld ? 4 : 2; ctx.strokeStyle = seld ? '#f59e0b' : strokeC; ctx.lineJoin = 'round'; if (neg) ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]);
       let big = polys[0], bigA = -1;                 // maior parte → leva o rótulo do total
       polys.forEach(poly => {
-        ctx.beginPath();
-        poly.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
-        ctx.closePath();
-        ctx.fillStyle = seld ? 'rgba(245,158,11,.22)' : fillC; ctx.fill();
-        ctx.lineWidth = seld ? 4 : 2; ctx.strokeStyle = seld ? '#f59e0b' : strokeC; ctx.lineJoin = 'round'; if (neg) ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]);
         const a = polySf(poly); if (a > bigA) { bigA = a; big = poly; }
         if (S.areaMode) poly.forEach(p => {          // vértices visíveis p/ apagar com botão direito
           const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy;
