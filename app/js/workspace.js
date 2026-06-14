@@ -795,22 +795,30 @@
     });
     // ÁREA — polígonos finalizados desta folha (verde translúcido + SF no centro)
     (S.areas || []).forEach(ar => {
-      if (ar.page !== S.page || !ar.path || ar.path.length < 3) return;
+      if (ar.page !== S.page) return;
+      const polys = areaPolys(ar).filter(pp => pp && pp.length >= 3);
+      if (!polys.length) return;
       const k = ar.kind || 'floor', seld = S.areaSel && S.areaSel.has(ar);
-      ctx.beginPath();
-      ar.path.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
-      ctx.closePath();
-      ctx.fillStyle = seld ? 'rgba(245,158,11,.22)' : kindFill(k, '.18'); ctx.fill();
-      ctx.lineWidth = seld ? 4 : 2; ctx.strokeStyle = seld ? '#f59e0b' : kindFill(k, '.9'); ctx.lineJoin = 'round'; ctx.stroke();
-      const c = polyCentroid(ar.path), cx = c[0] * S.scale + S.ox, cy = c[1] * S.scale + S.oy;
-      const txt = kindName(k) + '  ' + ar.sf.toFixed(1) + ' SF'; ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
+      let big = polys[0], bigA = -1;                 // maior parte → leva o rótulo do total
+      polys.forEach(poly => {
+        ctx.beginPath();
+        poly.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+        ctx.closePath();
+        ctx.fillStyle = seld ? 'rgba(245,158,11,.22)' : kindFill(k, '.18'); ctx.fill();
+        ctx.lineWidth = seld ? 4 : 2; ctx.strokeStyle = seld ? '#f59e0b' : kindFill(k, '.9'); ctx.lineJoin = 'round'; ctx.stroke();
+        const a = polySf(poly); if (a > bigA) { bigA = a; big = poly; }
+        if (S.areaMode) poly.forEach(p => {          // vértices visíveis p/ apagar com botão direito
+          const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy;
+          ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = kindFill(k, '.95'); ctx.fill();
+          ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.stroke();
+        });
+      });
+      const c = polyCentroid(big), cx = c[0] * S.scale + S.ox, cy = c[1] * S.scale + S.oy;
+      const tot = (ar.sf != null ? ar.sf : areaSf(ar));
+      const txt = kindName(k) + (polys.length > 1 ? ('  (' + polys.length + ')  ') : '  ') + tot.toFixed(1) + ' SF';
+      ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
       ctx.fillStyle = 'rgba(15,14,11,.85)'; ctx.fillRect(cx - tw / 2 - 5, cy - 9, tw + 10, 18);
       ctx.fillStyle = kindText(k); ctx.fillText(txt, cx - tw / 2, cy + 4);
-      if (S.areaMode) ar.path.forEach(p => {        // vértices visíveis p/ apagar com botão direito
-        const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy;
-        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = kindFill(k, '.95'); ctx.fill();
-        ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.stroke();
-      });
     });
     if (S.areaMode && S.areaPts && S.areaPts.length) {     // polígono em construção + área ao vivo
       const k = S.areaKind || 'floor', col = kindColor(k);
@@ -1076,7 +1084,7 @@
     S.marks.forEach(m => cands.push([m.x + m.w / 2, m.y + m.h / 2]));
     S.measures.forEach(ml => { cands.push(ml.a); cands.push(ml.b); });
     (S.lines || []).forEach(l => { if (l.page === S.page && l.path) l.path.forEach(p => cands.push(p)); });
-    (S.areas || []).forEach(a => { if (a.page === S.page && a.path) a.path.forEach(p => cands.push(p)); });
+    (S.areas || []).forEach(a => { if (a.page === S.page) areaPolys(a).forEach(poly => poly.forEach(p => cands.push(p))); });
     (S.areaPts || []).forEach(p => cands.push(p));
     cands.forEach(c => { const d = Math.hypot(c[0] - ix, c[1] - iy); if (d < bd) { bd = d; best = c; } });
     if (best && bd <= tol) return [best[0], best[1]];
@@ -1255,6 +1263,9 @@
     try { localStorage.setItem(areaKey(S.page), JSON.stringify(S.areas || [])); } catch (e) {}
   }
   function polyCentroid(path) { let x = 0, y = 0; path.forEach(p => { x += p[0]; y += p[1]; }); return [x / path.length, y / path.length]; }
+  // uma ÁREA pode ter VÁRIAS partes (juntadas pela varinha em lote) ou só `path`
+  function areaPolys(ar) { return (ar && ar.parts && ar.parts.length) ? ar.parts : (ar && ar.path ? [ar.path] : []); }
+  function areaSf(ar) { return areaPolys(ar).reduce((s, p) => s + polySf(p), 0); }
   // tipo de área: 'floor' (Piso, verde) | 'ceiling' (Teto/Forro, azul)
   function kindColor(k) { return k === 'ceiling' ? '#38bdf8' : '#22c55e'; }
   function kindFill(k, a) { return (k === 'ceiling' ? 'rgba(56,189,248,' : 'rgba(34,197,94,') + a + ')'; }
@@ -1284,7 +1295,7 @@
     let best = null, bd = (tolScreen || 14);
     const consider = (p) => { if (!p) return; const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; const d = Math.hypot(sx - x, sy - y); if (d <= bd) { bd = d; best = [p[0], p[1]]; } };
     (S.areaPts || []).forEach(consider);
-    (S.areas || []).forEach(a => { if (a.page === S.page && a.path) a.path.forEach(consider); });
+    (S.areas || []).forEach(a => { if (a.page === S.page) areaPolys(a).forEach(poly => poly.forEach(consider)); });
     (S.lines || []).forEach(l => { if (l.page === S.page && l.path) l.path.forEach(consider); });
     (S.marks || []).forEach(m => consider([m.x + m.w / 2, m.y + m.h / 2]));
     (S.measures || []).forEach(m => { consider(m.a); consider(m.b); });
@@ -1338,16 +1349,17 @@
     } catch (e) { markSaved(F.tr('Falha ao detectar os cômodos.')); return; }
     if (!S.areas) S.areas = [];
     let ok = 0, fail = 0;
-    pushUndo();
+    const parts = [];
     rooms.forEach(r => {
-      if (r && r.poly && r.poly.length >= 3) {
-        const path = r.poly.map(p => [p[0], p[1]]);
-        S.areas.push({ path: path, sf: polySf(path), page: S.page, kind: kind });
-        ok++;
-      } else fail++;
+      if (r && r.poly && r.poly.length >= 3) { parts.push(r.poly.map(p => [p[0], p[1]])); ok++; } else fail++;
     });
     S.areaSeeds = []; updateDetectAllBtn();
-    if (ok) { saveAreas(); updateAreaTot(); if (S.pageExp) S.pageExp.add(S.page); renderPagesList(); }
+    if (parts.length) {                                      // JUNTA todos num ÚNICO item (multi-partes), 1 total
+      pushUndo();
+      const sf = parts.reduce((s, p) => s + polySf(p), 0);
+      S.areas.push({ parts: parts, sf: sf, page: S.page, kind: kind });
+      saveAreas(); updateAreaTot(); if (S.pageExp) S.pageExp.add(S.page); renderPagesList();
+    }
     markSaved('✨ ' + F.tr('{ok} cômodo(s) detectado(s)', { ok: ok }) + (fail ? (' · ' + F.tr('{f} falhou(aram)', { f: fail })) : ''));
     draw();
   }
@@ -1378,21 +1390,29 @@
       if (Math.hypot(sx - px, sy - py) <= tol) return { kind: 'draft', i: i };
     }
     for (const ar of (S.areas || [])) {
-      if (ar.page !== S.page || !ar.path) continue;
-      for (let i = 0; i < ar.path.length; i++) {
-        const px = ar.path[i][0] * S.scale + S.ox, py = ar.path[i][1] * S.scale + S.oy;
-        if (Math.hypot(sx - px, sy - py) <= tol) return { kind: 'area', ar: ar, i: i };
+      if (ar.page !== S.page) continue;
+      const polys = areaPolys(ar);
+      for (const poly of polys) {
+        for (let i = 0; i < poly.length; i++) {
+          const px = poly[i][0] * S.scale + S.ox, py = poly[i][1] * S.scale + S.oy;
+          if (Math.hypot(sx - px, sy - py) <= tol) return { kind: 'area', ar: ar, poly: poly, i: i };
+        }
       }
     }
     return null;
   }
-  // remove o vértice retornado por hitAreaPoint (área fechada recalcula o SF; <3 pontos = apaga a área)
+  // remove o vértice retornado por hitAreaPoint (recalcula o SF; parte <3 pontos some; área sem partes some)
   function removeAreaPoint(hp) {
     if (hp.kind === 'draft') { S.areaPts.splice(hp.i, 1); draw(); markSaved(F.tr('Ponto removido')); return; }
     pushUndo();
-    hp.ar.path.splice(hp.i, 1);
-    if (hp.ar.path.length < 3) { S.areas = S.areas.filter(a => a !== hp.ar); markSaved(F.tr('Área apagada')); }
-    else { hp.ar.sf = polySf(hp.ar.path); markSaved(F.tr('Ponto removido')); }
+    hp.poly.splice(hp.i, 1);
+    if (hp.poly.length < 3) {                          // parte ficou inválida → remove a parte
+      if (hp.ar.parts) hp.ar.parts = hp.ar.parts.filter(p => p !== hp.poly);
+      else hp.ar.path = null;
+    }
+    const polys = areaPolys(hp.ar);
+    if (!polys.length) { S.areas = S.areas.filter(a => a !== hp.ar); markSaved(F.tr('Área apagada')); }
+    else { hp.ar.sf = areaSf(hp.ar); markSaved(F.tr('Ponto removido')); }
     saveAreas(); updateAreaTot(); renderPagesList(); draw();
   }
   function selSet() { if (!S.selSet) S.selSet = new Set(); return S.selSet; }
@@ -1557,8 +1577,8 @@
   function hitArea(sx, sy) {
     for (let i = (S.areas || []).length - 1; i >= 0; i--) {   // último desenhado primeiro
       const a = S.areas[i];
-      if (a.page !== S.page || !a.path || a.path.length < 3) continue;
-      if (pointInPoly(sx, sy, a.path)) return a;
+      if (a.page !== S.page) continue;
+      if (areaPolys(a).some(poly => poly.length >= 3 && pointInPoly(sx, sy, poly))) return a;
     }
     return null;
   }
@@ -1569,13 +1589,16 @@
     markSaved(F.tr('{n} área(s) selecionada(s) · Del p/ apagar', { n: S.areaSel.size }));
   }
   function areaInRect(ar, r, crossing) {
-    if (ar.page !== S.page || !ar.path) return false;
-    const pts = ar.path.map(p => [p[0] * S.scale + S.ox, p[1] * S.scale + S.oy]);
-    if (crossing) {                                   // toca o retângulo (arrasto p/ esquerda)
-      for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; if (segHitsRect(a[0], a[1], b[0], b[1], r)) return true; }
-      return false;
+    if (ar.page !== S.page) return false;
+    const polys = areaPolys(ar);
+    if (crossing) {                                   // toca o retângulo (arrasto p/ esquerda) — qualquer parte
+      return polys.some(poly => {
+        const pts = poly.map(p => [p[0] * S.scale + S.ox, p[1] * S.scale + S.oy]);
+        for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; if (segHitsRect(a[0], a[1], b[0], b[1], r)) return true; }
+        return false;
+      });
     }
-    return pts.every(p => ptInRect(p[0], p[1], r));    // totalmente dentro (arrasto p/ direita)
+    return polys.every(poly => poly.every(p => ptInRect(p[0] * S.scale + S.ox, p[1] * S.scale + S.oy, r)));   // TODAS as partes dentro
   }
   function deleteSelAreas() {
     if (!S.areaSel || !S.areaSel.size) return 0;
