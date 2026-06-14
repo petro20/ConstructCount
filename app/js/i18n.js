@@ -1155,6 +1155,7 @@ window.ConstructCount = window.ConstructCount || {};
     '{n} área(s) selecionada(s) · Del p/ apagar': { en: '{n} area(s) selected · Del to delete', es: '{n} área(s) seleccionada(s) · Supr para borrar' },
     '{n} áreas apagadas': { en: '{n} areas deleted', es: '{n} áreas eliminadas' },
     '🔗 Unir áreas (1 só)': { en: '🔗 Merge areas (into 1)', es: '🔗 Unir áreas (en 1)' },
+    '⇧ Shift+clique = negativo (desconta)': { en: '⇧ Shift+click = negative (subtracts)', es: '⇧ Shift+clic = negativo (descuenta)' },
     '{n} áreas unidas → {sf} SF': { en: '{n} areas merged → {sf} SF', es: '{n} áreas unidas → {sf} SF' },
     'Selecione 2+ áreas para unir (ou tenha 2+ do mesmo tipo na folha).': { en: 'Select 2+ areas to merge (or have 2+ of the same type on the sheet).', es: 'Selecciona 2+ áreas para unir (o ten 2+ del mismo tipo en la hoja).' },
     '{pkg} é um pacote à parte (US$ 12/mês) — assine na aba Pacote para liberar.': { en: '{pkg} is a separate package (US$ 12/mo) — subscribe on the Package tab to unlock.', es: '{pkg} es un paquete aparte (US$ 12/mes) — suscríbelo en la pestaña Paquete para desbloquear.' },

@@ -298,8 +298,8 @@
   function pageAreaSummary(pageNo) {
     const list = (pageNo === S.page) ? (S.areas || []) : loadAreas(pageNo);
     let f = 0, c = 0;
-    (list || []).forEach(a => { if (a.kind === 'ceiling') c += (a.sf || 0); else f += (a.sf || 0); });
-    return { floor: f, ceiling: c, any: f > 0 || c > 0 };
+    (list || []).forEach(a => { const s = (a.sf || 0) * (a.neg ? -1 : 1); if (a.kind === 'ceiling') c += s; else f += s; });   // negativos descontam
+    return { floor: f, ceiling: c, any: f !== 0 || c !== 0 };
   }
 
   // ----- menu de contexto (botão direito) das PÁGINAS -----
@@ -798,36 +798,38 @@
       if (ar.page !== S.page) return;
       const polys = areaPolys(ar).filter(pp => pp && pp.length >= 3);
       if (!polys.length) return;
-      const k = ar.kind || 'floor', seld = S.areaSel && S.areaSel.has(ar);
+      const k = ar.kind || 'floor', seld = S.areaSel && S.areaSel.has(ar), neg = !!ar.neg;
+      const fillC = neg ? 'rgba(239,68,68,.20)' : kindFill(k, '.18');     // NEGATIVO = vermelho
+      const strokeC = neg ? 'rgba(239,68,68,.95)' : kindFill(k, '.9');
       let big = polys[0], bigA = -1;                 // maior parte → leva o rótulo do total
       polys.forEach(poly => {
         ctx.beginPath();
         poly.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
         ctx.closePath();
-        ctx.fillStyle = seld ? 'rgba(245,158,11,.22)' : kindFill(k, '.18'); ctx.fill();
-        ctx.lineWidth = seld ? 4 : 2; ctx.strokeStyle = seld ? '#f59e0b' : kindFill(k, '.9'); ctx.lineJoin = 'round'; ctx.stroke();
+        ctx.fillStyle = seld ? 'rgba(245,158,11,.22)' : fillC; ctx.fill();
+        ctx.lineWidth = seld ? 4 : 2; ctx.strokeStyle = seld ? '#f59e0b' : strokeC; ctx.lineJoin = 'round'; if (neg) ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]);
         const a = polySf(poly); if (a > bigA) { bigA = a; big = poly; }
         if (S.areaMode) poly.forEach(p => {          // vértices visíveis p/ apagar com botão direito
           const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy;
-          ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = kindFill(k, '.95'); ctx.fill();
+          ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = neg ? 'rgba(239,68,68,.95)' : kindFill(k, '.95'); ctx.fill();
           ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.stroke();
         });
       });
       const c = polyCentroid(big), cx = c[0] * S.scale + S.ox, cy = c[1] * S.scale + S.oy;
       const tot = (ar.sf != null ? ar.sf : areaSf(ar));
-      const txt = kindName(k) + (polys.length > 1 ? ('  (' + polys.length + ')  ') : '  ') + tot.toFixed(1) + ' SF';
+      const txt = (neg ? '− ' : '') + kindName(k) + (polys.length > 1 ? ('  (' + polys.length + ')  ') : '  ') + tot.toFixed(1) + ' SF';
       ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
       ctx.fillStyle = 'rgba(15,14,11,.85)'; ctx.fillRect(cx - tw / 2 - 5, cy - 9, tw + 10, 18);
-      ctx.fillStyle = kindText(k); ctx.fillText(txt, cx - tw / 2, cy + 4);
+      ctx.fillStyle = neg ? '#fca5a5' : kindText(k); ctx.fillText(txt, cx - tw / 2, cy + 4);
     });
     if (S.areaMode && S.areaPts && S.areaPts.length) {     // polígono em construção + área ao vivo
-      const k = S.areaKind || 'floor', col = kindColor(k);
+      const k = S.areaKind || 'floor', neg = !!S.areaNeg, col = neg ? '#ef4444' : kindColor(k);
       const aeff = (S.curX != null) ? areaEffective(S.curX, S.curY) : { pt: S.hover, snapped: false };
       let eff = aeff.pt;
       const prev = (eff && S.areaPts.length >= 2) ? S.areaPts.concat([eff]) : S.areaPts;
       if (prev.length >= 3) {                               // preenchimento prévio
         ctx.beginPath(); prev.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }); ctx.closePath();
-        ctx.fillStyle = kindFill(k, '.12'); ctx.fill();
+        ctx.fillStyle = neg ? 'rgba(239,68,68,.14)' : kindFill(k, '.12'); ctx.fill();
       }
       ctx.lineWidth = 2; ctx.strokeStyle = col; ctx.setLineDash([6, 4]); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       ctx.beginPath();
@@ -837,8 +839,8 @@
       S.areaPts.forEach(p => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = col; ctx.fill(); });
       if (S.mmPerPx && prev.length >= 3) {                  // SF ao vivo no centro
         const sf = polySf(prev), c = polyCentroid(prev), cx = c[0] * S.scale + S.ox, cy = c[1] * S.scale + S.oy;
-        const txt = kindName(k) + '  ' + sf.toFixed(1) + ' SF'; ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
-        ctx.fillStyle = kindFill(k, '.95'); ctx.fillRect(cx - tw / 2 - 5, cy - 9, tw + 10, 18);
+        const txt = (neg ? '− ' : '') + kindName(k) + '  ' + sf.toFixed(1) + ' SF'; ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
+        ctx.fillStyle = neg ? 'rgba(239,68,68,.95)' : kindFill(k, '.95'); ctx.fillRect(cx - tw / 2 - 5, cy - 9, tw + 10, 18);
         ctx.fillStyle = '#fff'; ctx.fillText(txt, cx - tw / 2, cy + 4);
       }
     }
@@ -846,7 +848,7 @@
     if (S.areaMode && S.areaAI && S.areaSeeds && S.areaSeeds.length) {
       S.areaSeeds.forEach((s, i) => {
         const x = s[0] * S.scale + S.ox, y = s[1] * S.scale + S.oy;
-        ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.fillStyle = 'rgba(16,185,129,.9)'; ctx.fill();
+        ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.fillStyle = s[2] ? 'rgba(239,68,68,.92)' : 'rgba(16,185,129,.9)'; ctx.fill();
         ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.stroke();
         ctx.fillStyle = '#fff'; ctx.font = '700 11px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(String(i + 1), x, y); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
@@ -1275,7 +1277,7 @@
   function updateAreaTot() {
     const el = document.getElementById('wsAreaTot'); if (!el) return;
     let f = 0, c = 0;
-    (S.areas || []).forEach(a => { if (a.page !== S.page) return; if (a.kind === 'ceiling') c += (a.sf || 0); else f += (a.sf || 0); });
+    (S.areas || []).forEach(a => { if (a.page !== S.page) return; const s = (a.sf || 0) * (a.neg ? -1 : 1); if (a.kind === 'ceiling') c += s; else f += s; });   // negativos DESCONTAM
     const parts = [];
     if (f) parts.push('🟩 ' + F.tr('Piso') + ': ' + f.toFixed(1) + ' SF');
     if (c) parts.push('🟦 ' + F.tr('Teto') + ': ' + c.toFixed(1) + ' SF');
@@ -1310,7 +1312,7 @@
     if (S.areaPts && S.areaPts.length) p = applyOrtho(S.areaPts[S.areaPts.length - 1], p);
     return { pt: p, snapped: false };
   }
-  function handleArea(sx, sy) {
+  function handleArea(sx, sy, shift) {
     if (!S.mmPerPx) { alert(F.tr('Calibre a escala primeiro (📏 Calibrar escala).')); return; }
     const kind = S.areaKind || 'floor';
     if (!areaScopeOwned(kind)) {   // NADA grátis: medir/orçar este ofício exige o pacote
@@ -1318,18 +1320,19 @@
       return;
     }
     if (!S.areaPts) S.areaPts = [];
+    if (!S.areaPts.length) S.areaNeg = !!shift;          // 1º ponto define o SINAL do polígono (Shift = negativo)
     S.areaPts.push(areaEffective(sx, sy).pt); draw();
   }
   // ✨ VARINHA DE CÔMODO (LOTE): cada clique marca um PONTO (seed); o botão
   // "Detectar (N)" processa todos de uma vez (a IA/CV acha as paredes de cada um).
-  function addAreaSeed(sx, sy) {
+  function addAreaSeed(sx, sy, shift) {
     if (!S.mmPerPx) { alert(F.tr('Calibre a escala primeiro (📏 Calibrar escala).')); return; }
     const kind = S.areaKind || 'floor';
     if (!areaScopeOwned(kind)) { markSaved('🔒 ' + F.tr('{pkg} é um pacote à parte (US$ 12/mês) — assine na aba Pacote para liberar.', { pkg: kindName(kind) })); return; }
     if (!(S.prov && (S.prov.detectRooms || S.prov.detectRoom))) { markSaved(F.tr('Detectar cômodo: disponível no app desktop.')); return; }
     if (!S.areaSeeds) S.areaSeeds = [];
     const [ix, iy] = toImg(sx, sy);
-    S.areaSeeds.push([Math.round(ix), Math.round(iy)]);
+    S.areaSeeds.push([Math.round(ix), Math.round(iy), shift ? 1 : 0]);   // 3º = NEGATIVO (Shift)
     updateDetectAllBtn(); draw();
   }
   function updateDetectAllBtn() {
@@ -1350,19 +1353,19 @@
     } catch (e) { markSaved(F.tr('Falha ao detectar os cômodos.')); return; }
     if (!S.areas) S.areas = [];
     let ok = 0, fail = 0;
-    const parts = [], seen = new Set();                  // DEDUPE: ignora cômodos já medidos na folha
+    const pos = [], neg = [], seen = new Set();          // DEDUPE; separa POSITIVO e NEGATIVO (Shift)
     (S.areas || []).forEach(a => { if (a.page === S.page) areaPolys(a).forEach(p => seen.add(polyKey(p))); });
-    rooms.forEach(r => {
+    rooms.forEach((r, idx) => {
       if (!(r && r.poly && r.poly.length >= 3)) { fail++; return; }
       const poly = r.poly.map(p => [p[0], p[1]]), k = polyKey(poly);
       if (seen.has(k)) return;                            // já existe → não duplica
-      seen.add(k); parts.push(poly); ok++;
+      seen.add(k); (seeds[idx] && seeds[idx][2] ? neg : pos).push(poly); ok++;
     });
     S.areaSeeds = []; updateDetectAllBtn();
-    if (parts.length) {                                      // JUNTA todos num ÚNICO item (multi-partes), 1 total
+    if (pos.length || neg.length) {                      // junta positivos num item e negativos noutro
       pushUndo();
-      const sf = parts.reduce((s, p) => s + polySf(p), 0);
-      S.areas.push({ parts: parts, sf: sf, page: S.page, kind: kind });
+      if (pos.length) S.areas.push({ parts: pos, sf: pos.reduce((s, p) => s + polySf(p), 0), page: S.page, kind: kind });
+      if (neg.length) S.areas.push({ parts: neg, sf: neg.reduce((s, p) => s + polySf(p), 0), page: S.page, kind: kind, neg: true });
       saveAreas(); updateAreaTot(); if (S.pageExp) S.pageExp.add(S.page); renderPagesList();
     }
     markSaved('✨ ' + F.tr('{ok} cômodo(s) detectado(s)', { ok: ok }) + (fail ? (' · ' + F.tr('{f} falhou(aram)', { f: fail })) : ''));
@@ -1378,13 +1381,14 @@
       pushUndo();
       const sf = polySf(S.areaPts);
       const kind = S.areaKind || 'floor';
+      const neg = !!S.areaNeg;
       if (!S.areas) S.areas = [];
-      S.areas.push({ path: S.areaPts.slice(), sf: sf, page: S.page, kind: kind });
+      S.areas.push({ path: S.areaPts.slice(), sf: sf, page: S.page, kind: kind, neg: neg });
       saveAreas(); updateAreaTot();
       if (S.pageExp) S.pageExp.add(S.page); renderPagesList();   // levantamento aparece na folha (árvore)
-      markSaved(kindName(kind) + ' — ' + sf.toFixed(1) + ' SF');
+      markSaved((neg ? '− ' : '') + kindName(kind) + ' — ' + sf.toFixed(1) + ' SF');
     }
-    S.areaPts = []; draw();
+    S.areaPts = []; S.areaNeg = false; draw();
   }
   F._wsAreas = () => (S.areas || []);   // outros pacotes podem ler as áreas medidas
   // acha um VÉRTICE de área sob o cursor (em construção ou já fechada) — p/ apagar ponto errado
@@ -1617,18 +1621,21 @@
     }
     pushUndo();
     const kind = list[0].kind || 'floor';
-    const parts = [], seen = new Set();                  // DEDUPE partes repetidas (não dobra o SF)
+    const pos = [], neg = [], seen = new Set();          // DEDUPE; separa POSITIVO de NEGATIVO
     list.forEach(a => areaPolys(a).forEach(poly => {
       if (poly.length < 3) return;
-      const k = polyKey(poly); if (seen.has(k)) return; seen.add(k); parts.push(poly);
+      const key = (a.neg ? 'n:' : 'p:') + polyKey(poly); if (seen.has(key)) return; seen.add(key);
+      (a.neg ? neg : pos).push(poly);
     }));
     const set = new Set(list);
     S.areas = (S.areas || []).filter(a => !set.has(a));
-    const merged = { parts: parts, sf: parts.reduce((s, p) => s + polySf(p), 0), page: S.page, kind: kind };
-    S.areas.push(merged);
-    if (S.areaSel) { S.areaSel.clear(); S.areaSel.add(merged); }
+    const added = [];
+    if (pos.length) { const m = { parts: pos, sf: pos.reduce((s, p) => s + polySf(p), 0), page: S.page, kind: kind }; S.areas.push(m); added.push(m); }
+    if (neg.length) { const m = { parts: neg, sf: neg.reduce((s, p) => s + polySf(p), 0), page: S.page, kind: kind, neg: true }; S.areas.push(m); added.push(m); }
+    if (S.areaSel) { S.areaSel.clear(); added.forEach(m => S.areaSel.add(m)); }
     saveAreas(); updateAreaTot(); renderPagesList(); draw();
-    markSaved('🔗 ' + F.tr('{n} áreas unidas → {sf} SF', { n: list.length, sf: merged.sf.toFixed(1) }));
+    const net = pos.reduce((s, p) => s + polySf(p), 0) - neg.reduce((s, p) => s + polySf(p), 0);
+    markSaved('🔗 ' + F.tr('{n} áreas unidas → {sf} SF', { n: list.length, sf: net.toFixed(1) }));
   }
   function deleteSelAreas() {
     if (!S.areaSel || !S.areaSel.size) return 0;
@@ -2198,7 +2205,7 @@
         const ha = hitArea(e.offsetX, e.offsetY);
         if (ha) { pickArea(ha, e); draw(); return; }
       }
-      if (S.areaMode) { if (S.areaAI) addAreaSeed(e.offsetX, e.offsetY); else handleArea(e.offsetX, e.offsetY); return; }
+      if (S.areaMode) { if (S.areaAI) addAreaSeed(e.offsetX, e.offsetY, e.shiftKey); else handleArea(e.offsetX, e.offsetY, e.shiftKey); return; }   // Shift = NEGATIVO (desconta)
       if (S.lineMode) { handleLine(e.offsetX, e.offsetY); return; }
       if (S.calibMode || S.measMode) { handleRuler(e.offsetX, e.offsetY); return; }
       const m = hit(e.offsetX, e.offsetY);
@@ -2237,7 +2244,7 @@
       S.lineMode = which === 'linear' && !S.lineMode;
       S.areaMode = which === 'area' && !S.areaMode;
       if (which !== 'linear') S.linePts = [];
-      if (which !== 'area') { S.areaPts = []; S.areaAI = false; S.areaSeeds = []; const wai = $('#wsAreaAI'); if (wai) { wai.classList.remove('ring-2', 'ring-emerald-300'); } if (typeof updateDetectAllBtn === 'function') updateDetectAllBtn(); }
+      if (which !== 'area') { S.areaPts = []; S.areaAI = false; S.areaSeeds = []; S.areaNeg = false; const wai = $('#wsAreaAI'); if (wai) { wai.classList.remove('ring-2', 'ring-emerald-300'); } if (typeof updateDetectAllBtn === 'function') updateDetectAllBtn(); }
       if (S.lineSel) S.lineSel.clear();
       if (S.areaSel) S.areaSel.clear();
       S.clickA = null; S.hover = null; S.maybeMarquee = false; S.marquee = null;
