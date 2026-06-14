@@ -1143,6 +1143,7 @@ window.ConstructCount = window.ConstructCount || {};
     'base ({n})': { en: 'base ({n})', es: 'zócalo ({n})' },
     'Base': { en: 'Base', es: 'Zócalo' },
     'Piso / Forro': { en: 'Floor / Ceiling', es: 'Piso / Cielo' },
+    'Forro': { en: 'Ceiling', es: 'Cielo' },
     '📊 Takeoff de Piso/Forro': { en: '📊 Floor/Ceiling Takeoff', es: '📊 Cómputo de Piso/Cielo' },
     'Rodapé (base)': { en: 'Base (baseboard)', es: 'Zócalo (base)' },
     'Rodapé': { en: 'Base', es: 'Zócalo' },
