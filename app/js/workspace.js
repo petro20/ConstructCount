@@ -36,6 +36,7 @@
     S.labelIdx = {}; S.countMode = false; S.autoMode = false; S.delMode = false;
     S.calibMode = false; S.measMode = false; S.clickA = null; S.measures = [];
     S.lineMode = false; S.linePts = []; S.lines = []; S.lineSel = new Set(); S.hiddenTypes = new Set();
+    S.areas = []; S.areaSel = new Set();   // áreas (Piso/Forro) + seleção
     S.schedulePages = (opts.schedulePages || []).slice();
     S.sections = (opts.sections && opts.sections.length) ? opts.sections.slice() : ['Geral'];
     S.activeSection = opts.activeSection || S.sections[0];
@@ -485,7 +486,7 @@
     S.measures = Array.isArray(data.measures) ? data.measures : [];   // medidas salvas
     // áreas desta folha: PREFERE o que o motor (Python) salvou no projeto; senão localStorage (fallback web/cliente antigo)
     S.areas = Array.isArray(data.areas) ? data.areas : loadAreas(S.page);
-    S.areaPts = []; updateAreaTot();
+    S.areaPts = []; if (S.areaSel) S.areaSel.clear(); updateAreaTot();
     // traços do Linear salvos desta folha → substituem os desta página em memória
     S.lines = (S.lines || []).filter(l => l.page !== S.page);
     (Array.isArray(data.lines) ? data.lines : []).forEach(l => { l.page = S.page; S.lines.push(l); });
@@ -795,12 +796,12 @@
     // ÁREA — polígonos finalizados desta folha (verde translúcido + SF no centro)
     (S.areas || []).forEach(ar => {
       if (ar.page !== S.page || !ar.path || ar.path.length < 3) return;
-      const k = ar.kind || 'floor';
+      const k = ar.kind || 'floor', seld = S.areaSel && S.areaSel.has(ar);
       ctx.beginPath();
       ar.path.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
       ctx.closePath();
-      ctx.fillStyle = kindFill(k, '.18'); ctx.fill();
-      ctx.lineWidth = 2; ctx.strokeStyle = kindFill(k, '.9'); ctx.lineJoin = 'round'; ctx.stroke();
+      ctx.fillStyle = seld ? 'rgba(245,158,11,.22)' : kindFill(k, '.18'); ctx.fill();
+      ctx.lineWidth = seld ? 4 : 2; ctx.strokeStyle = seld ? '#f59e0b' : kindFill(k, '.9'); ctx.lineJoin = 'round'; ctx.stroke();
       const c = polyCentroid(ar.path), cx = c[0] * S.scale + S.ox, cy = c[1] * S.scale + S.oy;
       const txt = kindName(k) + '  ' + ar.sf.toFixed(1) + ' SF'; ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
       ctx.fillStyle = 'rgba(15,14,11,.85)'; ctx.fillRect(cx - tw / 2 - 5, cy - 9, tw + 10, 18);
@@ -1174,7 +1175,7 @@
     if (!S.undoStack || !S.undoStack.length) { markSaved(F.tr('Nada para desfazer')); return; }
     let snap; try { snap = JSON.parse(S.undoStack.pop()); } catch (e) { return; }
     S.lines = snap.lines || []; S.marks = snap.marks || []; S.measures = snap.measures || []; S.areas = snap.areas || [];
-    if (S.lineSel) S.lineSel.clear(); clearSel();
+    if (S.lineSel) S.lineSel.clear(); if (S.areaSel) S.areaSel.clear(); clearSel();
     saveLines(); saveMeasures(); saveAreas(); S.dirty = true; scheduleSave();
     renderItems(); renderPagesList(); updateMeasSel(); updateAreaTot(); draw();
     if (F._renderFramingPanel) F._renderFramingPanel();
@@ -1509,6 +1510,48 @@
       return false;
     }
     return pts.every(p => ptInRect(p[0], p[1], r));    // totalmente dentro (arrasto p/ direita)
+  }
+  // ----- seleção/apagar de ÁREAS (igual paredes): clique dentro seleciona, Del apaga -----
+  function pointInPoly(px, py, path) {                 // (coords de TELA)
+    let inside = false;
+    for (let i = 0, j = path.length - 1; i < path.length; j = i++) {
+      const xi = path[i][0] * S.scale + S.ox, yi = path[i][1] * S.scale + S.oy;
+      const xj = path[j][0] * S.scale + S.ox, yj = path[j][1] * S.scale + S.oy;
+      if (((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / ((yj - yi) || 1e-9) + xi)) inside = !inside;
+    }
+    return inside;
+  }
+  function hitArea(sx, sy) {
+    for (let i = (S.areas || []).length - 1; i >= 0; i--) {   // último desenhado primeiro
+      const a = S.areas[i];
+      if (a.page !== S.page || !a.path || a.path.length < 3) continue;
+      if (pointInPoly(sx, sy, a.path)) return a;
+    }
+    return null;
+  }
+  function pickArea(ar, e) {
+    if (!S.areaSel) S.areaSel = new Set();
+    if (!(e && (e.ctrlKey || e.metaKey || e.shiftKey))) S.areaSel.clear();
+    if (S.areaSel.has(ar)) S.areaSel.delete(ar); else S.areaSel.add(ar);
+    markSaved(F.tr('{n} área(s) selecionada(s) · Del p/ apagar', { n: S.areaSel.size }));
+  }
+  function areaInRect(ar, r, crossing) {
+    if (ar.page !== S.page || !ar.path) return false;
+    const pts = ar.path.map(p => [p[0] * S.scale + S.ox, p[1] * S.scale + S.oy]);
+    if (crossing) {                                   // toca o retângulo (arrasto p/ esquerda)
+      for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; if (segHitsRect(a[0], a[1], b[0], b[1], r)) return true; }
+      return false;
+    }
+    return pts.every(p => ptInRect(p[0], p[1], r));    // totalmente dentro (arrasto p/ direita)
+  }
+  function deleteSelAreas() {
+    if (!S.areaSel || !S.areaSel.size) return 0;
+    const n = S.areaSel.size;
+    pushUndo();
+    S.areas = (S.areas || []).filter(a => !S.areaSel.has(a));
+    S.areaSel.clear();
+    saveAreas(); updateAreaTot(); renderPagesList(); draw();
+    return n;
   }
 
   // ✨ IA (CV local): detecta as paredes da folha e cria os traços Linear na camada ativa
@@ -2027,21 +2070,24 @@
       if (S.maybeMarquee && S.marquee) {              // soltou o laço
         const crossing = S.marqCrossing;             // p/ esquerda = APAGAR; p/ direita = selecionar
         const set = selSet(), mset = selMarks();
-        if (crossing || !(S.marqMods && (S.marqMods.ctrl || S.marqMods.shift))) { set.clear(); mset.clear(); S.lineSel.clear(); }
+        if (crossing || !(S.marqMods && (S.marqMods.ctrl || S.marqMods.shift))) { set.clear(); mset.clear(); S.lineSel.clear(); if (S.areaSel) S.areaSel.clear(); }
         S.measures.forEach(m => { if (measInRect(m, S.marquee, crossing)) set.add(m); });
         S.marks.forEach(m => { if (markInRect(m, S.marquee, crossing)) mset.add(m); });
         (S.lines || []).forEach(ln => { if (lineInRect(ln, S.marquee, crossing)) S.lineSel.add(ln); });   // traços Linear
+        (S.areas || []).forEach(ar => { if (areaInRect(ar, S.marquee, crossing)) { if (!S.areaSel) S.areaSel = new Set(); S.areaSel.add(ar); } });   // áreas
         S.maybeMarquee = false; S.marquee = null;
         if (crossing) {                              // ARRASTE P/ ESQUERDA = apagar tudo que tocou
           pushUndo();
           const nL = S.lineSel.size;
           if (nL) { S.lines = S.lines.filter(l => !S.lineSel.has(l)); S.lineSel.clear(); saveLines(); }
+          const nA = (S.areaSel && S.areaSel.size) || 0;
+          if (nA) { S.areas = S.areas.filter(a => !S.areaSel.has(a)); S.areaSel.clear(); saveAreas(); updateAreaTot(); renderPagesList(); }
           const n = selCount();
           if (n) { deleteSelMeas(); }
-          const tot = n + nL;
+          const tot = n + nL + nA;
           if (tot) markSaved(F.tr('🗑 Apagadas {n} (laço ←)', { n: tot })); else draw();
         } else {                                     // p/ direita = apenas selecionar
-          updateMeasSel(); draw(); markSaved(F.tr('{n} selecionada(s) · Del p/ apagar', { n: selCount() + S.lineSel.size }));
+          updateMeasSel(); draw(); markSaved(F.tr('{n} selecionada(s) · Del p/ apagar', { n: selCount() + S.lineSel.size + ((S.areaSel && S.areaSel.size) || 0) }));
         }
         return;
       }
@@ -2063,6 +2109,8 @@
         if (hm) { pickMeasure(hm, e); markSaved(F.tr('{n} medida(s) selecionada(s) · Del p/ apagar', { n: selSet().size })); draw(); return; }
         const hl = hitLine(e.offsetX, e.offsetY);
         if (hl) { pickLine(hl, e); draw(); return; }
+        const ha = hitArea(e.offsetX, e.offsetY);
+        if (ha) { pickArea(ha, e); draw(); return; }
       }
       if (S.areaMode) { if (S.areaAI) detectRoomAt(e.offsetX, e.offsetY); else handleArea(e.offsetX, e.offsetY); return; }
       if (S.lineMode) { handleLine(e.offsetX, e.offsetY); return; }
@@ -2105,6 +2153,7 @@
       if (which !== 'linear') S.linePts = [];
       if (which !== 'area') { S.areaPts = []; S.areaAI = false; const wai = $('#wsAreaAI'); if (wai) { wai.classList.remove('ring-2', 'ring-emerald-300'); } }
       if (S.lineSel) S.lineSel.clear();
+      if (S.areaSel) S.areaSel.clear();
       S.clickA = null; S.hover = null; S.maybeMarquee = false; S.marquee = null;
       S.autoDragStart = null; S.autoRegion = null; S.autoSample = null;
       const act = (id, on) => { const b = $(id); if (b) b.classList.toggle('ws-tool-active', on); };
@@ -2292,6 +2341,7 @@
         if (S.areaMode && S.areaPts && S.areaPts.length) { finishArea(); return; }
         if (S.lineMode && S.linePts.length) { finishLine(); return; }
         if (S.lineSel && S.lineSel.size) { S.lineSel.clear(); draw(); }
+        if (S.areaSel && S.areaSel.size) { S.areaSel.clear(); draw(); }
         if (S.clickA || S.dragMeas || selCount()) { S.clickA = null; S.dragMeas = null; clearSel(); updateMeasSel(); markSaved(F.tr('Cancelado')); draw(); }
       } else if ((e.key === 'Enter' || e.key === 'n' || e.key === 'N') && !typing && S.areaMode && S.areaPts && S.areaPts.length) {
         e.preventDefault(); finishArea();              // Enter fecha a Área
@@ -2309,6 +2359,8 @@
         e.preventDefault(); S.linePts.pop(); draw();    // desfaz último ponto do Linear
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.lineSel && S.lineSel.size) {
         e.preventDefault(); pushUndo(); S.lines = S.lines.filter(l => !S.lineSel.has(l)); S.lineSel.clear(); saveLines(); draw(); markSaved(F.tr('Linha(s) apagada(s)'));   // apaga traço(s) Linear selecionado(s)
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.areaSel && S.areaSel.size) {
+        e.preventDefault(); const n = deleteSelAreas(); markSaved(n > 1 ? F.tr('{n} áreas apagadas', { n: n }) : F.tr('Área apagada'));   // apaga área(s) selecionada(s)
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && selCount()) {
         e.preventDefault(); pushUndo(); deleteSelMeas();   // apaga a medida selecionada
       } else if (!typing && !mod && (e.key === 's' || e.key === 'S')) {

@@ -1144,6 +1144,8 @@ window.ConstructCount = window.ConstructCount || {};
     'Falha ao detectar o cômodo.': { en: 'Failed to detect the room.', es: 'Error al detectar la habitación.' },
     'Não consegui delimitar o cômodo — desenhe manual.': { en: "Couldn't outline the room — draw it manually.", es: 'No pude delimitar la habitación — dibújala manual.' },
     'Detectar cômodo: disponível no app desktop.': { en: 'Detect room: available in the desktop app.', es: 'Detectar habitación: disponible en la app de escritorio.' },
+    '{n} área(s) selecionada(s) · Del p/ apagar': { en: '{n} area(s) selected · Del to delete', es: '{n} área(s) seleccionada(s) · Supr para borrar' },
+    '{n} áreas apagadas': { en: '{n} areas deleted', es: '{n} áreas eliminadas' },
     '{pkg} é um pacote à parte (US$ 12/mês) — assine na aba Pacote para liberar.': { en: '{pkg} is a separate package (US$ 12/mo) — subscribe on the Package tab to unlock.', es: '{pkg} es un paquete aparte (US$ 12/mes) — suscríbelo en la pestaña Paquete para desbloquear.' },
     'Meça algo no desenho primeiro': { en: 'Measure something on the drawing first', es: 'Mide algo en el dibujo primero' },
     'Modo de reconhecimento do projeto — clique para mudar': { en: 'Project recognition mode — click to change', es: 'Modo de reconocimiento del proyecto — clic para cambiar' },
