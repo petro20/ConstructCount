@@ -848,7 +848,8 @@
       const tot = (ar.sf != null ? ar.sf : areaSf(ar));
       const tg = ar.tag ? (' ' + ar.tag) : '';
       const baseLf = (!neg && k !== 'ceiling') ? areaBaseLf(ar) : 0;   // BASE = perímetro do piso (rodapé)
-      const baseTxt = baseLf > 0 ? ('  ·  ' + F.tr('Base') + ' ' + baseLf.toFixed(1) + ' LF') : '';
+      const bH = S.areaBaseH || 0, baseSf = baseLf * (bH / 12);        // área da base = perímetro × altura
+      const baseTxt = baseLf > 0 ? ('  ·  ' + F.tr('Base') + ' ' + baseLf.toFixed(1) + ' LF' + (bH > 0 ? (' (' + baseSf.toFixed(1) + ' SF)') : '')) : '';
       const txt = (neg ? '− ' : '') + kindName(k) + tg + (polys.length > 1 ? ('  (' + polys.length + ')  ') : '  ') + tot.toFixed(1) + ' SF' + baseTxt;
       ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
       ctx.fillStyle = 'rgba(15,14,11,.85)'; ctx.fillRect(cx - tw / 2 - 5, cy - 9, tw + 10, 18);
@@ -1380,7 +1381,7 @@
     (S.areas || []).forEach(a => { if (a.page !== S.page) return; const s = (a.sf || 0) * (a.neg ? -1 : 1); if (a.kind === 'ceiling') c += s; else { f += s; if (!a.neg) base += areaBaseLf(a); } });   // negativos DESCONTAM; base = perímetro do piso
     const parts = [];
     if (f) parts.push('🟩 ' + F.tr('Piso') + ': ' + f.toFixed(1) + ' SF');
-    if (base) parts.push('📏 ' + F.tr('Base') + ': ' + base.toFixed(1) + ' LF');
+    if (base) { let bt = '📏 ' + F.tr('Base') + ': ' + base.toFixed(1) + ' LF'; if (S.areaBaseH > 0) bt += ' (' + (base * S.areaBaseH / 12).toFixed(1) + ' SF)'; parts.push(bt); }
     if (c) parts.push('🟦 ' + F.tr('Teto') + ': ' + c.toFixed(1) + ' SF');
     el.textContent = parts.join('   ·   ');
   }
@@ -2505,6 +2506,7 @@
       if (S.areaSel && S.areaSel.size) { pushUndo(); S.areaSel.forEach(a => { a.tag = S.areaTag; }); saveAreas(); renderPagesList(); }   // aplica nas selecionadas
       draw();
     }); refreshAreaTagList(); } }
+    { const wbh = $('#wsAreaBaseH'); if (wbh) { S.areaBaseH = parseFloat(wbh.value) || 0; wbh.addEventListener('input', () => { S.areaBaseH = parseFloat(wbh.value) || 0; updateAreaTot(); draw(); }); } }
     { const wai = $('#wsAreaAI'); if (wai) wai.addEventListener('click', () => {
       S.areaAI = !S.areaAI; S.areaPts = [];                    // alterna a varinha; limpa polígono manual em andamento
       if (!S.areaAI) S.areaSeeds = [];                         // desligou → descarta os pontos marcados
