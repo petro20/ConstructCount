@@ -825,16 +825,20 @@
       if (eff) { const hx = eff[0] * S.scale + S.ox, hy = eff[1] * S.scale + S.oy; ctx.lineTo(hx, hy); }
       ctx.stroke(); ctx.setLineDash([]);
       S.areaPts.forEach(p => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = col; ctx.fill(); });
-      if (eff && aeff.snapped) {                            // ÍMÃ: anel destacando o ponto que vai grudar
-        const hx = eff[0] * S.scale + S.ox, hy = eff[1] * S.scale + S.oy;
-        ctx.beginPath(); ctx.arc(hx, hy, 8, 0, Math.PI * 2); ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2.5; ctx.stroke();
-        ctx.beginPath(); ctx.arc(hx, hy, 3, 0, Math.PI * 2); ctx.fillStyle = '#f59e0b'; ctx.fill();
-      }
       if (S.mmPerPx && prev.length >= 3) {                  // SF ao vivo no centro
         const sf = polySf(prev), c = polyCentroid(prev), cx = c[0] * S.scale + S.ox, cy = c[1] * S.scale + S.oy;
         const txt = kindName(k) + '  ' + sf.toFixed(1) + ' SF'; ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
         ctx.fillStyle = kindFill(k, '.95'); ctx.fillRect(cx - tw / 2 - 5, cy - 9, tw + 10, 18);
         ctx.fillStyle = '#fff'; ctx.fillText(txt, cx - tw / 2, cy + 4);
+      }
+    }
+    // ÍMÃ (Snap ligado): anel laranja no vértice que o cursor vai grudar — vale ATÉ antes do 1º ponto
+    if (S.areaMode && S.snap && S.curX != null) {
+      const v = nearestAreaVertex(S.curX, S.curY);
+      if (v) {
+        const hx = v[0] * S.scale + S.ox, hy = v[1] * S.scale + S.oy;
+        ctx.beginPath(); ctx.arc(hx, hy, 8, 0, Math.PI * 2); ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2.5; ctx.stroke();
+        ctx.beginPath(); ctx.arc(hx, hy, 3, 0, Math.PI * 2); ctx.fillStyle = '#f59e0b'; ctx.fill();
       }
     }
     if (S.lineMode && S.linePts.length) {                 // traço em construção
@@ -1269,10 +1273,10 @@
     (S.measures || []).forEach(m => { consider(m.a); consider(m.b); });
     return best;
   }
-  // ponto efetivo da área: ímã do vértice vence; senão snap de imagem + ortho. {pt, snapped}
+  // ponto efetivo da área: com SNAP ligado, o ímã do vértice vence (ignora ortho);
+  // senão snap de imagem + ortho. {pt, snapped}
   function areaEffective(sx, sy) {
-    const v = nearestAreaVertex(sx, sy);
-    if (v) return { pt: v, snapped: true };                  // gruda no ponto existente (ignora ortho)
+    if (S.snap) { const v = nearestAreaVertex(sx, sy); if (v) return { pt: v, snapped: true }; }
     let p = snapPt(...toImg(sx, sy));
     if (S.areaPts && S.areaPts.length) p = applyOrtho(S.areaPts[S.areaPts.length - 1], p);
     return { pt: p, snapped: false };
