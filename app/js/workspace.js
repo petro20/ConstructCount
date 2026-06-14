@@ -292,6 +292,15 @@
     return arr;
   }
 
+  // resumo de ÁREA por folha (Piso/Teto em SF) — p/ a árvore PÁGINAS. Lê a folha
+  // atual da memória e as demais do localStorage (áreas persistem por folha).
+  function pageAreaSummary(pageNo) {
+    const list = (pageNo === S.page) ? (S.areas || []) : loadAreas(pageNo);
+    let f = 0, c = 0;
+    (list || []).forEach(a => { if (a.kind === 'ceiling') c += (a.sf || 0); else f += (a.sf || 0); });
+    return { floor: f, ceiling: c, any: f > 0 || c > 0 };
+  }
+
   // ----- menu de contexto (botão direito) das PÁGINAS -----
   function closePagesMenu() { const m = document.getElementById('wsPagesMenu'); if (m) m.remove(); document.removeEventListener('click', closePagesMenu); document.removeEventListener('keydown', onMenuKey); }
   function onMenuKey(e) { if (e.key === 'Escape') closePagesMenu(); }
@@ -377,6 +386,8 @@
     displayedPages().forEach(p => {
       const picked = sel.has(p.page);
       const types = pageTypeSummary(p.page);
+      const ar = pageAreaSummary(p.page);
+      const hasChildren = types.length || ar.any;
       const row = document.createElement('div');
       row.setAttribute('data-pageno', p.page);
       row.className = 'px-2 py-1.5 cursor-pointer flex items-center gap-1.5 select-none ' +
@@ -384,8 +395,8 @@
       // triângulo de expandir (só quando há tipos levantados)
       const tri = document.createElement('span');
       tri.className = 'w-3 text-xs text-steel-400 shrink-0 text-center';
-      tri.textContent = types.length ? (S.pageExp.has(p.page) ? '▾' : '▸') : '';
-      if (types.length) tri.addEventListener('click', (ev) => { ev.stopPropagation(); S.pageExp.has(p.page) ? S.pageExp.delete(p.page) : S.pageExp.add(p.page); renderPagesList(); });
+      tri.textContent = hasChildren ? (S.pageExp.has(p.page) ? '▾' : '▸') : '';
+      if (hasChildren) tri.addEventListener('click', (ev) => { ev.stopPropagation(); S.pageExp.has(p.page) ? S.pageExp.delete(p.page) : S.pageExp.add(p.page); renderPagesList(); });
       row.appendChild(tri);
       const badge = p.n_hex
         ? '<span class="text-xs bg-emerald-600 text-white rounded px-1.5">' + p.n_hex + '</span>'
@@ -419,7 +430,7 @@
       row.addEventListener('click', (ev) => selectPage(p.page, ev));   // Ctrl/Shift/clique = Excel
       el.appendChild(row);
       // FILHOS: tipos de parede levantados nesta folha (cor + LF) — clique ativa o tipo
-      if (types.length && S.pageExp.has(p.page)) {
+      if (hasChildren && S.pageExp.has(p.page)) {
         types.forEach(t => {
           const hidden = t.id && S.hiddenTypes && S.hiddenTypes.has(t.id);
           const c = document.createElement('div');
@@ -434,6 +445,19 @@
           const q = document.createElement('span'); q.className = 'text-steel-300 tabular-nums text-xs'; q.textContent = t.lf.toFixed(1) + ' LF';
           c.appendChild(sw); c.appendChild(nm); c.appendChild(q);
           c.addEventListener('click', () => { if (F.framing) F.framing.activeWT = t.id; if (F._syncWallTypeSelect) F._syncWallTypeSelect(); if (p.page !== S.page) selectPage(p.page, {}); else if (F._wsRedraw) F._wsRedraw(); });
+          el.appendChild(c);
+        });
+        // ÁREA levantada nesta folha (Piso verde / Teto azul, em SF) — clique abre a folha
+        [['floor', ar.floor, '#22c55e', F.tr('Piso')], ['ceiling', ar.ceiling, '#38bdf8', F.tr('Teto')]].forEach(arr => {
+          if (!arr[1]) return;
+          const c = document.createElement('div');
+          c.setAttribute('data-pageno', p.page);
+          c.className = 'pl-8 pr-2 py-1 flex items-center gap-2 text-sm cursor-pointer hover:bg-steel-700/60';
+          const sw = document.createElement('span'); sw.style.cssText = 'width:12px;height:12px;border-radius:3px;flex:0 0 auto;background:' + arr[2];
+          const nm = document.createElement('span'); nm.className = 'flex-1 truncate text-steel-200'; nm.textContent = arr[3];
+          const q = document.createElement('span'); q.className = 'text-steel-300 tabular-nums text-xs'; q.textContent = arr[1].toFixed(1) + ' SF';
+          c.appendChild(sw); c.appendChild(nm); c.appendChild(q);
+          c.addEventListener('click', () => { if (p.page !== S.page) selectPage(p.page, {}); });
           el.appendChild(c);
         });
       }
@@ -1248,6 +1272,7 @@
       if (!S.areas) S.areas = [];
       S.areas.push({ path: S.areaPts.slice(), sf: sf, page: S.page, kind: kind });
       saveAreas(); updateAreaTot();
+      if (S.pageExp) S.pageExp.add(S.page); renderPagesList();   // levantamento aparece na folha (árvore)
       markSaved(kindName(kind) + ' — ' + sf.toFixed(1) + ' SF');
     }
     S.areaPts = []; draw();
@@ -1276,7 +1301,7 @@
     hp.ar.path.splice(hp.i, 1);
     if (hp.ar.path.length < 3) { S.areas = S.areas.filter(a => a !== hp.ar); markSaved(F.tr('Área apagada')); }
     else { hp.ar.sf = polySf(hp.ar.path); markSaved(F.tr('Ponto removido')); }
-    saveAreas(); updateAreaTot(); draw();
+    saveAreas(); updateAreaTot(); renderPagesList(); draw();
   }
   function selSet() { if (!S.selSet) S.selSet = new Set(); return S.selSet; }
   function selMarks() { if (!S.selMarks) S.selMarks = new Set(); return S.selMarks; }
@@ -2213,7 +2238,7 @@
         else if (S.areas && S.areas.some(a => a.page === S.page)) {               // idle → apaga a última área da folha
           pushUndo();
           for (let i = S.areas.length - 1; i >= 0; i--) { if (S.areas[i].page === S.page) { S.areas.splice(i, 1); break; } }
-          saveAreas(); updateAreaTot(); draw(); markSaved(F.tr('Área apagada'));
+          saveAreas(); updateAreaTot(); renderPagesList(); draw(); markSaved(F.tr('Área apagada'));
         }
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.lineMode && S.linePts.length) {
         e.preventDefault(); S.linePts.pop(); draw();    // desfaz último ponto do Linear
