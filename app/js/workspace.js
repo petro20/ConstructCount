@@ -1297,6 +1297,26 @@
     if (!S.areaPts) S.areaPts = [];
     S.areaPts.push(areaEffective(sx, sy).pt); draw();
   }
+  // ✨ VARINHA DE CÔMODO: 1 clique → a IA/CV preenche até as paredes e cria a área
+  async function detectRoomAt(sx, sy) {
+    if (!S.mmPerPx) { alert(F.tr('Calibre a escala primeiro (📏 Calibrar escala).')); return; }
+    const kind = S.areaKind || 'floor';
+    if (!areaScopeOwned(kind)) { markSaved('🔒 ' + F.tr('{pkg} é um pacote à parte (US$ 12/mês) — assine na aba Pacote para liberar.', { pkg: kindName(kind) })); return; }
+    if (!(S.prov && S.prov.detectRoom)) { markSaved(F.tr('Detectar cômodo: disponível no app desktop.')); return; }
+    const [ix, iy] = toImg(sx, sy);
+    markSaved(F.tr('✨ IA detectando o cômodo…'));
+    let r; try { r = await S.prov.detectRoom(S.page, Math.round(ix), Math.round(iy)); } catch (e) { markSaved(F.tr('Falha ao detectar o cômodo.')); return; }
+    if (!r || r.error || !r.poly || r.poly.length < 3) { markSaved('⚠️ ' + ((r && r.error) || F.tr('Não consegui delimitar o cômodo — desenhe manual.'))); return; }
+    pushUndo();
+    const path = r.poly.map(p => [p[0], p[1]]);
+    const sf = polySf(path);
+    if (!S.areas) S.areas = [];
+    S.areas.push({ path: path, sf: sf, page: S.page, kind: kind });
+    saveAreas(); updateAreaTot();
+    if (S.pageExp) S.pageExp.add(S.page); renderPagesList();
+    markSaved('✨ ' + kindName(kind) + ' — ' + sf.toFixed(1) + ' SF');
+    draw();
+  }
   function finishArea() {
     if (!S.areaPts) S.areaPts = [];
     while (S.areaPts.length >= 2) {                       // tira ponto duplicado do duplo-clique
@@ -2044,7 +2064,7 @@
         const hl = hitLine(e.offsetX, e.offsetY);
         if (hl) { pickLine(hl, e); draw(); return; }
       }
-      if (S.areaMode) { handleArea(e.offsetX, e.offsetY); return; }
+      if (S.areaMode) { if (S.areaAI) detectRoomAt(e.offsetX, e.offsetY); else handleArea(e.offsetX, e.offsetY); return; }
       if (S.lineMode) { handleLine(e.offsetX, e.offsetY); return; }
       if (S.calibMode || S.measMode) { handleRuler(e.offsetX, e.offsetY); return; }
       const m = hit(e.offsetX, e.offsetY);
@@ -2083,7 +2103,7 @@
       S.lineMode = which === 'linear' && !S.lineMode;
       S.areaMode = which === 'area' && !S.areaMode;
       if (which !== 'linear') S.linePts = [];
-      if (which !== 'area') S.areaPts = [];
+      if (which !== 'area') { S.areaPts = []; S.areaAI = false; const wai = $('#wsAreaAI'); if (wai) { wai.classList.remove('ring-2', 'ring-emerald-300'); } }
       if (S.lineSel) S.lineSel.clear();
       S.clickA = null; S.hover = null; S.maybeMarquee = false; S.marquee = null;
       S.autoDragStart = null; S.autoRegion = null; S.autoSample = null;
@@ -2150,6 +2170,13 @@
     const wmea = $('#wsMeasure'); if (wmea) wmea.addEventListener('click', () => setMode('measure'));
     const ware = $('#wsArea'); if (ware) ware.addEventListener('click', () => { if (!S.mmPerPx) markSaved(F.tr('Calibre a escala primeiro (📏).')); setMode('area'); });
     { const wak = $('#wsAreaKind'); if (wak) { S.areaKind = wak.value || 'floor'; wak.addEventListener('change', () => { S.areaKind = wak.value || 'floor'; if (!areaScopeOwned(S.areaKind)) markSaved('🔒 ' + F.tr('{pkg} é um pacote à parte (US$ 12/mês) — assine na aba Pacote para liberar.', { pkg: kindName(S.areaKind) })); draw(); }); } }
+    { const wai = $('#wsAreaAI'); if (wai) wai.addEventListener('click', () => {
+      S.areaAI = !S.areaAI; S.areaPts = [];                    // alterna a varinha; limpa polígono manual em andamento
+      if (S.areaAI && !S.areaMode) setMode('area');            // liga o modo Área junto
+      wai.classList.toggle('ring-2', S.areaAI); wai.classList.toggle('ring-emerald-300', S.areaAI);
+      markSaved(S.areaAI ? F.tr('✨ Varinha de cômodo: clique dentro do quarto') : F.tr('Varinha de cômodo: desligada'));
+      draw();
+    }); }
     const wdm = $('#wsDelMeas'); if (wdm) wdm.addEventListener('click', deleteSelMeas);
     const wcm = $('#wsClearMeas'); if (wcm) wcm.addEventListener('click', () => {
       if (!S.measures.length) { markSaved(F.tr('Sem medidas')); return; }
