@@ -1221,8 +1221,15 @@
     for (let i = 0; i < path.length; i++) { const p = path[i], q = path[(i + 1) % path.length]; a2 += p[0] * q[1] - q[0] * p[1]; }
     return (Math.abs(a2) / 2) * S.mmPerPx * S.mmPerPx / 92903.04;   // 1 ft² = 304.8² mm²
   }
+  function areaPkgFor(k) { return k === 'ceiling' ? 'ceiling' : 'floor'; }   // Piso/Teto = pacotes próprios
+  function areaScopeOwned(k) { return !F.hasPackage || F.hasPackage(areaPkgFor(k)); }
   function handleArea(sx, sy) {
     if (!S.mmPerPx) { alert(F.tr('Calibre a escala primeiro (📏 Calibrar escala).')); return; }
+    const kind = S.areaKind || 'floor';
+    if (!areaScopeOwned(kind)) {   // NADA grátis: medir/orçar este ofício exige o pacote
+      markSaved('🔒 ' + F.tr('{pkg} é um pacote à parte (US$ 12/mês) — assine na aba Pacote para liberar.', { pkg: kindName(kind) }));
+      return;
+    }
     if (!S.areaPts) S.areaPts = [];
     let p = snapPt(...toImg(sx, sy));
     if (S.areaPts.length) p = applyOrtho(S.areaPts[S.areaPts.length - 1], p);   // trava H/V se Ortho
@@ -2079,7 +2086,7 @@
     const wcal = $('#wsCalib'); if (wcal) wcal.addEventListener('click', () => setMode('calib'));
     const wmea = $('#wsMeasure'); if (wmea) wmea.addEventListener('click', () => setMode('measure'));
     const ware = $('#wsArea'); if (ware) ware.addEventListener('click', () => { if (!S.mmPerPx) markSaved(F.tr('Calibre a escala primeiro (📏).')); setMode('area'); });
-    { const wak = $('#wsAreaKind'); if (wak) { S.areaKind = wak.value || 'floor'; wak.addEventListener('change', () => { S.areaKind = wak.value || 'floor'; draw(); }); } }
+    { const wak = $('#wsAreaKind'); if (wak) { S.areaKind = wak.value || 'floor'; wak.addEventListener('change', () => { S.areaKind = wak.value || 'floor'; if (!areaScopeOwned(S.areaKind)) markSaved('🔒 ' + F.tr('{pkg} é um pacote à parte (US$ 12/mês) — assine na aba Pacote para liberar.', { pkg: kindName(S.areaKind) })); draw(); }); } }
     const wdm = $('#wsDelMeas'); if (wdm) wdm.addEventListener('click', deleteSelMeas);
     const wcm = $('#wsClearMeas'); if (wcm) wcm.addEventListener('click', () => {
       if (!S.measures.length) { markSaved(F.tr('Sem medidas')); return; }

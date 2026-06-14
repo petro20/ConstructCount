@@ -20,6 +20,9 @@ function cc_plan_catalog(): array {
     'drywall'    => ['name' => 'Drywall — mensal',    'amount' => 15.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['drywall']],
     'insulation' => ['name' => 'Insulation — mensal', 'amount' => 12.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['insulation']],
     'paint'      => ['name' => 'Paint — mensal',      'amount' => 12.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['paint']],
+    // Acabamento por ÁREA (à la carte, pacotes próprios — NÃO entram no combo de parede)
+    'floor'      => ['name' => 'Piso — mensal',        'amount' => 12.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['floor']],
+    'ceiling'    => ['name' => 'Teto/Forro — mensal',  'amount' => 12.00, 'currency' => 'USD', 'interval' => 'month', 'modules' => ['ceiling']],
     // Combo Parede completa (libera os 4 ofícios)
     'parede'     => ['name' => 'Parede completa — mensal', 'amount' => 45.00,  'currency' => 'USD', 'interval' => 'month', 'modules' => ['wall_combo', 'framing', 'drywall', 'insulation', 'paint']],
     'parede_ano' => ['name' => 'Parede completa — anual',  'amount' => 450.00, 'currency' => 'USD', 'interval' => 'year',  'modules' => ['wall_combo', 'framing', 'drywall', 'insulation', 'paint']],
@@ -57,6 +60,10 @@ function cc_portal_packages(): array {
       'desc' => 'Área de cavidade isolada por SF.', 'desc_en' => 'Insulated cavity area by SF.', 'desc_es' => 'Área de cavidad aislada por SF.'] + $pm,
     ['plan' => 'paint', 'price' => '$12', 'name' => 'Paint',
       'desc' => 'Pintura de parede por SF.', 'desc_en' => 'Wall paint by SF.', 'desc_es' => 'Pintura de pared por SF.'] + $pm,
+    ['plan' => 'floor', 'price' => '$12', 'name' => 'Piso', 'name_en' => 'Floor', 'name_es' => 'Piso',
+      'desc' => 'Área de piso por SF — meça na planta e orce.', 'desc_en' => 'Floor area by SF — measure on the plan and price it.', 'desc_es' => 'Área de piso por SF — mide en el plano y cotiza.'] + $pm,
+    ['plan' => 'ceiling', 'price' => '$12', 'name' => 'Teto / Forro', 'name_en' => 'Ceiling', 'name_es' => 'Techo / Cielo',
+      'desc' => 'Área de teto/forro por SF — meça na planta e orce.', 'desc_en' => 'Ceiling area by SF — measure on the plan and price it.', 'desc_es' => 'Área de techo/cielo por SF — mide en el plano y cotiza.'] + $pm,
     ['plan' => 'mensal', 'price' => '$19',
       'name' => 'Janelas & Portas', 'name_en' => 'Windows & Doors', 'name_es' => 'Ventanas y Puertas',
       'desc' => 'Esquadrias: leitura por IA, takeoff e documentos.', 'desc_en' => 'Windows & doors: AI reading, takeoff and documents.', 'desc_es' => 'Carpinterías: lectura por IA, cómputo y documentos.'] + $pm,
