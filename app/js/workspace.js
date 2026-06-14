@@ -2473,6 +2473,15 @@
         if (k === 's') { e.preventDefault(); saveAll(); return; }
         if (!typing && k === 'c' && S.lineSel && S.lineSel.size) { e.preventDefault(); copyLines(); return; }
         if (!typing && k === 'v' && S.lineClip && S.lineClip.length) { e.preventDefault(); pasteLines(); return; }
+        if (!typing && k === 'a' && (S.areas || []).some(a => a.page === S.page)) {   // Ctrl+A → seleciona TODAS as áreas da folha (p/ Unir)
+          e.preventDefault();
+          if (!S.areaSel) S.areaSel = new Set();
+          S.areaSel.clear(); if (S.lineSel) S.lineSel.clear(); clearSel();
+          (S.areas || []).forEach(a => { if (a.page === S.page) S.areaSel.add(a); });
+          updateMeasSel(); draw();
+          markSaved(F.tr('{n} área(s) selecionada(s) · Del p/ apagar', { n: S.areaSel.size }));
+          return;
+        }
       }
       if (e.key === 'Escape') {                        // Linear/Área: finaliza; senão cancela ponto/arraste/seleção
         if (S.areaMode && S.areaPts && S.areaPts.length) { finishArea(); return; }
