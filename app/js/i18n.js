@@ -1130,6 +1130,7 @@ window.ConstructCount = window.ConstructCount || {};
     '▱ Área (rápida)': { en: '▱ Area (quick)', es: '▱ Área (rápida)' },
     'Área: {sf} SF': { en: 'Area: {sf} SF', es: 'Área: {sf} SF' },
     'Área apagada': { en: 'Area deleted', es: 'Área eliminada' },
+    'Ponto removido': { en: 'Point removed', es: 'Punto eliminado' },
     'Meça algo no desenho primeiro': { en: 'Measure something on the drawing first', es: 'Mide algo en el dibujo primero' },
     'Modo de reconhecimento do projeto — clique para mudar': { en: 'Project recognition mode — click to change', es: 'Modo de reconocimiento del proyecto — clic para cambiar' },
     'Mostrar (cor)': { en: 'Show (color)', es: 'Mostrar (color)' },

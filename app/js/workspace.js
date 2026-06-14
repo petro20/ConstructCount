@@ -779,6 +779,11 @@
       const txt = ar.sf.toFixed(1) + ' SF'; ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
       ctx.fillStyle = 'rgba(15,14,11,.85)'; ctx.fillRect(cx - tw / 2 - 5, cy - 9, tw + 10, 18);
       ctx.fillStyle = '#86efac'; ctx.fillText(txt, cx - tw / 2, cy + 4);
+      if (S.areaMode) ar.path.forEach(p => {        // vértices visíveis p/ apagar com botão direito
+        const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy;
+        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = 'rgba(34,197,94,.95)'; ctx.fill();
+        ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.stroke();
+      });
     });
     if (S.areaMode && S.areaPts && S.areaPts.length) {     // polígono em construção + área ao vivo
       const col = '#22c55e';
@@ -1224,6 +1229,31 @@
     S.areaPts = []; draw();
   }
   F._wsAreas = () => (S.areas || []);   // outros pacotes podem ler as áreas medidas
+  // acha um VÉRTICE de área sob o cursor (em construção ou já fechada) — p/ apagar ponto errado
+  function hitAreaPoint(sx, sy) {
+    const tol = 11;
+    if (S.areaPts) for (let i = 0; i < S.areaPts.length; i++) {
+      const px = S.areaPts[i][0] * S.scale + S.ox, py = S.areaPts[i][1] * S.scale + S.oy;
+      if (Math.hypot(sx - px, sy - py) <= tol) return { kind: 'draft', i: i };
+    }
+    for (const ar of (S.areas || [])) {
+      if (ar.page !== S.page || !ar.path) continue;
+      for (let i = 0; i < ar.path.length; i++) {
+        const px = ar.path[i][0] * S.scale + S.ox, py = ar.path[i][1] * S.scale + S.oy;
+        if (Math.hypot(sx - px, sy - py) <= tol) return { kind: 'area', ar: ar, i: i };
+      }
+    }
+    return null;
+  }
+  // remove o vértice retornado por hitAreaPoint (área fechada recalcula o SF; <3 pontos = apaga a área)
+  function removeAreaPoint(hp) {
+    if (hp.kind === 'draft') { S.areaPts.splice(hp.i, 1); draw(); markSaved(F.tr('Ponto removido')); return; }
+    pushUndo();
+    hp.ar.path.splice(hp.i, 1);
+    if (hp.ar.path.length < 3) { S.areas = S.areas.filter(a => a !== hp.ar); markSaved(F.tr('Área apagada')); }
+    else { hp.ar.sf = polySf(hp.ar.path); markSaved(F.tr('Ponto removido')); }
+    saveAreas(); draw();
+  }
   function selSet() { if (!S.selSet) S.selSet = new Set(); return S.selSet; }
   function selMarks() { if (!S.selMarks) S.selMarks = new Set(); return S.selMarks; }
   function clearSel() { selSet().clear(); selMarks().clear(); }
@@ -1873,7 +1903,13 @@
         S.draggingLegend = null; legSave();
         markSaved(F.tr('Legenda movida')); draw(); return;
       }
-      if (e.button === 2) { endPan(); return; }      // soltou o direito → fim do pan
+      if (e.button === 2) {                          // soltou o direito
+        if (S.areaMode && !S.moved) {                // botão direito SEM arrastar em cima de um ponto = apaga o ponto
+          const hp = hitAreaPoint(e.offsetX, e.offsetY);
+          if (hp) { removeAreaPoint(hp); endPan(); return; }
+        }
+        endPan(); return;                            // senão → fim do pan
+      }
       if (e.button !== 0) return;
       S.lpress = false;
       if (S.dragMeas) {
