@@ -1082,13 +1082,15 @@
 
         <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="escala"><span>Escala / Medir (desenho)</span><span class="ws-chev">▼</span></div>
         <div class="p-3 space-y-2">
-          <div data-pkg="wall" class="rounded-lg border border-amber-700/50 bg-steel-800/60 p-2.5" title="Defina ANTES de levantar: quais ofícios esta estimativa cobre. A mesma parede gera quantidades para cada escopo ligado.">
+          <div class="rounded-lg border border-amber-700/50 bg-steel-800/60 p-2.5" title="Defina ANTES de levantar: quais ofícios esta estimativa cobre. Parede gera quantidades por escopo; Piso/Forro vêm da ferramenta de Área (SF).">
             <div class="text-[11px] font-semibold uppercase tracking-wide text-amber-300/90 mb-1.5">Escopo da obra</div>
             <div class="flex flex-wrap gap-1.5">
-              <button id="wsScopeFraming" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="framing">🏗️ Framing</button>
-              <button id="wsScopeDrywall" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="drywall">🧱 Drywall</button>
-              <button id="wsScopeInsul" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="insulation">🧊 Insulation</button>
-              <button id="wsScopePaint" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="paint">🎨 Paint</button>
+              <button id="wsScopeFraming" data-pkg="framing" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="framing">🏗️ Framing</button>
+              <button id="wsScopeDrywall" data-pkg="drywall" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="drywall">🧱 Drywall</button>
+              <button id="wsScopeInsul" data-pkg="insulation" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="insulation">🧊 Insulation</button>
+              <button id="wsScopePaint" data-pkg="paint" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="paint">🎨 Paint</button>
+              <button id="wsScopeFloor" data-pkg="floor" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="floor">▱ Piso</button>
+              <button id="wsScopeCeiling" data-pkg="ceiling" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="ceiling">▱ Forro</button>
             </div>
           </div>
           <button id="wsCalib" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Trace uma linha sobre uma medida conhecida do desenho e informe o valor real">📏 Calibrar escala</button>
@@ -1177,7 +1179,7 @@
     </div>
   </div>
 
-  <script src="js/i18n.js?v=238"></script>
+  <script src="js/i18n.js?v=239"></script>
   <script src="js/license.js?v=208"></script>
   <script src="js/calculator.js?v=216"></script>
   <script src="js/svg-engine.js?v=200"></script>
@@ -1187,8 +1189,8 @@
   <script src="js/proposal.js?v=200"></script>
   <script src="js/main.js?v=201"></script>
   <script src="js/annotator.js?v=200"></script>
-  <script src="js/workspace.js?v=265"></script>
-  <script src="js/framing.js?v=38"></script>
+  <script src="js/workspace.js?v=266"></script>
+  <script src="js/framing.js?v=39"></script>
   <script src="js/framing-export.js?v=5"></script>
   <script src="js/framing-report-editor.js?v=8"></script>
   <script src="js/framing-report-grapes.js?v=1"></script>

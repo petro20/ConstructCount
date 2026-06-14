@@ -28,7 +28,7 @@
     priceMeta: {},                                                                        // { key: {source, date, estimate:true} } — preço = estimativa IA até confirmar
     pxPerFt: null,  // escala calibrada (px da imagem por pé)
     floors: [], activeFloor: null,   // PISOS (cada um com altura) — o traço herda a altura do piso ativo
-    scope: { framing: true, drywall: true, insulation: true, paint: true },   // ESCOPO da obra — definido ANTES do levantamento
+    scope: { framing: true, drywall: true, insulation: true, paint: true, floor: false, ceiling: false },   // ESCOPO da obra — definido ANTES do levantamento (piso/forro = pacotes próprios, por ÁREA, default off)
   };
   // escopo: a mesma parede gera quantidades p/ cada ofício LIGADO
   F.framingScope = function () { return FR.scope; };
@@ -214,7 +214,7 @@
     if (d.sizes) FR.sizes = d.sizes;
     if (d.priceMeta) FR.priceMeta = d.priceMeta;
     if (d.labor) FR.labor = Object.assign({ framing: 0, drywall: 0, insulation: 0, paint: 0 }, d.labor);
-    if (d.scope) FR.scope = Object.assign({ framing: true, drywall: true, insulation: true, paint: true }, d.scope);
+    if (d.scope) FR.scope = Object.assign({ framing: true, drywall: true, insulation: true, paint: true, floor: false, ceiling: false }, d.scope);
     if (d.layerAssembly) FR.layerAssembly = d.layerAssembly;
     if (Array.isArray(d.floors)) FR.floors = d.floors;
     FR.activeFloor = d.activeFloor || (FR.floors[0] && FR.floors[0].id) || null;

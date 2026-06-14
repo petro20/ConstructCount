@@ -1135,6 +1135,8 @@ window.ConstructCount = window.ConstructCount || {};
     'Teto': { en: 'Ceiling', es: 'Techo' },
     'Teto / Forro': { en: 'Ceiling', es: 'Techo / Cielo' },
     'Tipo de área:': { en: 'Area type:', es: 'Tipo de área:' },
+    '▱ Piso': { en: '▱ Floor', es: '▱ Piso' },
+    '▱ Forro': { en: '▱ Ceiling', es: '▱ Cielo' },
     '{pkg} é um pacote à parte (US$ 12/mês) — assine na aba Pacote para liberar.': { en: '{pkg} is a separate package (US$ 12/mo) — subscribe on the Package tab to unlock.', es: '{pkg} es un paquete aparte (US$ 12/mes) — suscríbelo en la pestaña Paquete para desbloquear.' },
     'Meça algo no desenho primeiro': { en: 'Measure something on the drawing first', es: 'Mide algo en el dibujo primero' },
     'Modo de reconhecimento do projeto — clique para mudar': { en: 'Project recognition mode — click to change', es: 'Modo de reconocimiento del proyecto — clic para cambiar' },
