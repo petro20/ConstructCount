@@ -460,7 +460,7 @@
     }));
     S.measures = Array.isArray(data.measures) ? data.measures : [];   // medidas salvas
     S.areas = loadAreas(S.page);   // áreas (medição rápida) desta folha — localStorage por projeto+folha
-    S.areaPts = [];
+    S.areaPts = []; updateAreaTot();
     // traços do Linear salvos desta folha → substituem os desta página em memória
     S.lines = (S.lines || []).filter(l => l.page !== S.page);
     (Array.isArray(data.lines) ? data.lines : []).forEach(l => { l.page = S.page; S.lines.push(l); });
@@ -770,28 +770,29 @@
     // ÁREA — polígonos finalizados desta folha (verde translúcido + SF no centro)
     (S.areas || []).forEach(ar => {
       if (ar.page !== S.page || !ar.path || ar.path.length < 3) return;
+      const k = ar.kind || 'floor';
       ctx.beginPath();
       ar.path.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
       ctx.closePath();
-      ctx.fillStyle = 'rgba(34,197,94,.18)'; ctx.fill();
-      ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(34,197,94,.9)'; ctx.lineJoin = 'round'; ctx.stroke();
+      ctx.fillStyle = kindFill(k, '.18'); ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = kindFill(k, '.9'); ctx.lineJoin = 'round'; ctx.stroke();
       const c = polyCentroid(ar.path), cx = c[0] * S.scale + S.ox, cy = c[1] * S.scale + S.oy;
-      const txt = ar.sf.toFixed(1) + ' SF'; ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
+      const txt = kindName(k) + '  ' + ar.sf.toFixed(1) + ' SF'; ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
       ctx.fillStyle = 'rgba(15,14,11,.85)'; ctx.fillRect(cx - tw / 2 - 5, cy - 9, tw + 10, 18);
-      ctx.fillStyle = '#86efac'; ctx.fillText(txt, cx - tw / 2, cy + 4);
+      ctx.fillStyle = kindText(k); ctx.fillText(txt, cx - tw / 2, cy + 4);
       if (S.areaMode) ar.path.forEach(p => {        // vértices visíveis p/ apagar com botão direito
         const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy;
-        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = 'rgba(34,197,94,.95)'; ctx.fill();
+        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = kindFill(k, '.95'); ctx.fill();
         ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.stroke();
       });
     });
     if (S.areaMode && S.areaPts && S.areaPts.length) {     // polígono em construção + área ao vivo
-      const col = '#22c55e';
+      const k = S.areaKind || 'floor', col = kindColor(k);
       let eff = S.hover && S.areaPts.length ? applyOrtho(S.areaPts[S.areaPts.length - 1], S.hover) : S.hover;
       const prev = (eff && S.areaPts.length >= 2) ? S.areaPts.concat([eff]) : S.areaPts;
       if (prev.length >= 3) {                               // preenchimento prévio
         ctx.beginPath(); prev.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }); ctx.closePath();
-        ctx.fillStyle = 'rgba(34,197,94,.12)'; ctx.fill();
+        ctx.fillStyle = kindFill(k, '.12'); ctx.fill();
       }
       ctx.lineWidth = 2; ctx.strokeStyle = col; ctx.setLineDash([6, 4]); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       ctx.beginPath();
@@ -801,8 +802,8 @@
       S.areaPts.forEach(p => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = col; ctx.fill(); });
       if (S.mmPerPx && prev.length >= 3) {                  // SF ao vivo no centro
         const sf = polySf(prev), c = polyCentroid(prev), cx = c[0] * S.scale + S.ox, cy = c[1] * S.scale + S.oy;
-        const txt = sf.toFixed(1) + ' SF'; ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
-        ctx.fillStyle = 'rgba(34,197,94,.95)'; ctx.fillRect(cx - tw / 2 - 5, cy - 9, tw + 10, 18);
+        const txt = kindName(k) + '  ' + sf.toFixed(1) + ' SF'; ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
+        ctx.fillStyle = kindFill(k, '.95'); ctx.fillRect(cx - tw / 2 - 5, cy - 9, tw + 10, 18);
         ctx.fillStyle = '#fff'; ctx.fillText(txt, cx - tw / 2, cy + 4);
       }
     }
@@ -1136,7 +1137,7 @@
     S.lines = snap.lines || []; S.marks = snap.marks || []; S.measures = snap.measures || []; S.areas = snap.areas || [];
     if (S.lineSel) S.lineSel.clear(); clearSel();
     saveLines(); saveMeasures(); saveAreas(); S.dirty = true; scheduleSave();
-    renderItems(); renderPagesList(); updateMeasSel(); draw();
+    renderItems(); renderPagesList(); updateMeasSel(); updateAreaTot(); draw();
     if (F._renderFramingPanel) F._renderFramingPanel();
     markSaved(F.tr('Desfeito ↶'));
   }
@@ -1199,6 +1200,21 @@
   function loadAreas(page) { try { return JSON.parse(localStorage.getItem(areaKey(page)) || '[]') || []; } catch (e) { return []; } }
   function saveAreas() { try { localStorage.setItem(areaKey(S.page), JSON.stringify(S.areas || [])); } catch (e) {} }
   function polyCentroid(path) { let x = 0, y = 0; path.forEach(p => { x += p[0]; y += p[1]; }); return [x / path.length, y / path.length]; }
+  // tipo de área: 'floor' (Piso, verde) | 'ceiling' (Teto/Forro, azul)
+  function kindColor(k) { return k === 'ceiling' ? '#38bdf8' : '#22c55e'; }
+  function kindFill(k, a) { return (k === 'ceiling' ? 'rgba(56,189,248,' : 'rgba(34,197,94,') + a + ')'; }
+  function kindText(k) { return k === 'ceiling' ? '#7dd3fc' : '#86efac'; }
+  function kindName(k) { return F.tr(k === 'ceiling' ? 'Teto' : 'Piso'); }
+  function updateAreaTot() {
+    const el = document.getElementById('wsAreaTot'); if (!el) return;
+    let f = 0, c = 0;
+    (S.areas || []).forEach(a => { if (a.page !== S.page) return; if (a.kind === 'ceiling') c += (a.sf || 0); else f += (a.sf || 0); });
+    const parts = [];
+    if (f) parts.push('🟩 ' + F.tr('Piso') + ': ' + f.toFixed(1) + ' SF');
+    if (c) parts.push('🟦 ' + F.tr('Teto') + ': ' + c.toFixed(1) + ' SF');
+    el.textContent = parts.join('   ·   ');
+  }
+  F._wsUpdateAreaTot = updateAreaTot;
   function polySf(path) {                                  // área do polígono (shoelace) px² → ft²
     if (!S.mmPerPx || !path || path.length < 3) return 0;
     let a2 = 0;
@@ -1221,10 +1237,11 @@
     if (S.areaPts.length >= 3 && S.mmPerPx) {
       pushUndo();
       const sf = polySf(S.areaPts);
+      const kind = S.areaKind || 'floor';
       if (!S.areas) S.areas = [];
-      S.areas.push({ path: S.areaPts.slice(), sf: sf, page: S.page });
-      saveAreas();
-      markSaved(F.tr('Área: {sf} SF', { sf: sf.toFixed(1) }));
+      S.areas.push({ path: S.areaPts.slice(), sf: sf, page: S.page, kind: kind });
+      saveAreas(); updateAreaTot();
+      markSaved(kindName(kind) + ' — ' + sf.toFixed(1) + ' SF');
     }
     S.areaPts = []; draw();
   }
@@ -1252,7 +1269,7 @@
     hp.ar.path.splice(hp.i, 1);
     if (hp.ar.path.length < 3) { S.areas = S.areas.filter(a => a !== hp.ar); markSaved(F.tr('Área apagada')); }
     else { hp.ar.sf = polySf(hp.ar.path); markSaved(F.tr('Ponto removido')); }
-    saveAreas(); draw();
+    saveAreas(); updateAreaTot(); draw();
   }
   function selSet() { if (!S.selSet) S.selSet = new Set(); return S.selSet; }
   function selMarks() { if (!S.selMarks) S.selMarks = new Set(); return S.selMarks; }
@@ -2062,6 +2079,7 @@
     const wcal = $('#wsCalib'); if (wcal) wcal.addEventListener('click', () => setMode('calib'));
     const wmea = $('#wsMeasure'); if (wmea) wmea.addEventListener('click', () => setMode('measure'));
     const ware = $('#wsArea'); if (ware) ware.addEventListener('click', () => { if (!S.mmPerPx) markSaved(F.tr('Calibre a escala primeiro (📏).')); setMode('area'); });
+    { const wak = $('#wsAreaKind'); if (wak) { S.areaKind = wak.value || 'floor'; wak.addEventListener('change', () => { S.areaKind = wak.value || 'floor'; draw(); }); } }
     const wdm = $('#wsDelMeas'); if (wdm) wdm.addEventListener('click', deleteSelMeas);
     const wcm = $('#wsClearMeas'); if (wcm) wcm.addEventListener('click', () => {
       if (!S.measures.length) { markSaved(F.tr('Sem medidas')); return; }
@@ -2188,7 +2206,7 @@
         else if (S.areas && S.areas.some(a => a.page === S.page)) {               // idle → apaga a última área da folha
           pushUndo();
           for (let i = S.areas.length - 1; i >= 0; i--) { if (S.areas[i].page === S.page) { S.areas.splice(i, 1); break; } }
-          saveAreas(); draw(); markSaved(F.tr('Área apagada'));
+          saveAreas(); updateAreaTot(); draw(); markSaved(F.tr('Área apagada'));
         }
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.lineMode && S.linePts.length) {
         e.preventDefault(); S.linePts.pop(); draw();    // desfaz último ponto do Linear
