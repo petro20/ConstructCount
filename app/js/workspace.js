@@ -1047,11 +1047,15 @@
   function snapPt(ix, iy) {
     if (!S.snap) return [ix, iy];
     const tol = 22 / (S.scale || 1);
-    // 1) pontos notáveis (marcas + extremidades de medidas)
+    // 1) pontos notáveis (marcas + pontas de medida + VÉRTICES de paredes e áreas
+    //    desta folha + pontos da área em construção → gruda no ponto já marcado p/ reusar/fechar)
     let best = null, bd = 1e9;
     const cands = [];
     S.marks.forEach(m => cands.push([m.x + m.w / 2, m.y + m.h / 2]));
     S.measures.forEach(ml => { cands.push(ml.a); cands.push(ml.b); });
+    (S.lines || []).forEach(l => { if (l.page === S.page && l.path) l.path.forEach(p => cands.push(p)); });
+    (S.areas || []).forEach(a => { if (a.page === S.page && a.path) a.path.forEach(p => cands.push(p)); });
+    (S.areaPts || []).forEach(p => cands.push(p));
     cands.forEach(c => { const d = Math.hypot(c[0] - ix, c[1] - iy); if (d < bd) { bd = d; best = c; } });
     if (best && bd <= tol) return [best[0], best[1]];
     // 2) linha do desenho: pixel escuro mais próximo dentro de um raio FIXO NA TELA
