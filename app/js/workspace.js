@@ -1818,6 +1818,61 @@
     alert(F.tr('A IA leu {n} tipo(s) de parede' + onSheet + '. Escolha o TIPO na caixa de seleção (FERRAMENTAS) e trace — a parede entra nesse tipo, com a cor dele.', { n: n }));
   }
 
+  // 🧠 LER ESCOPO DA FOLHA DE MEDIDAS: a IA lê SÓ os ofícios LIGADOS no escopo
+  // (parede→tipos, piso/forro→acabamentos, alturas, janelas/portas→schedule).
+  F._scopeFinishes = [];
+  async function readScopeFromSchedule() {
+    if (S.busy) return;
+    const sc = F.framingScope ? F.framingScope() : {};
+    const on = (k) => sc[k] && (!F.framingHasScope || F.framingHasScope(k));
+    const wall = ['framing', 'drywall', 'insulation', 'paint'].some(on);
+    const did = [];
+    // PAREDE → tipos de parede (usa o leitor existente, com fallback de visão)
+    if (wall) { await readScopeWalls(did); }
+    // ALTURAS (pé-direito) — vale p/ parede e piso/forro
+    if ((wall || on('floor') || on('ceiling')) && S.prov && S.prov.readHeights) {
+      try { const r = await S.prov.readHeights(); if (F.framing) F.framing._heights = (r && r.heights) || []; if (typeof populateFloorHeight === 'function') populateFloorHeight(); if ((r && r.heights || []).length) did.push(F.tr('alturas ({n})', { n: r.heights.length })); } catch (e) {}
+    }
+    // PISO / FORRO → room finish schedule
+    if ((on('floor') || on('ceiling')) && S.prov && S.prov.readFinishSchedule) {
+      try {
+        const r = await S.prov.readFinishSchedule(); const f = (r && r.finishes) || [];
+        F._scopeFinishes = f;
+        if (f.length) {
+          const fl = f.filter(x => x.kind === 'floor'), cl = f.filter(x => x.kind === 'ceiling');
+          if (on('floor') && fl.length) did.push(F.tr('piso ({n})', { n: fl.length }));
+          if (on('ceiling') && cl.length) did.push(F.tr('forro ({n})', { n: cl.length }));
+        }
+      } catch (e) {}
+    }
+    // JANELAS / PORTAS → schedule (se houver folha de medidas marcada)
+    if (S.schedulePages && S.schedulePages.length && S.prov && S.prov.rereadSchedule) {
+      try { const r = await S.prov.rereadSchedule(); if (r && r.n) { did.push(F.tr('janelas/portas ({n})', { n: r.n })); if (S.onConsolidate && S.prov.consolidate) { try { S.onConsolidate(await S.prov.consolidate(S.scope)); } catch (e) {} } } } catch (e) {}
+    }
+    if (!did.length) { markSaved('🧠 ' + F.tr('Nada lido — defina o escopo e marque a folha de medidas (📐).')); return; }
+    markSaved('🧠 ' + F.tr('IA leu do escopo: ') + did.join(' · '));
+    // resumo do que a IA achou de piso/forro
+    if (F._scopeFinishes.length && (on('floor') || on('ceiling'))) {
+      const lines = F._scopeFinishes.filter(x => (x.kind === 'floor' && on('floor')) || (x.kind === 'ceiling' && on('ceiling')))
+        .map(x => (x.kind === 'ceiling' ? '🟦 Forro' : '🟩 Piso') + '  ' + x.code + ' — ' + x.desc);
+      if (lines.length) alert(F.tr('Acabamentos lidos da folha de medidas:') + '\n\n' + lines.join('\n'));
+    }
+  }
+  // leitura de parede sem os alerts/locks do botão dedicado (p/ usar dentro do orquestrador)
+  async function readScopeWalls(did) {
+    S.busy = true;
+    let r = null;
+    try {
+      if (S.prov && S.prov.readWallTypesAll) r = await S.prov.readWallTypesAll();
+      else if (S.prov && S.prov.readWallTypes) r = await S.prov.readWallTypes(S.page);
+      if (!r || !(r.walls || []).length) { const r2 = await cloudReadWalls(); if (r2 && (r2.walls || []).length) r = r2; }
+    } catch (e) {}
+    S.busy = false;
+    const walls = (r && r.walls) || [];
+    if (walls.length) { if (F.framingAddWallTypes) F.framingAddWallTypes(walls); populateWallTypeSelect(); did.push(F.tr('tipos de parede ({n})', { n: walls.length })); }
+  }
+  F._readScopeFromSchedule = readScopeFromSchedule;
+
   // ---- caixa de seleção do TIPO de framing ativo (FERRAMENTAS) ----
   function updateWallTypeSwatch() {
     const fr = F.framing, sw = $('#wsWallTypeSwatch'); if (!sw || !fr) return;
@@ -2382,6 +2437,7 @@
     { const wl = $('#wsLinear'); if (wl) wl.addEventListener('click', () => setMode('linear')); }
     { const dwb = $('#wsDetectWalls'); if (dwb) dwb.addEventListener('click', detectWallsAI); }
     { const rwb = $('#wsReadWalls'); if (rwb) rwb.addEventListener('click', readWallTypesAI); }
+    { const rsb = $('#wsReadScope'); if (rsb) rsb.addEventListener('click', () => readScopeFromSchedule()); }
     { const wts = $('#wsWallType'); if (wts) wts.addEventListener('change', () => {
       if (F.framing) F.framing.activeWT = wts.value; updateWallTypeSwatch();
       if (S.lineSel && S.lineSel.size) {                 // há traços selecionados → ATRIBUI o tipo a eles
