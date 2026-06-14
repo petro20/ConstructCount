@@ -1512,6 +1512,14 @@
   F._wsAreaBaseLf = (ar) => areaBaseLf(ar);   // perímetro/base em LF de uma área
   F._wsAreaBaseH = () => (S.areaBaseH || 0);  // altura da base (pol)
   F._wsFinishDesc = (kind, tag) => { const x = (F._scopeFinishes || []).find(y => y.kind === kind && y.code === tag); return x ? x.desc : ''; };
+  F._wsAllAreas = () => {                // áreas de TODAS as folhas (p/ o takeoff do projeto)
+    const out = [];
+    (S.pages || []).forEach(pg => {
+      const list = (pg.page === S.page) ? (S.areas || []) : loadAreas(pg.page);
+      (list || []).forEach(a => out.push(a));
+    });
+    return out;
+  };
   // acha um VÉRTICE de área sob o cursor (em construção ou já fechada) — p/ apagar ponto errado
   function hitAreaPoint(sx, sy) {
     const tol = 11;
@@ -2530,6 +2538,7 @@
     }); }
     { const wda = $('#wsAreaDetectAll'); if (wda) wda.addEventListener('click', () => detectAllRooms()); }
     { const wam = $('#wsAreaMerge'); if (wam) wam.addEventListener('click', () => mergeAreas()); }
+    { const wft = $('#wsFloorTakeoff'); if (wft) wft.addEventListener('click', () => { if (F.openFloorTakeoff) F.openFloorTakeoff(); }); }
     const wdm = $('#wsDelMeas'); if (wdm) wdm.addEventListener('click', deleteSelMeas);
     const wcm = $('#wsClearMeas'); if (wcm) wcm.addEventListener('click', () => {
       if (!S.measures.length) { markSaved(F.tr('Sem medidas')); return; }

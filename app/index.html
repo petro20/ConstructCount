@@ -1116,6 +1116,7 @@
           <button id="wsArea" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Área: clique nos cantos do cômodo/região; duplo-clique (ou Enter) fecha e mostra a área em SF na hora. SHIFT+clique = área NEGATIVA (vermelha) que DESCONTA do total (colunas, escadas, vãos). Botão DIREITO em cima de um ponto apaga aquele ponto. Backspace desfaz o último ponto; quando não está desenhando, apaga a última área. Precisa calibrar a escala.">▱ Área (rápida)</button>
           <button id="wsAreaRect" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Retângulo: liga o modo Área e cria a área com 2 CLIQUES na diagonal (um canto, o canto oposto). Mais rápido e os cantos saem retos. Shift+1º clique = negativo.">▭ Retângulo (2 cliques)</button>
           <button id="wsAreaMerge" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Une várias áreas num ÚNICO piso/forro (um total de SF). Selecione as áreas (clique com o modo Área desligado, Ctrl+clique p/ várias, ou Ctrl+A p/ TODAS) e clique aqui; sem seleção, une TODAS do tipo escolhido nesta folha.">🔗 Unir áreas (1 só)</button>
+          <button id="wsFloorTakeoff" class="w-full text-left px-3 py-2 rounded bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-sm font-semibold" title="Abre o Takeoff de Piso/Forro: lista de materiais por tag (acabamento + rodapé), qtd, preço, custo e venda.">📊 Takeoff de Piso/Forro</button>
           <div class="text-[11px] text-steel-400 px-1">⇧ Shift+clique = negativo (desconta)</div>
           <div id="wsAreaTot" class="text-xs text-steel-300 px-1"></div>
           <button id="wsDetectWalls" data-pkg="wall" class="w-full text-left px-3 py-2 rounded bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-sm font-semibold" title="IA: detecta as linhas de parede da folha e cria os traços Linear na camada ativa. Você revisa e apaga as erradas (clique + Del).">✨ Detectar paredes (IA)</button>
@@ -1192,7 +1193,7 @@
     </div>
   </div>
 
-  <script src="js/i18n.js?v=249"></script>
+  <script src="js/i18n.js?v=250"></script>
   <script src="js/license.js?v=208"></script>
   <script src="js/calculator.js?v=216"></script>
   <script src="js/svg-engine.js?v=200"></script>
@@ -1202,11 +1203,12 @@
   <script src="js/proposal.js?v=200"></script>
   <script src="js/main.js?v=201"></script>
   <script src="js/annotator.js?v=200"></script>
-  <script src="js/workspace.js?v=289"></script>
+  <script src="js/workspace.js?v=290"></script>
   <script src="js/framing.js?v=40"></script>
   <script src="js/framing-export.js?v=5"></script>
   <script src="js/framing-report-editor.js?v=8"></script>
   <script src="js/framing-report-grapes.js?v=1"></script>
+  <script src="js/floor-takeoff.js?v=1"></script>
   <script src="js/desktop.js?v=225"></script>
   <script src="js/menu.js?v=243"></script>
   <script src="js/cards.js?v=200"></script>
