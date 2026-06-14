@@ -222,6 +222,26 @@
     if (!name || !name.trim() || !S.prov.addLayer) return;
     try { const r = await S.prov.addLayer(name.trim()); if (r && r.layers) { S.layers = r.layers; S.activeLayer = r.active; renderLayers(); markSaved(F.tr('Camada criada: {s}', { s: name.trim() })); } } catch (e) {}
   }
+  // cada OFÍCIO do escopo tem a SUA camada (cor própria). Ao escolher o escopo, garante a camada.
+  const SCOPE_LAYER = {
+    framing: ['Framing', '#ef4444'], drywall: ['Drywall', '#3b82f6'],
+    insulation: ['Insulation', '#10b981'], paint: ['Paint', '#f59e0b'],
+    floor: ['Piso', '#22c55e'], ceiling: ['Forro', '#38bdf8'],
+  };
+  async function ensureScopeLayer(key) {
+    const def = SCOPE_LAYER[key]; if (!def) return;
+    const name = def[0], color = def[1];
+    const lay = (S.layers || []).find(l => (l.name || '').toLowerCase() === name.toLowerCase());
+    if (lay) { setActiveLayerUI(lay); return; }                 // já existe → só ativa
+    if (S.prov && S.prov.addLayer) {
+      try { const r = await S.prov.addLayer(name, color); if (r && r.layers) { S.layers = r.layers; S.activeLayer = r.active; renderLayers(); markSaved(F.tr('Camada criada: {s}', { s: name })); } } catch (e) {}
+    } else {                                                    // web / sem backend → camada local
+      const id = 'lyr_' + key + '_' + (S.layers.length + 1);
+      S.layers.push({ id: id, name: name, color: color, visible: true, locked: false });
+      S.activeLayer = id; renderLayers(); markSaved(F.tr('Camada criada: {s}', { s: name }));
+    }
+  }
+  F._ensureScopeLayer = ensureScopeLayer;
   async function renameLayer(l) {
     const nn = prompt(F.tr('Novo nome da camada "{s}":', { s: l.name }), l.name);
     if (!nn || !nn.trim()) return;
@@ -2279,7 +2299,7 @@
       }
       if (F._renderFramingPanel) F._renderFramingPanel(); draw(); if (F._saveFraming) F._saveFraming();
     }); populateWallTypeSelect(); }
-    [['#wsScopeFraming', 'framing'], ['#wsScopeDrywall', 'drywall'], ['#wsScopeInsul', 'insulation'], ['#wsScopePaint', 'paint'], ['#wsScopeFloor', 'floor'], ['#wsScopeCeiling', 'ceiling']].forEach(([sel, k]) => { const b = $(sel); if (b) b.addEventListener('click', () => { if (F.framingToggleScope) F.framingToggleScope(k); populateScope(); if (F._renderFramingPanel) F._renderFramingPanel(); }); }); populateScope();
+    [['#wsScopeFraming', 'framing'], ['#wsScopeDrywall', 'drywall'], ['#wsScopeInsul', 'insulation'], ['#wsScopePaint', 'paint'], ['#wsScopeFloor', 'floor'], ['#wsScopeCeiling', 'ceiling']].forEach(([sel, k]) => { const b = $(sel); if (b) b.addEventListener('click', () => { if (F.framingToggleScope) F.framingToggleScope(k); populateScope(); if (F.framingScope && F.framingScope()[k]) ensureScopeLayer(k); if (F._renderFramingPanel) F._renderFramingPanel(); }); }); populateScope();
     { const fsel = $('#wsFloor'); if (fsel) fsel.addEventListener('change', () => { if (F.framingSetFloor) F.framingSetFloor(fsel.value); populateFloorSelect(); }); populateFloorSelect(); }
     { const fh = $('#wsFloorH'); if (fh) fh.addEventListener('change', () => {
       let v = fh.value;
