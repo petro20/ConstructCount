@@ -842,19 +842,24 @@
       ctx.fillStyle = 'rgba(15,14,11,.85)'; ctx.fillRect(cx - tw / 2 - 5, cy - 9, tw + 10, 18);
       ctx.fillStyle = neg ? '#fca5a5' : kindText(k); ctx.fillText(txt, cx - tw / 2, cy + 4);
     });
-    if (S.areaMode && S.areaPts && S.areaPts.length) {     // polígono em construção + área ao vivo
+    if (S.areaMode && S.areaPts && S.areaPts.length) {     // polígono/retângulo em construção + área ao vivo
       const k = S.areaKind || 'floor', neg = !!S.areaNeg, col = neg ? '#ef4444' : kindColor(k);
-      const aeff = (S.curX != null) ? areaEffective(S.curX, S.curY) : { pt: S.hover, snapped: false };
+      const aeff = (S.curX != null) ? areaEffective(S.curX, S.curY, S.areaRect) : { pt: S.hover, snapped: false };
       let eff = aeff.pt;
-      const prev = (eff && S.areaPts.length >= 2) ? S.areaPts.concat([eff]) : S.areaPts;
+      const prev = (S.areaRect && eff) ? rectFrom(S.areaPts[0], eff)                 // RETÂNGULO: prévia dos 4 cantos
+                 : ((eff && S.areaPts.length >= 2) ? S.areaPts.concat([eff]) : S.areaPts);
       if (prev.length >= 3) {                               // preenchimento prévio
         ctx.beginPath(); prev.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }); ctx.closePath();
         ctx.fillStyle = neg ? 'rgba(239,68,68,.14)' : kindFill(k, '.12'); ctx.fill();
       }
       ctx.lineWidth = 2; ctx.strokeStyle = col; ctx.setLineDash([6, 4]); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       ctx.beginPath();
-      S.areaPts.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
-      if (eff) { const hx = eff[0] * S.scale + S.ox, hy = eff[1] * S.scale + S.oy; ctx.lineTo(hx, hy); }
+      if (S.areaRect) {                                    // retângulo: contorno fechado dos 4 cantos
+        prev.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }); ctx.closePath();
+      } else {
+        S.areaPts.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+        if (eff) { const hx = eff[0] * S.scale + S.ox, hy = eff[1] * S.scale + S.oy; ctx.lineTo(hx, hy); }
+      }
       ctx.stroke(); ctx.setLineDash([]);
       S.areaPts.forEach(p => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = col; ctx.fill(); });
       if (S.mmPerPx && prev.length >= 3) {                  // SF ao vivo no centro
@@ -1326,12 +1331,13 @@
   }
   // ponto efetivo da área: com SNAP ligado, o ímã do vértice vence (ignora ortho);
   // senão snap de imagem + ortho. {pt, snapped}
-  function areaEffective(sx, sy) {
+  function areaEffective(sx, sy, noOrtho) {
     if (S.snap) { const v = nearestAreaVertex(sx, sy); if (v) return { pt: v, snapped: true }; }
     let p = snapPt(...toImg(sx, sy));
-    if (S.areaPts && S.areaPts.length) p = applyOrtho(S.areaPts[S.areaPts.length - 1], p);
+    if (!noOrtho && S.areaPts && S.areaPts.length) p = applyOrtho(S.areaPts[S.areaPts.length - 1], p);
     return { pt: p, snapped: false };
   }
+  function rectFrom(a, b) { return [[a[0], a[1]], [b[0], a[1]], [b[0], b[1]], [a[0], b[1]]]; }   // 2 cantos diagonais → 4 cantos
   function handleArea(sx, sy, shift) {
     if (!S.mmPerPx) { alert(F.tr('Calibre a escala primeiro (📏 Calibrar escala).')); return; }
     const kind = S.areaKind || 'floor';
@@ -1340,7 +1346,13 @@
       return;
     }
     if (!S.areaPts) S.areaPts = [];
-    if (!S.areaPts.length) S.areaNeg = !!shift;          // 1º ponto define o SINAL do polígono (Shift = negativo)
+    if (!S.areaPts.length) S.areaNeg = !!shift;          // 1º ponto define o SINAL (Shift = negativo)
+    if (S.areaRect) {                                    // RETÂNGULO: 2 cliques na diagonal
+      const pt = areaEffective(sx, sy, true).pt;         // sem ortho (a diagonal é livre)
+      if (!S.areaPts.length) { S.areaPts.push(pt); draw(); return; }   // 1º canto
+      S.areaPts = rectFrom(S.areaPts[0], pt);            // 2º canto → fecha o retângulo
+      finishArea(); return;
+    }
     S.areaPts.push(areaEffective(sx, sy).pt); draw();
   }
   // ✨ VARINHA DE CÔMODO (LOTE): cada clique marca um PONTO (seed); o botão
@@ -2264,7 +2276,7 @@
       S.lineMode = which === 'linear' && !S.lineMode;
       S.areaMode = which === 'area' && !S.areaMode;
       if (which !== 'linear') S.linePts = [];
-      if (which !== 'area') { S.areaPts = []; S.areaAI = false; S.areaSeeds = []; S.areaNeg = false; const wai = $('#wsAreaAI'); if (wai) { wai.classList.remove('ring-2', 'ring-emerald-300'); } if (typeof updateDetectAllBtn === 'function') updateDetectAllBtn(); }
+      if (which !== 'area') { S.areaPts = []; S.areaAI = false; S.areaSeeds = []; S.areaNeg = false; S.areaRect = false; const wai = $('#wsAreaAI'); if (wai) wai.classList.remove('ring-2', 'ring-emerald-300'); const war = $('#wsAreaRect'); if (war) war.classList.remove('ring-2', 'ring-emerald-300'); if (typeof updateDetectAllBtn === 'function') updateDetectAllBtn(); }
       if (S.lineSel) S.lineSel.clear();
       if (S.areaSel) S.areaSel.clear();
       S.clickA = null; S.hover = null; S.maybeMarquee = false; S.marquee = null;
@@ -2335,10 +2347,18 @@
     { const wai = $('#wsAreaAI'); if (wai) wai.addEventListener('click', () => {
       S.areaAI = !S.areaAI; S.areaPts = [];                    // alterna a varinha; limpa polígono manual em andamento
       if (!S.areaAI) S.areaSeeds = [];                         // desligou → descarta os pontos marcados
+      if (S.areaAI) { S.areaRect = false; const war = $('#wsAreaRect'); if (war) war.classList.remove('ring-2', 'ring-emerald-300'); }   // exclui com Retângulo
       if (S.areaAI && !S.areaMode) setMode('area');            // liga o modo Área junto
       wai.classList.toggle('ring-2', S.areaAI); wai.classList.toggle('ring-emerald-300', S.areaAI);
       updateDetectAllBtn();
       markSaved(S.areaAI ? F.tr('✨ Varinha: clique nos cômodos e depois Detectar') : F.tr('Varinha de cômodo: desligada'));
+      draw();
+    }); }
+    { const war = $('#wsAreaRect'); if (war) war.addEventListener('click', () => {
+      S.areaRect = !S.areaRect; S.areaPts = [];
+      if (S.areaRect) { S.areaAI = false; const wai = $('#wsAreaAI'); if (wai) wai.classList.remove('ring-2', 'ring-emerald-300'); updateDetectAllBtn(); if (!S.areaMode) setMode('area'); }
+      war.classList.toggle('ring-2', S.areaRect); war.classList.toggle('ring-emerald-300', S.areaRect);
+      markSaved(S.areaRect ? F.tr('▭ Retângulo: clique 2 cantos na diagonal') : F.tr('Retângulo: desligado'));
       draw();
     }); }
     { const wda = $('#wsAreaDetectAll'); if (wda) wda.addEventListener('click', () => detectAllRooms()); }
