@@ -459,6 +459,8 @@
       layer: m.layer || 'default',
     }));
     S.measures = Array.isArray(data.measures) ? data.measures : [];   // medidas salvas
+    S.areas = loadAreas(S.page);   // áreas (medição rápida) desta folha — localStorage por projeto+folha
+    S.areaPts = [];
     // traços do Linear salvos desta folha → substituem os desta página em memória
     S.lines = (S.lines || []).filter(l => l.page !== S.page);
     (Array.isArray(data.lines) ? data.lines : []).forEach(l => { l.page = S.page; S.lines.push(l); });
@@ -765,6 +767,40 @@
       ctx.fillStyle = 'rgba(15,14,11,.85)'; ctx.fillRect(mx + 6, my - 16, tw + 8, 15);
       ctx.fillStyle = col; ctx.fillText(txt, mx + 10, my - 4);
     });
+    // ÁREA — polígonos finalizados desta folha (verde translúcido + SF no centro)
+    (S.areas || []).forEach(ar => {
+      if (ar.page !== S.page || !ar.path || ar.path.length < 3) return;
+      ctx.beginPath();
+      ar.path.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(34,197,94,.18)'; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(34,197,94,.9)'; ctx.lineJoin = 'round'; ctx.stroke();
+      const c = polyCentroid(ar.path), cx = c[0] * S.scale + S.ox, cy = c[1] * S.scale + S.oy;
+      const txt = ar.sf.toFixed(1) + ' SF'; ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
+      ctx.fillStyle = 'rgba(15,14,11,.85)'; ctx.fillRect(cx - tw / 2 - 5, cy - 9, tw + 10, 18);
+      ctx.fillStyle = '#86efac'; ctx.fillText(txt, cx - tw / 2, cy + 4);
+    });
+    if (S.areaMode && S.areaPts && S.areaPts.length) {     // polígono em construção + área ao vivo
+      const col = '#22c55e';
+      let eff = S.hover && S.areaPts.length ? applyOrtho(S.areaPts[S.areaPts.length - 1], S.hover) : S.hover;
+      const prev = (eff && S.areaPts.length >= 2) ? S.areaPts.concat([eff]) : S.areaPts;
+      if (prev.length >= 3) {                               // preenchimento prévio
+        ctx.beginPath(); prev.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }); ctx.closePath();
+        ctx.fillStyle = 'rgba(34,197,94,.12)'; ctx.fill();
+      }
+      ctx.lineWidth = 2; ctx.strokeStyle = col; ctx.setLineDash([6, 4]); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath();
+      S.areaPts.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+      if (eff) { const hx = eff[0] * S.scale + S.ox, hy = eff[1] * S.scale + S.oy; ctx.lineTo(hx, hy); }
+      ctx.stroke(); ctx.setLineDash([]);
+      S.areaPts.forEach(p => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = col; ctx.fill(); });
+      if (S.mmPerPx && prev.length >= 3) {                  // SF ao vivo no centro
+        const sf = polySf(prev), c = polyCentroid(prev), cx = c[0] * S.scale + S.ox, cy = c[1] * S.scale + S.oy;
+        const txt = sf.toFixed(1) + ' SF'; ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
+        ctx.fillStyle = 'rgba(34,197,94,.95)'; ctx.fillRect(cx - tw / 2 - 5, cy - 9, tw + 10, 18);
+        ctx.fillStyle = '#fff'; ctx.fillText(txt, cx - tw / 2, cy + 4);
+      }
+    }
     if (S.lineMode && S.linePts.length) {                 // traço em construção
       const lay = activeLayerObj(), col = (lay && lay.color) || '#fde047';
       ctx.lineWidth = 3; ctx.strokeStyle = col; ctx.setLineDash([6, 4]); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
@@ -1086,15 +1122,15 @@
   // snapshot UNIFICADO: traços Linear + marcas + medidas
   function pushUndo() {
     if (!S.undoStack) S.undoStack = [];
-    S.undoStack.push(JSON.stringify({ lines: S.lines || [], marks: S.marks || [], measures: S.measures || [] }));
+    S.undoStack.push(JSON.stringify({ lines: S.lines || [], marks: S.marks || [], measures: S.measures || [], areas: S.areas || [] }));
     if (S.undoStack.length > 50) S.undoStack.shift();
   }
   function undo() {
     if (!S.undoStack || !S.undoStack.length) { markSaved(F.tr('Nada para desfazer')); return; }
     let snap; try { snap = JSON.parse(S.undoStack.pop()); } catch (e) { return; }
-    S.lines = snap.lines || []; S.marks = snap.marks || []; S.measures = snap.measures || [];
+    S.lines = snap.lines || []; S.marks = snap.marks || []; S.measures = snap.measures || []; S.areas = snap.areas || [];
     if (S.lineSel) S.lineSel.clear(); clearSel();
-    saveLines(); saveMeasures(); S.dirty = true; scheduleSave();
+    saveLines(); saveMeasures(); saveAreas(); S.dirty = true; scheduleSave();
     renderItems(); renderPagesList(); updateMeasSel(); draw();
     if (F._renderFramingPanel) F._renderFramingPanel();
     markSaved(F.tr('Desfeito ↶'));
@@ -1153,6 +1189,41 @@
   function saveMeasures() {
     if (S.prov.saveMeasures) { try { S.prov.saveMeasures(S.page, S.measures); } catch (e) {} }
   }
+  // ----- ÁREA (medição rápida): polígono → SF. Persiste em localStorage (sem backend). -----
+  function areaKey(page) { return 'cc_areas_' + (S.slug || 'proj') + '_' + page; }
+  function loadAreas(page) { try { return JSON.parse(localStorage.getItem(areaKey(page)) || '[]') || []; } catch (e) { return []; } }
+  function saveAreas() { try { localStorage.setItem(areaKey(S.page), JSON.stringify(S.areas || [])); } catch (e) {} }
+  function polyCentroid(path) { let x = 0, y = 0; path.forEach(p => { x += p[0]; y += p[1]; }); return [x / path.length, y / path.length]; }
+  function polySf(path) {                                  // área do polígono (shoelace) px² → ft²
+    if (!S.mmPerPx || !path || path.length < 3) return 0;
+    let a2 = 0;
+    for (let i = 0; i < path.length; i++) { const p = path[i], q = path[(i + 1) % path.length]; a2 += p[0] * q[1] - q[0] * p[1]; }
+    return (Math.abs(a2) / 2) * S.mmPerPx * S.mmPerPx / 92903.04;   // 1 ft² = 304.8² mm²
+  }
+  function handleArea(sx, sy) {
+    if (!S.mmPerPx) { alert(F.tr('Calibre a escala primeiro (📏 Calibrar escala).')); return; }
+    if (!S.areaPts) S.areaPts = [];
+    let p = snapPt(...toImg(sx, sy));
+    if (S.areaPts.length) p = applyOrtho(S.areaPts[S.areaPts.length - 1], p);   // trava H/V se Ortho
+    S.areaPts.push(p); draw();
+  }
+  function finishArea() {
+    if (!S.areaPts) S.areaPts = [];
+    while (S.areaPts.length >= 2) {                       // tira ponto duplicado do duplo-clique
+      const a = S.areaPts[S.areaPts.length - 1], b = S.areaPts[S.areaPts.length - 2];
+      if (Math.abs(a[0] - b[0]) < 1 && Math.abs(a[1] - b[1]) < 1) S.areaPts.pop(); else break;
+    }
+    if (S.areaPts.length >= 3 && S.mmPerPx) {
+      pushUndo();
+      const sf = polySf(S.areaPts);
+      if (!S.areas) S.areas = [];
+      S.areas.push({ path: S.areaPts.slice(), sf: sf, page: S.page });
+      saveAreas();
+      markSaved(F.tr('Área: {sf} SF', { sf: sf.toFixed(1) }));
+    }
+    S.areaPts = []; draw();
+  }
+  F._wsAreas = () => (S.areas || []);   // outros pacotes podem ler as áreas medidas
   function selSet() { if (!S.selSet) S.selSet = new Set(); return S.selSet; }
   function selMarks() { if (!S.selMarks) S.selMarks = new Set(); return S.selMarks; }
   function clearSel() { selSet().clear(); selMarks().clear(); }
@@ -1608,10 +1679,10 @@
   }
   F._updateSmartPanel = updateSmartPanel;
 
-  function toolActive() { return S.countMode || S.autoMode || S.delMode || S.calibMode || S.measMode || S.lineMode; }
+  function toolActive() { return S.countMode || S.autoMode || S.delMode || S.calibMode || S.measMode || S.lineMode || S.areaMode; }
   function applyCursor() { if (cv) cv.style.cursor = 'none'; }   // cruz de tela cheia é sempre o cursor
   function syncBarActive() {
-    const on = { wsCount: S.countMode, wsAuto: S.autoMode, wsDelete: S.delMode, wsCalib: S.calibMode, wsMeasure: S.measMode, wsLinear: S.lineMode };
+    const on = { wsCount: S.countMode, wsAuto: S.autoMode, wsDelete: S.delMode, wsCalib: S.calibMode, wsMeasure: S.measMode, wsLinear: S.lineMode, wsArea: S.areaMode };
     document.querySelectorAll('.wsBarTool').forEach(b => {
       const active = !!on[b.dataset.proxy];
       const del = b.dataset.proxy === 'wsDelete';
@@ -1730,7 +1801,7 @@
           S.autoRegion = null;
         }
         // pode selecionar/arrastar/laço fora dos modos de clique (Medir ou neutro)
-        const canSelect = !S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.clickA;
+        const canSelect = !S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.clickA;
         if (canSelect) {
           S.dragMeas = hitMeasEnd(e.offsetX, e.offsetY);   // pegar ponta de medida p/ arrastar
           if (S.dragMeas) cv.style.cursor = 'move';
@@ -1788,7 +1859,7 @@
         if (Math.abs(dx) + Math.abs(dy) > 3) S.moved = true;
         S.ox += dx; S.oy += dy; S.lastX = e.offsetX; S.lastY = e.offsetY;
       }
-      if (S.calibMode || S.measMode || S.lineMode) S.hover = snapPt(mix, miy);   // prévia da régua/linear
+      if (S.calibMode || S.measMode || S.lineMode || S.areaMode) S.hover = snapPt(mix, miy);   // prévia da régua/linear/área
       draw();                                 // SEMPRE redesenha → cruz acompanha o cursor
     });
     const endPan = () => { S.panning = false; applyCursor(); };
@@ -1844,12 +1915,13 @@
         // sem arraste (só clique) → segue o fluxo normal (folha toda) abaixo
       }
       if (S.moved) return;                            // foi arraste, não clique
-      if (!S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.clickA) {  // clicar numa medida/linha = selecionar (Ctrl/Shift = múltiplas)
+      if (!S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.clickA) {  // clicar numa medida/linha = selecionar (Ctrl/Shift = múltiplas)
         const hm = hitMeasLine(e.offsetX, e.offsetY);
         if (hm) { pickMeasure(hm, e); markSaved(F.tr('{n} medida(s) selecionada(s) · Del p/ apagar', { n: selSet().size })); draw(); return; }
         const hl = hitLine(e.offsetX, e.offsetY);
         if (hl) { pickLine(hl, e); draw(); return; }
       }
+      if (S.areaMode) { handleArea(e.offsetX, e.offsetY); return; }
       if (S.lineMode) { handleLine(e.offsetX, e.offsetY); return; }
       if (S.calibMode || S.measMode) { handleRuler(e.offsetX, e.offsetY); return; }
       const m = hit(e.offsetX, e.offsetY);
@@ -1866,6 +1938,7 @@
       } else if (m) { m.confirmed = !m.confirmed; changed(); }
     });
     cv.addEventListener('dblclick', (e) => {
+      if (S.areaMode) { e.preventDefault(); finishArea(); return; }   // duplo-clique fecha a Área
       if (S.lineMode) { e.preventDefault(); finishLine(); return; }   // duplo-clique finaliza o Linear
       if (S.legend && S.legendRect) {                 // duplo-clique na legenda = volta ao canto automático
         const r = S.legendRect;
@@ -1885,7 +1958,9 @@
       S.calibMode = which === 'calib' && !S.calibMode;
       S.measMode = which === 'measure' && !S.measMode;
       S.lineMode = which === 'linear' && !S.lineMode;
+      S.areaMode = which === 'area' && !S.areaMode;
       if (which !== 'linear') S.linePts = [];
+      if (which !== 'area') S.areaPts = [];
       if (S.lineSel) S.lineSel.clear();
       S.clickA = null; S.hover = null; S.maybeMarquee = false; S.marquee = null;
       S.autoDragStart = null; S.autoRegion = null; S.autoSample = null;
@@ -1895,6 +1970,7 @@
       act('#wsCalib', S.calibMode);
       act('#wsMeasure', S.measMode);
       act('#wsLinear', S.lineMode);
+      act('#wsArea', S.areaMode);
       const wd = $('#wsDelete'); if (wd) wd.classList.toggle('ws-tool-active-del', S.delMode);
       applyCursor(); syncBarActive();
       if (ruler && S.measMode && !S.mmPerPx) markSaved(F.tr('Calibre a escala primeiro (📏).'));
@@ -1949,6 +2025,7 @@
     $('#wsDelete').addEventListener('click', () => setMode('del'));
     const wcal = $('#wsCalib'); if (wcal) wcal.addEventListener('click', () => setMode('calib'));
     const wmea = $('#wsMeasure'); if (wmea) wmea.addEventListener('click', () => setMode('measure'));
+    const ware = $('#wsArea'); if (ware) ware.addEventListener('click', () => { if (!S.mmPerPx) markSaved(F.tr('Calibre a escala primeiro (📏).')); setMode('area'); });
     const wdm = $('#wsDelMeas'); if (wdm) wdm.addEventListener('click', deleteSelMeas);
     const wcm = $('#wsClearMeas'); if (wcm) wcm.addEventListener('click', () => {
       if (!S.measures.length) { markSaved(F.tr('Sem medidas')); return; }
@@ -2060,12 +2137,23 @@
         if (!typing && k === 'c' && S.lineSel && S.lineSel.size) { e.preventDefault(); copyLines(); return; }
         if (!typing && k === 'v' && S.lineClip && S.lineClip.length) { e.preventDefault(); pasteLines(); return; }
       }
-      if (e.key === 'Escape') {                        // Linear: finaliza; senão cancela ponto/arraste/seleção
+      if (e.key === 'Escape') {                        // Linear/Área: finaliza; senão cancela ponto/arraste/seleção
+        if (S.areaMode && S.areaPts && S.areaPts.length) { finishArea(); return; }
         if (S.lineMode && S.linePts.length) { finishLine(); return; }
         if (S.lineSel && S.lineSel.size) { S.lineSel.clear(); draw(); }
         if (S.clickA || S.dragMeas || selCount()) { S.clickA = null; S.dragMeas = null; clearSel(); updateMeasSel(); markSaved(F.tr('Cancelado')); draw(); }
+      } else if ((e.key === 'Enter' || e.key === 'n' || e.key === 'N') && !typing && S.areaMode && S.areaPts && S.areaPts.length) {
+        e.preventDefault(); finishArea();              // Enter fecha a Área
       } else if ((e.key === 'Enter' || e.key === 'n' || e.key === 'N') && !typing && S.lineMode && S.linePts.length) {
         e.preventDefault(); finishLine();              // Enter/N finaliza a linha e libera p/ começar OUTRA
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.areaMode) {
+        e.preventDefault();
+        if (S.areaPts && S.areaPts.length) { S.areaPts.pop(); draw(); }           // desfaz último ponto
+        else if (S.areas && S.areas.some(a => a.page === S.page)) {               // idle → apaga a última área da folha
+          pushUndo();
+          for (let i = S.areas.length - 1; i >= 0; i--) { if (S.areas[i].page === S.page) { S.areas.splice(i, 1); break; } }
+          saveAreas(); draw(); markSaved(F.tr('Área apagada'));
+        }
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.lineMode && S.linePts.length) {
         e.preventDefault(); S.linePts.pop(); draw();    // desfaz último ponto do Linear
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !typing && S.lineSel && S.lineSel.size) {
