@@ -242,6 +242,14 @@
     }
   }
   F._ensureScopeLayer = ensureScopeLayer;
+  // garante a camada de TODOS os ofícios LIGADOS no escopo (e comprados) — chamado ao escolher o escopo
+  async function ensureAllScopeLayers() {
+    const sc = F.framingScope ? F.framingScope() : {};
+    for (const k of ['framing', 'drywall', 'insulation', 'paint', 'floor', 'ceiling']) {
+      if (sc[k] && (!F.framingHasScope || F.framingHasScope(k))) await ensureScopeLayer(k);
+    }
+  }
+  F._ensureAllScopeLayers = ensureAllScopeLayers;
   async function renameLayer(l) {
     const nn = prompt(F.tr('Novo nome da camada "{s}":', { s: l.name }), l.name);
     if (!nn || !nn.trim()) return;
@@ -1965,8 +1973,8 @@
   }
 
   // ---------- PAINEL INTELIGENTE (sequência lógica de uso + adaptativo) ----------
-  const ACC_ORDER = ['folha', 'escala', 'camadas', 'ferramentas', 'autocount', 'janela', 'medidas'];
-  const ACC_STEP = { folha: 1, escala: 2, camadas: 3, ferramentas: 4, autocount: 5, janela: 6, medidas: 7 };
+  const ACC_ORDER = ['folha', 'camadas', 'escala', 'ferramentas', 'autocount', 'janela', 'medidas'];
+  const ACC_STEP = { folha: 1, camadas: 2, escala: 3, ferramentas: 4, autocount: 5, janela: 6, medidas: 7 };
   function accHdr(name) { return document.querySelector('#wsRight [data-acc="' + name + '"]'); }
   function accSet(name, open) {
     const hdr = accHdr(name); if (!hdr) return;
@@ -2368,7 +2376,7 @@
       }
       if (F._renderFramingPanel) F._renderFramingPanel(); draw(); if (F._saveFraming) F._saveFraming();
     }); populateWallTypeSelect(); }
-    [['#wsScopeFraming', 'framing'], ['#wsScopeDrywall', 'drywall'], ['#wsScopeInsul', 'insulation'], ['#wsScopePaint', 'paint'], ['#wsScopeFloor', 'floor'], ['#wsScopeCeiling', 'ceiling']].forEach(([sel, k]) => { const b = $(sel); if (b) b.addEventListener('click', () => { if (F.framingToggleScope) F.framingToggleScope(k); populateScope(); if (F.framingScope && F.framingScope()[k]) ensureScopeLayer(k); if (F._renderFramingPanel) F._renderFramingPanel(); }); }); populateScope();
+    [['#wsScopeFraming', 'framing'], ['#wsScopeDrywall', 'drywall'], ['#wsScopeInsul', 'insulation'], ['#wsScopePaint', 'paint'], ['#wsScopeFloor', 'floor'], ['#wsScopeCeiling', 'ceiling']].forEach(([sel, k]) => { const b = $(sel); if (b) b.addEventListener('click', () => { if (F.framingToggleScope) F.framingToggleScope(k); populateScope(); ensureAllScopeLayers(); if (F._renderFramingPanel) F._renderFramingPanel(); }); }); populateScope();
     { const fsel = $('#wsFloor'); if (fsel) fsel.addEventListener('change', () => { if (F.framingSetFloor) F.framingSetFloor(fsel.value); populateFloorSelect(); }); populateFloorSelect(); }
     { const fh = $('#wsFloorH'); if (fh) fh.addEventListener('change', () => {
       let v = fh.value;
