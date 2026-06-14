@@ -1600,6 +1600,28 @@
     }
     return polys.every(poly => poly.every(p => ptInRect(p[0] * S.scale + S.ox, p[1] * S.scale + S.oy, r)));   // TODAS as partes dentro
   }
+  // UNE áreas num ÚNICO item (multi-partes, 1 total). Selecionadas (2+) OU todas do
+  // tipo atual na folha se nada selecionado.
+  function mergeAreas() {
+    let list;
+    if (S.areaSel && S.areaSel.size >= 2) list = [...S.areaSel];
+    else {
+      const kind = S.areaKind || 'floor';
+      list = (S.areas || []).filter(a => a.page === S.page && (a.kind || 'floor') === kind);
+      if (list.length < 2) { markSaved(F.tr('Selecione 2+ áreas para unir (ou tenha 2+ do mesmo tipo na folha).')); return; }
+    }
+    pushUndo();
+    const kind = list[0].kind || 'floor';
+    const parts = [];
+    list.forEach(a => areaPolys(a).forEach(poly => parts.push(poly)));
+    const set = new Set(list);
+    S.areas = (S.areas || []).filter(a => !set.has(a));
+    const merged = { parts: parts, sf: parts.reduce((s, p) => s + polySf(p), 0), page: S.page, kind: kind };
+    S.areas.push(merged);
+    if (S.areaSel) { S.areaSel.clear(); S.areaSel.add(merged); }
+    saveAreas(); updateAreaTot(); renderPagesList(); draw();
+    markSaved('🔗 ' + F.tr('{n} áreas unidas → {sf} SF', { n: list.length, sf: merged.sf.toFixed(1) }));
+  }
   function deleteSelAreas() {
     if (!S.areaSel || !S.areaSel.size) return 0;
     const n = S.areaSel.size;
@@ -2285,6 +2307,7 @@
       draw();
     }); }
     { const wda = $('#wsAreaDetectAll'); if (wda) wda.addEventListener('click', () => detectAllRooms()); }
+    { const wam = $('#wsAreaMerge'); if (wam) wam.addEventListener('click', () => mergeAreas()); }
     const wdm = $('#wsDelMeas'); if (wdm) wdm.addEventListener('click', deleteSelMeas);
     const wcm = $('#wsClearMeas'); if (wcm) wcm.addEventListener('click', () => {
       if (!S.measures.length) { markSaved(F.tr('Sem medidas')); return; }
