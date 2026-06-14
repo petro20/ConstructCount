@@ -1266,6 +1266,7 @@
   // uma ÁREA pode ter VÁRIAS partes (juntadas pela varinha em lote) ou só `path`
   function areaPolys(ar) { return (ar && ar.parts && ar.parts.length) ? ar.parts : (ar && ar.path ? [ar.path] : []); }
   function areaSf(ar) { return areaPolys(ar).reduce((s, p) => s + polySf(p), 0); }
+  function polyKey(poly) { return poly.map(p => Math.round(p[0] / 4) + ',' + Math.round(p[1] / 4)).join(';'); }   // ~4px de tolerância p/ achar partes repetidas
   // tipo de área: 'floor' (Piso, verde) | 'ceiling' (Teto/Forro, azul)
   function kindColor(k) { return k === 'ceiling' ? '#38bdf8' : '#22c55e'; }
   function kindFill(k, a) { return (k === 'ceiling' ? 'rgba(56,189,248,' : 'rgba(34,197,94,') + a + ')'; }
@@ -1349,9 +1350,13 @@
     } catch (e) { markSaved(F.tr('Falha ao detectar os cômodos.')); return; }
     if (!S.areas) S.areas = [];
     let ok = 0, fail = 0;
-    const parts = [];
+    const parts = [], seen = new Set();                  // DEDUPE: ignora cômodos já medidos na folha
+    (S.areas || []).forEach(a => { if (a.page === S.page) areaPolys(a).forEach(p => seen.add(polyKey(p))); });
     rooms.forEach(r => {
-      if (r && r.poly && r.poly.length >= 3) { parts.push(r.poly.map(p => [p[0], p[1]])); ok++; } else fail++;
+      if (!(r && r.poly && r.poly.length >= 3)) { fail++; return; }
+      const poly = r.poly.map(p => [p[0], p[1]]), k = polyKey(poly);
+      if (seen.has(k)) return;                            // já existe → não duplica
+      seen.add(k); parts.push(poly); ok++;
     });
     S.areaSeeds = []; updateDetectAllBtn();
     if (parts.length) {                                      // JUNTA todos num ÚNICO item (multi-partes), 1 total
@@ -1612,8 +1617,11 @@
     }
     pushUndo();
     const kind = list[0].kind || 'floor';
-    const parts = [];
-    list.forEach(a => areaPolys(a).forEach(poly => parts.push(poly)));
+    const parts = [], seen = new Set();                  // DEDUPE partes repetidas (não dobra o SF)
+    list.forEach(a => areaPolys(a).forEach(poly => {
+      if (poly.length < 3) return;
+      const k = polyKey(poly); if (seen.has(k)) return; seen.add(k); parts.push(poly);
+    }));
     const set = new Set(list);
     S.areas = (S.areas || []).filter(a => !set.has(a));
     const merged = { parts: parts, sf: parts.reduce((s, p) => s + polySf(p), 0), page: S.page, kind: kind };
