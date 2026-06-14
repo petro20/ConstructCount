@@ -483,7 +483,8 @@
       layer: m.layer || 'default',
     }));
     S.measures = Array.isArray(data.measures) ? data.measures : [];   // medidas salvas
-    S.areas = loadAreas(S.page);   // áreas (medição rápida) desta folha — localStorage por projeto+folha
+    // áreas desta folha: PREFERE o que o motor (Python) salvou no projeto; senão localStorage (fallback web/cliente antigo)
+    S.areas = Array.isArray(data.areas) ? data.areas : loadAreas(S.page);
     S.areaPts = []; updateAreaTot();
     // traços do Linear salvos desta folha → substituem os desta página em memória
     S.lines = (S.lines || []).filter(l => l.page !== S.page);
@@ -1226,7 +1227,7 @@
   }
   async function saveAll() {
     try { await flushSave(); } catch (e) {}
-    saveLines(); saveMeasures();
+    saveLines(); saveMeasures(); saveAreas();
     if (F._saveFraming) F._saveFraming();
     markSaved(F.tr('Salvo ✓'));
   }
@@ -1236,7 +1237,12 @@
   // ----- ÁREA (medição rápida): polígono → SF. Persiste em localStorage (sem backend). -----
   function areaKey(page) { return 'cc_areas_' + (S.slug || 'proj') + '_' + page; }
   function loadAreas(page) { try { return JSON.parse(localStorage.getItem(areaKey(page)) || '[]') || []; } catch (e) { return []; } }
-  function saveAreas() { try { localStorage.setItem(areaKey(S.page), JSON.stringify(S.areas || [])); } catch (e) {} }
+  function saveAreas() {
+    // persiste no PROJETO (Python → areas-NNN.json) pra sobreviver ao fechar o app;
+    // sempre grava também no localStorage como espelho/fallback (web e clientes antigos)
+    if (S.prov && S.prov.saveAreas) { try { S.prov.saveAreas(S.page, (S.areas || []).filter(a => a.page === S.page)); } catch (e) {} }
+    try { localStorage.setItem(areaKey(S.page), JSON.stringify(S.areas || [])); } catch (e) {}
+  }
   function polyCentroid(path) { let x = 0, y = 0; path.forEach(p => { x += p[0]; y += p[1]; }); return [x / path.length, y / path.length]; }
   // tipo de área: 'floor' (Piso, verde) | 'ceiling' (Teto/Forro, azul)
   function kindColor(k) { return k === 'ceiling' ? '#38bdf8' : '#22c55e'; }
