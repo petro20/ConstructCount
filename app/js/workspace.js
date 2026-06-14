@@ -846,7 +846,10 @@
       });
       const c = polyCentroid(big), cx = c[0] * S.scale + S.ox, cy = c[1] * S.scale + S.oy;
       const tot = (ar.sf != null ? ar.sf : areaSf(ar));
-      const txt = (neg ? '− ' : '') + kindName(k) + (polys.length > 1 ? ('  (' + polys.length + ')  ') : '  ') + tot.toFixed(1) + ' SF';
+      const tg = ar.tag ? (' ' + ar.tag) : '';
+      const baseLf = (!neg && k !== 'ceiling') ? areaBaseLf(ar) : 0;   // BASE = perímetro do piso (rodapé)
+      const baseTxt = baseLf > 0 ? ('  ·  ' + F.tr('Base') + ' ' + baseLf.toFixed(1) + ' LF') : '';
+      const txt = (neg ? '− ' : '') + kindName(k) + tg + (polys.length > 1 ? ('  (' + polys.length + ')  ') : '  ') + tot.toFixed(1) + ' SF' + baseTxt;
       ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
       ctx.fillStyle = 'rgba(15,14,11,.85)'; ctx.fillRect(cx - tw / 2 - 5, cy - 9, tw + 10, 18);
       ctx.fillStyle = neg ? '#fca5a5' : kindText(k); ctx.fillText(txt, cx - tw / 2, cy + 4);
@@ -1302,6 +1305,12 @@
   // uma ÁREA pode ter VÁRIAS partes (juntadas pela varinha em lote) ou só `path`
   function areaPolys(ar) { return (ar && ar.parts && ar.parts.length) ? ar.parts : (ar && ar.path ? [ar.path] : []); }
   function areaSf(ar) { return areaPolys(ar).reduce((s, p) => s + polySf(p), 0); }
+  function polyPerimeterLf(poly) {                     // perímetro do polígono em LF (= rodapé/base do piso)
+    if (!S.mmPerPx || !poly || poly.length < 2) return 0;
+    let px = 0; for (let i = 0; i < poly.length; i++) { const a = poly[i], b = poly[(i + 1) % poly.length]; px += Math.hypot(b[0] - a[0], b[1] - a[1]); }
+    return px * S.mmPerPx / 304.8;
+  }
+  function areaBaseLf(ar) { return areaPolys(ar).reduce((s, p) => s + polyPerimeterLf(p), 0); }
   function polyKey(poly) { return poly.map(p => Math.round(p[0] / 4) + ',' + Math.round(p[1] / 4)).join(';'); }   // ~4px de tolerância p/ achar partes repetidas
   function pxToSf(areaPx) { return S.mmPerPx ? (areaPx * S.mmPerPx * S.mmPerPx / 92903.04) : 0; }
   // ---- UNIÃO de retângulos eixo-alinhados → "1 formato só" (bordas comuns somem, sobreposição não conta 2x) ----
@@ -1367,14 +1376,23 @@
   function kindName(k) { return F.tr(k === 'ceiling' ? 'Teto' : 'Piso'); }
   function updateAreaTot() {
     const el = document.getElementById('wsAreaTot'); if (!el) return;
-    let f = 0, c = 0;
-    (S.areas || []).forEach(a => { if (a.page !== S.page) return; const s = (a.sf || 0) * (a.neg ? -1 : 1); if (a.kind === 'ceiling') c += s; else f += s; });   // negativos DESCONTAM
+    let f = 0, c = 0, base = 0;
+    (S.areas || []).forEach(a => { if (a.page !== S.page) return; const s = (a.sf || 0) * (a.neg ? -1 : 1); if (a.kind === 'ceiling') c += s; else { f += s; if (!a.neg) base += areaBaseLf(a); } });   // negativos DESCONTAM; base = perímetro do piso
     const parts = [];
     if (f) parts.push('🟩 ' + F.tr('Piso') + ': ' + f.toFixed(1) + ' SF');
+    if (base) parts.push('📏 ' + F.tr('Base') + ': ' + base.toFixed(1) + ' LF');
     if (c) parts.push('🟦 ' + F.tr('Teto') + ': ' + c.toFixed(1) + ' SF');
     el.textContent = parts.join('   ·   ');
   }
   F._wsUpdateAreaTot = updateAreaTot;
+  // datalist do campo Tag = códigos de acabamento lidos da folha, do tipo de área atual
+  function refreshAreaTagList() {
+    const dl = document.getElementById('wsAreaTagList'); if (!dl) return;
+    const kind = S.areaKind || 'floor';
+    const fins = (F._scopeFinishes || []).filter(x => x.kind === kind);
+    dl.innerHTML = fins.map(x => '<option value="' + (x.code || '').replace(/"/g, '') + '">' + (x.desc || '').replace(/"/g, '') + '</option>').join('');
+  }
+  F._refreshAreaTagList = refreshAreaTagList;
   function polySf(path) {                                  // área do polígono (shoelace) px² → ft²
     if (!S.mmPerPx || !path || path.length < 3) return 0;
     let a2 = 0;
@@ -1462,8 +1480,8 @@
     S.areaSeeds = []; updateDetectAllBtn();
     if (pos.length || neg.length) {                      // junta positivos num item e negativos noutro
       pushUndo();
-      if (pos.length) S.areas.push({ parts: pos, sf: pos.reduce((s, p) => s + polySf(p), 0), page: S.page, kind: kind });
-      if (neg.length) S.areas.push({ parts: neg, sf: neg.reduce((s, p) => s + polySf(p), 0), page: S.page, kind: kind, neg: true });
+      if (pos.length) S.areas.push({ parts: pos, sf: pos.reduce((s, p) => s + polySf(p), 0), page: S.page, kind: kind, tag: S.areaTag || '' });
+      if (neg.length) S.areas.push({ parts: neg, sf: neg.reduce((s, p) => s + polySf(p), 0), page: S.page, kind: kind, neg: true, tag: S.areaTag || '' });
       saveAreas(); updateAreaTot(); if (S.pageExp) S.pageExp.add(S.page); renderPagesList();
     }
     markSaved('✨ ' + F.tr('{ok} cômodo(s) detectado(s)', { ok: ok }) + (fail ? (' · ' + F.tr('{f} falhou(aram)', { f: fail })) : ''));
@@ -1481,7 +1499,7 @@
       const kind = S.areaKind || 'floor';
       const neg = !!S.areaNeg;
       if (!S.areas) S.areas = [];
-      S.areas.push({ path: S.areaPts.slice(), sf: sf, page: S.page, kind: kind, neg: neg });
+      S.areas.push({ path: S.areaPts.slice(), sf: sf, page: S.page, kind: kind, neg: neg, tag: S.areaTag || '' });
       saveAreas(); updateAreaTot();
       if (S.pageExp) S.pageExp.add(S.page); renderPagesList();   // levantamento aparece na folha (árvore)
       markSaved((neg ? '− ' : '') + kindName(kind) + ' — ' + sf.toFixed(1) + ' SF');
@@ -1728,8 +1746,9 @@
     const set = new Set(list);
     S.areas = (S.areas || []).filter(a => !set.has(a));
     const added = [];
-    if (pos.length) { const g = buildAreaGroup(pos); const m = { parts: g.parts, sf: g.sf, page: S.page, kind: kind }; S.areas.push(m); added.push(m); }
-    if (neg.length) { const g = buildAreaGroup(neg); const m = { parts: g.parts, sf: g.sf, page: S.page, kind: kind, neg: true }; S.areas.push(m); added.push(m); }
+    const tag = list[0].tag || '';
+    if (pos.length) { const g = buildAreaGroup(pos); const m = { parts: g.parts, sf: g.sf, page: S.page, kind: kind, tag: tag }; S.areas.push(m); added.push(m); }
+    if (neg.length) { const g = buildAreaGroup(neg); const m = { parts: g.parts, sf: g.sf, page: S.page, kind: kind, neg: true, tag: tag }; S.areas.push(m); added.push(m); }
     if (S.areaSel) { S.areaSel.clear(); added.forEach(m => S.areaSel.add(m)); }
     saveAreas(); updateAreaTot(); renderPagesList(); draw();
     const net = added.reduce((s, m) => s + (m.sf || 0) * (m.neg ? -1 : 1), 0);
@@ -1837,10 +1856,11 @@
     if ((on('floor') || on('ceiling')) && S.prov && S.prov.readFinishSchedule) {
       try {
         const r = await S.prov.readFinishSchedule(); const f = (r && r.finishes) || [];
-        F._scopeFinishes = f;
+        F._scopeFinishes = f; refreshAreaTagList();
         if (f.length) {
-          const fl = f.filter(x => x.kind === 'floor'), cl = f.filter(x => x.kind === 'ceiling');
+          const fl = f.filter(x => x.kind === 'floor'), cl = f.filter(x => x.kind === 'ceiling'), bs = f.filter(x => x.kind === 'base');
           if (on('floor') && fl.length) did.push(F.tr('piso ({n})', { n: fl.length }));
+          if (on('floor') && bs.length) did.push(F.tr('base ({n})', { n: bs.length }));
           if (on('ceiling') && cl.length) did.push(F.tr('forro ({n})', { n: cl.length }));
         }
       } catch (e) {}
@@ -1853,8 +1873,8 @@
     markSaved('🧠 ' + F.tr('IA leu do escopo: ') + did.join(' · '));
     // resumo do que a IA achou de piso/forro
     if (F._scopeFinishes.length && (on('floor') || on('ceiling'))) {
-      const lines = F._scopeFinishes.filter(x => (x.kind === 'floor' && on('floor')) || (x.kind === 'ceiling' && on('ceiling')))
-        .map(x => (x.kind === 'ceiling' ? '🟦 Forro' : '🟩 Piso') + '  ' + x.code + ' — ' + x.desc);
+      const lines = F._scopeFinishes.filter(x => ((x.kind === 'floor' || x.kind === 'base') && on('floor')) || (x.kind === 'ceiling' && on('ceiling')))
+        .map(x => (x.kind === 'ceiling' ? '🟦 Forro' : x.kind === 'base' ? '📏 Base' : '🟩 Piso') + '  ' + x.code + ' — ' + x.desc);
       if (lines.length) alert(F.tr('Acabamentos lidos da folha de medidas:') + '\n\n' + lines.join('\n'));
     }
   }
@@ -2479,7 +2499,12 @@
     const wcal = $('#wsCalib'); if (wcal) wcal.addEventListener('click', () => setMode('calib'));
     const wmea = $('#wsMeasure'); if (wmea) wmea.addEventListener('click', () => setMode('measure'));
     const ware = $('#wsArea'); if (ware) ware.addEventListener('click', () => { if (!S.mmPerPx) markSaved(F.tr('Calibre a escala primeiro (📏).')); setMode('area'); });
-    { const wak = $('#wsAreaKind'); if (wak) { S.areaKind = wak.value || 'floor'; wak.addEventListener('change', () => { S.areaKind = wak.value || 'floor'; if (!areaScopeOwned(S.areaKind)) markSaved('🔒 ' + F.tr('{pkg} é um pacote à parte (US$ 12/mês) — assine na aba Pacote para liberar.', { pkg: kindName(S.areaKind) })); draw(); }); } }
+    { const wak = $('#wsAreaKind'); if (wak) { S.areaKind = wak.value || 'floor'; wak.addEventListener('change', () => { S.areaKind = wak.value || 'floor'; if (!areaScopeOwned(S.areaKind)) markSaved('🔒 ' + F.tr('{pkg} é um pacote à parte (US$ 12/mês) — assine na aba Pacote para liberar.', { pkg: kindName(S.areaKind) })); refreshAreaTagList(); draw(); }); } }
+    { const wat = $('#wsAreaTag'); if (wat) { wat.addEventListener('input', () => {
+      S.areaTag = (wat.value || '').trim().toUpperCase();
+      if (S.areaSel && S.areaSel.size) { pushUndo(); S.areaSel.forEach(a => { a.tag = S.areaTag; }); saveAreas(); renderPagesList(); }   // aplica nas selecionadas
+      draw();
+    }); refreshAreaTagList(); } }
     { const wai = $('#wsAreaAI'); if (wai) wai.addEventListener('click', () => {
       S.areaAI = !S.areaAI; S.areaPts = [];                    // alterna a varinha; limpa polígono manual em andamento
       if (!S.areaAI) S.areaSeeds = [];                         // desligou → descarta os pontos marcados

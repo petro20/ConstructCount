@@ -1139,6 +1139,8 @@ window.ConstructCount = window.ConstructCount || {};
     'alturas ({n})': { en: 'heights ({n})', es: 'alturas ({n})' },
     'piso ({n})': { en: 'floor ({n})', es: 'piso ({n})' },
     'forro ({n})': { en: 'ceiling ({n})', es: 'cielo ({n})' },
+    'base ({n})': { en: 'base ({n})', es: 'zócalo ({n})' },
+    'Base': { en: 'Base', es: 'Zócalo' },
     'janelas/portas ({n})': { en: 'windows/doors ({n})', es: 'ventanas/puertas ({n})' },
     'Ponto removido': { en: 'Point removed', es: 'Punto eliminado' },
     'Piso': { en: 'Floor', es: 'Piso' },
