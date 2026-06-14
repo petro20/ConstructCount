@@ -1130,6 +1130,7 @@ window.ConstructCount = window.ConstructCount || {};
     '▱ Área (rápida)': { en: '▱ Area (quick)', es: '▱ Área (rápida)' },
     'Área: {sf} SF': { en: 'Area: {sf} SF', es: 'Área: {sf} SF' },
     'Área apagada': { en: 'Area deleted', es: 'Área eliminada' },
+    'Área editada': { en: 'Area edited', es: 'Área editada' },
     'Ponto removido': { en: 'Point removed', es: 'Punto eliminado' },
     'Piso': { en: 'Floor', es: 'Piso' },
     'Teto': { en: 'Ceiling', es: 'Techo' },

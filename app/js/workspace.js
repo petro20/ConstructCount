@@ -838,9 +838,9 @@
       let big = polys[0], bigA = -1;                 // maior parte → leva o rótulo do total
       polys.forEach(poly => {
         const a = polySf(poly); if (a > bigA) { bigA = a; big = poly; }
-        if (S.areaMode) poly.forEach(p => {          // vértices visíveis p/ apagar com botão direito
+        if (S.areaMode || seld) poly.forEach(p => {  // alças: visíveis no modo Área ou quando SELECIONADA (arrastar p/ editar)
           const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy;
-          ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = neg ? 'rgba(239,68,68,.95)' : kindFill(k, '.95'); ctx.fill();
+          ctx.beginPath(); ctx.arc(x, y, seld ? 5 : 4, 0, Math.PI * 2); ctx.fillStyle = seld ? '#f59e0b' : (neg ? 'rgba(239,68,68,.95)' : kindFill(k, '.95')); ctx.fill();
           ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.stroke();
         });
       });
@@ -2175,7 +2175,11 @@
         const canSelect = !S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.clickA;
         if (canSelect) {
           S.dragMeas = hitMeasEnd(e.offsetX, e.offsetY);   // pegar ponta de medida p/ arrastar
+          const hap = S.dragMeas ? null : hitAreaPoint(e.offsetX, e.offsetY);   // pegar canto de ÁREA p/ EDITAR
           if (S.dragMeas) cv.style.cursor = 'move';
+          else if (hap && hap.kind === 'area' && S.areaSel && S.areaSel.has(hap.ar)) {   // só edita área SELECIONADA
+            pushUndo(); S.dragAreaPt = hap; cv.style.cursor = 'move';
+          }
           else {                                            // senão, laço de seleção
             S.maybeMarquee = true; S.marqStart = [e.offsetX, e.offsetY]; S.marquee = null;
             S.marqMods = { ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey };
@@ -2199,6 +2203,12 @@
         S.moved = true; draw(); return;
       }
       const toolMode = S.countMode || S.autoMode || S.delMode || S.calibMode || S.measMode;
+      if (S.dragAreaPt) {                     // arrastando um CANTO de área (editar)
+        const [ix, iy] = snapPt(mix, miy);
+        S.dragAreaPt.poly[S.dragAreaPt.i] = [ix, iy];
+        S.dragAreaPt.ar.sf = areaSf(S.dragAreaPt.ar);
+        S.moved = true; draw(); return;
+      }
       if (S.dragMeas) {                       // arrastando uma ponta de medida
         const [ix, iy] = snapPt(mix, miy);
         S.dragMeas.m[S.dragMeas.end] = [ix, iy];
@@ -2253,6 +2263,10 @@
       }
       if (e.button !== 0) return;
       S.lpress = false;
+      if (S.dragAreaPt) {                     // soltou um canto de área
+        if (S.moved) { S.dragAreaPt.ar.sf = areaSf(S.dragAreaPt.ar); saveAreas(); updateAreaTot(); renderPagesList(); markSaved(F.tr('Área editada')); }
+        S.dragAreaPt = null; applyCursor(); draw(); return;
+      }
       if (S.dragMeas) {
         if (S.moved) { saveMeasures(); updateScaleInfo(); markSaved(F.tr('Medida movida')); }
         else { pickMeasure(S.dragMeas.m, e); markSaved(F.tr('{n} selecionada(s) · Del p/ apagar', { n: selSet().size })); }   // clique = selecionar
