@@ -812,7 +812,8 @@
     });
     if (S.areaMode && S.areaPts && S.areaPts.length) {     // polígono em construção + área ao vivo
       const k = S.areaKind || 'floor', col = kindColor(k);
-      let eff = S.hover && S.areaPts.length ? applyOrtho(S.areaPts[S.areaPts.length - 1], S.hover) : S.hover;
+      const aeff = (S.curX != null) ? areaEffective(S.curX, S.curY) : { pt: S.hover, snapped: false };
+      let eff = aeff.pt;
       const prev = (eff && S.areaPts.length >= 2) ? S.areaPts.concat([eff]) : S.areaPts;
       if (prev.length >= 3) {                               // preenchimento prévio
         ctx.beginPath(); prev.forEach((p, i) => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }); ctx.closePath();
@@ -824,6 +825,11 @@
       if (eff) { const hx = eff[0] * S.scale + S.ox, hy = eff[1] * S.scale + S.oy; ctx.lineTo(hx, hy); }
       ctx.stroke(); ctx.setLineDash([]);
       S.areaPts.forEach(p => { const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = col; ctx.fill(); });
+      if (eff && aeff.snapped) {                            // ÍMÃ: anel destacando o ponto que vai grudar
+        const hx = eff[0] * S.scale + S.ox, hy = eff[1] * S.scale + S.oy;
+        ctx.beginPath(); ctx.arc(hx, hy, 8, 0, Math.PI * 2); ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2.5; ctx.stroke();
+        ctx.beginPath(); ctx.arc(hx, hy, 3, 0, Math.PI * 2); ctx.fillStyle = '#f59e0b'; ctx.fill();
+      }
       if (S.mmPerPx && prev.length >= 3) {                  // SF ao vivo no centro
         const sf = polySf(prev), c = polyCentroid(prev), cx = c[0] * S.scale + S.ox, cy = c[1] * S.scale + S.oy;
         const txt = kindName(k) + '  ' + sf.toFixed(1) + ' SF'; ctx.font = '700 13px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
@@ -1251,6 +1257,26 @@
   }
   function areaPkgFor(k) { return k === 'ceiling' ? 'ceiling' : 'floor'; }   // Piso/Teto = pacotes próprios
   function areaScopeOwned(k) { return !F.hasPackage || F.hasPackage(areaPkgFor(k)); }
+  // ÍMÃ de ponto: vértice JÁ MARCADO mais próximo do cursor (em px de TELA → atração
+  // constante em qualquer zoom). Atrai SEMPRE (não depende do botão Snap).
+  function nearestAreaVertex(sx, sy, tolScreen) {
+    let best = null, bd = (tolScreen || 14);
+    const consider = (p) => { if (!p) return; const x = p[0] * S.scale + S.ox, y = p[1] * S.scale + S.oy; const d = Math.hypot(sx - x, sy - y); if (d <= bd) { bd = d; best = [p[0], p[1]]; } };
+    (S.areaPts || []).forEach(consider);
+    (S.areas || []).forEach(a => { if (a.page === S.page && a.path) a.path.forEach(consider); });
+    (S.lines || []).forEach(l => { if (l.page === S.page && l.path) l.path.forEach(consider); });
+    (S.marks || []).forEach(m => consider([m.x + m.w / 2, m.y + m.h / 2]));
+    (S.measures || []).forEach(m => { consider(m.a); consider(m.b); });
+    return best;
+  }
+  // ponto efetivo da área: ímã do vértice vence; senão snap de imagem + ortho. {pt, snapped}
+  function areaEffective(sx, sy) {
+    const v = nearestAreaVertex(sx, sy);
+    if (v) return { pt: v, snapped: true };                  // gruda no ponto existente (ignora ortho)
+    let p = snapPt(...toImg(sx, sy));
+    if (S.areaPts && S.areaPts.length) p = applyOrtho(S.areaPts[S.areaPts.length - 1], p);
+    return { pt: p, snapped: false };
+  }
   function handleArea(sx, sy) {
     if (!S.mmPerPx) { alert(F.tr('Calibre a escala primeiro (📏 Calibrar escala).')); return; }
     const kind = S.areaKind || 'floor';
@@ -1259,9 +1285,7 @@
       return;
     }
     if (!S.areaPts) S.areaPts = [];
-    let p = snapPt(...toImg(sx, sy));
-    if (S.areaPts.length) p = applyOrtho(S.areaPts[S.areaPts.length - 1], p);   // trava H/V se Ortho
-    S.areaPts.push(p); draw();
+    S.areaPts.push(areaEffective(sx, sy).pt); draw();
   }
   function finishArea() {
     if (!S.areaPts) S.areaPts = [];
