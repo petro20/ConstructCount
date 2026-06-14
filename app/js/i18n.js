@@ -880,6 +880,7 @@ window.ConstructCount = window.ConstructCount || {};
     'Tabela do orçamento': { en: 'Quote table', es: 'Tabla de cotización' },
     'Tabela do orçamento (por tipo)': { en: 'Quote table (by type)', es: 'Tabla de cotización (por tipo)' },
     'Takeoff de Framing': { en: 'Framing Takeoff', es: 'Cómputo de Framing' },
+    'Takeoff': { en: 'Takeoff', es: 'Cómputo' },
     'Tamanho': { en: 'Size', es: 'Tamaño' },
     'Texto': { en: 'Text', es: 'Texto' },
     'Texto com IA': { en: 'AI text', es: 'Texto con IA' },

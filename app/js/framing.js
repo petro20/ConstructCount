@@ -519,7 +519,7 @@
 
     ov.innerHTML =
       '<div class="ftt-grip" title="' + tr('Arraste para aumentar/diminuir a tabela') + '"></div>'
-      + '<div class="ftt-top"><span>🏗️ ' + tr('Takeoff de Framing') + '</span>'
+      + '<div class="ftt-top"><span>📊 ' + tr('Takeoff') + '</span>'
       + '<span class="ftt-scopes" title="' + tr('Escopo da obra — quais ofícios o takeoff cobre') + '">' + scopeChips + '</span>'
       + '<span class="ftt-pr">' + prHTML + '</span>'
       + '<button id="ftReports" class="ftt-reportsbtn" title="' + tr('Abrir a Central de relatórios') + '">📄 ' + tr('Relatórios') + '</button>'
@@ -834,7 +834,7 @@
     sc.innerHTML =
       '<header class="flex items-center gap-3 px-4 py-2.5 bg-steel-800 text-white shrink-0">'
       + '  <button id="frBack" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-white/10"><span class="text-lg">←</span><span>' + tr('Voltar') + '</span></button>'
-      + '  <div class="font-bold">🏗️ ' + tr('Takeoff de Framing') + ' <span class="text-steel-300 font-normal text-sm">(Metal &amp; Wood)</span></div>'
+      + '  <div class="font-bold">📊 ' + tr('Takeoff') + '</div>'
       // toolbar
       + '  <div class="ml-4 flex items-center gap-1">'
       + '    <button id="frOpenPlan" class="px-3 py-1.5 rounded-lg text-sm font-semibold bg-steel-600 hover:bg-steel-500">📄 ' + tr('Abrir planta') + '</button>'

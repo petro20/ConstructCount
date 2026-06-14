@@ -1508,6 +1508,10 @@
     S.areaPts = []; S.areaNeg = false; draw();
   }
   F._wsAreas = () => (S.areas || []);   // outros pacotes podem ler as áreas medidas
+  F._wsPage = () => S.page;             // folha atual (p/ o takeoff de piso)
+  F._wsAreaBaseLf = (ar) => areaBaseLf(ar);   // perímetro/base em LF de uma área
+  F._wsAreaBaseH = () => (S.areaBaseH || 0);  // altura da base (pol)
+  F._wsFinishDesc = (kind, tag) => { const x = (F._scopeFinishes || []).find(y => y.kind === kind && y.code === tag); return x ? x.desc : ''; };
   // acha um VÉRTICE de área sob o cursor (em construção ou já fechada) — p/ apagar ponto errado
   function hitAreaPoint(sx, sy) {
     const tol = 11;
