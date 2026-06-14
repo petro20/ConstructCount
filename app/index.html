@@ -1096,7 +1096,6 @@
           <button id="wsCalib" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Trace uma linha sobre uma medida conhecida do desenho e informe o valor real">📏 Calibrar escala</button>
           <button id="wsMeasure" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Trace uma linha e veja a medida real (precisa calibrar a escala antes). Pode adicionar várias.">📐 Medir (várias)</button>
           <button id="wsLinear" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Linear: traço contínuo de vários pontos na CAMADA ativa (clique p/ mudar de direção, Esc/Enter finaliza, Backspace desfaz). Precisa calibrar a escala. Usado por Framing e outros pacotes.">📐 Linear (contínuo)</button>
-          <button id="wsArea" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Área: clique nos cantos do cômodo/região; duplo-clique (ou Enter) fecha e mostra a área em SF na hora. SHIFT+clique = área NEGATIVA (vermelha) que DESCONTA do total (colunas, escadas, vãos). Botão DIREITO em cima de um ponto apaga aquele ponto. Backspace desfaz o último ponto; quando não está desenhando, apaga a última área. Precisa calibrar a escala.">▱ Área (rápida)</button>
           <div class="flex items-center gap-2 pt-1" title="Tipo da área — Piso (verde) ou Teto/Forro (azul). Cada área nova entra com este tipo. O total por tipo aparece abaixo.">
             <span class="text-xs text-steel-300 shrink-0">Tipo de área:</span>
             <select id="wsAreaKind" class="flex-1 min-w-0 text-steel-900 text-sm rounded px-2 py-1">
@@ -1104,6 +1103,7 @@
               <option value="ceiling">Teto / Forro</option>
             </select>
           </div>
+          <button id="wsArea" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Área: clique nos cantos do cômodo/região; duplo-clique (ou Enter) fecha e mostra a área em SF na hora. SHIFT+clique = área NEGATIVA (vermelha) que DESCONTA do total (colunas, escadas, vãos). Botão DIREITO em cima de um ponto apaga aquele ponto. Backspace desfaz o último ponto; quando não está desenhando, apaga a última área. Precisa calibrar a escala.">▱ Área (rápida)</button>
           <button id="wsAreaRect" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Retângulo: liga o modo Área e cria a área com 2 CLIQUES na diagonal (um canto, o canto oposto). Mais rápido e os cantos saem retos. Shift+1º clique = negativo.">▭ Retângulo (2 cliques)</button>
           <button id="wsAreaMerge" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Une várias áreas num ÚNICO piso/forro (um total de SF). Selecione as áreas (clique com o modo Área desligado, Ctrl+clique p/ várias, ou Ctrl+A p/ TODAS) e clique aqui; sem seleção, une TODAS do tipo escolhido nesta folha.">🔗 Unir áreas (1 só)</button>
           <div class="text-[11px] text-steel-400 px-1">⇧ Shift+clique = negativo (desconta)</div>
