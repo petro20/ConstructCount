@@ -86,6 +86,26 @@
     if (S.prov && S.prov.readLevels && (S.pages || []).some(pg => !pg.level)) {
       try { const lr = await S.prov.readLevels(); const lv = (lr && lr.levels) || {}; let n = 0; (S.pages || []).forEach(pg => { const l = lv[pg.page] || lv[String(pg.page)]; if (l) { pg.level = l; n++; } }); if (n) renderPagesList(); } catch (e) {}
     }
+    // lê as LEGENDAS de acabamento (tipo + fabricante de PISO e BASE) AUTOMATICAMENTE — MESCLA sem apagar o que o usuário editou
+    if (S.prov && S.prov.readFinishSchedule) {
+      try {
+        const r = await S.prov.readFinishSchedule(); const fresh = (r && r.finishes) || [];
+        if (fresh.length) {
+          const cur = (F._scopeFinishes || []).slice(); const byCode = {}; cur.forEach(x => { byCode[x.code] = x; });
+          let changed = false;
+          fresh.forEach(nf => {
+            const ex = byCode[nf.code];
+            if (!ex) { cur.push(nf); byCode[nf.code] = nf; changed = true; }
+            else {
+              if (!ex.material && nf.material) { ex.material = nf.material; ex.desc = nf.material; changed = true; }
+              if (!ex.manufacturer && nf.manufacturer) { ex.manufacturer = nf.manufacturer; changed = true; }
+              if (!ex.kind && nf.kind) { ex.kind = nf.kind; changed = true; }
+            }
+          });
+          if (changed) { F._scopeFinishes = cur; if (F._setFloorFinishes) F._setFloorFinishes(cur); if (F._refreshAreaTagList) F._refreshAreaTagList(); renderPagesList(); }
+        }
+      } catch (e) {}
+    }
   }
   F._saveFraming = () => { if (S.prov && S.prov.saveFraming && F._framingSnapshot) { try { S.prov.saveFraming(F._framingSnapshot()); } catch (e) {} } };
 
