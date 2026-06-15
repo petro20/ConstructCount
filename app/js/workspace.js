@@ -613,7 +613,7 @@
     const wrap = document.querySelector('#wsSummaryCards'); if (!wrap) return;
     const tr = (s, v) => (F.tr ? F.tr(s, v) : s);
     const has = F.hasPackage;
-    const fmt = (n) => '$ ' + (Number(n) || 0).toFixed(2);
+    const fmt = (n) => (F.money ? F.money(n) : '$ ' + (Number(n) || 0).toFixed(2));
     const cards = []; let gCost = 0, gSale = 0, anyMoney = false;
     if (!has || has('wall')) {
       const d = F.framingReportData ? F.framingReportData() : null, T = d && d.totals;
