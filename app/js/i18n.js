@@ -1148,6 +1148,7 @@ window.ConstructCount = window.ConstructCount || {};
     'Parede': { en: 'Wall', es: 'Pared' },
     'Janelas e Portas': { en: 'Windows & Doors', es: 'Ventanas y Puertas' },
     'Disciplina do takeoff': { en: 'Takeoff discipline', es: 'Disciplina del cómputo' },
+    'Pacotes atualizados': { en: 'Packages updated', es: 'Paquetes actualizados' },
     '📊 Resumo por pacote': { en: '📊 Summary by package', es: '📊 Resumen por paquete' },
     'Abrir no Takeoff': { en: 'Open in Takeoff', es: 'Abrir en el Cómputo' },
     'Total geral': { en: 'Grand total', es: 'Total general' },

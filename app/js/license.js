@@ -119,11 +119,31 @@
   var PLAN_MAP = { wall: 'parede', windows_doors: 'mensal' };   // id do pacote -> plano do checkout (combo=parede, janelas=mensal)
   function checkoutUrl(plan) { return PORTAL + '/checkout.php?plan=' + encodeURIComponent(PLAN_MAP[plan] || plan); }
   F.upgradePackage = function (lockCsv) {
+    F._pendingUpgrade = true;   // ao voltar o foco, re-checa a licença → destrava se comprou
     var ids = String(lockCsv || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
     if (ids.length === 1) { try { window.open(checkoutUrl(ids[0]), '_blank'); } catch (e) {} return; }   // pacote único → checkout direto
     if (F.openPackageTab) return F.openPackageTab();                                                       // ambíguo (ex.: Piso/Forro) → aba Pacote p/ escolher
     if (ids[0]) { try { window.open(checkoutUrl(ids[0]), '_blank'); } catch (e) {} }
   };
+  // re-valida no servidor e re-aplica os gates SEM popar overlay (usado ao voltar da compra)
+  F.refreshEntitlements = async function () {
+    try { await getStatus(); } catch (e) {}     // força revalidação online (web atualiza token; desktop revalida o cache)
+    try { await refreshInfo(); } catch (e) {}   // lê os modules atualizados (desktop: license_info; web: token)
+    applyPackageGates();
+  };
+  // ao voltar o foco pro app (ex.: terminou a compra no navegador) → atualiza os pacotes
+  var lastChk = 0;
+  function onReturn() {
+    var pend = F._pendingUpgrade;
+    var now = Date.now();
+    if (!pend && now - lastChk < 20000) return;   // throttle p/ retornos comuns; compra força a checagem
+    lastChk = now; F._pendingUpgrade = false;
+    Promise.resolve(F.refreshEntitlements()).then(function () {
+      if (pend && F.flashExport) F.flashExport('✓ ' + tr('Pacotes atualizados'));
+    });
+  }
+  window.addEventListener('focus', onReturn);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) onReturn(); });
   // intercepta o clique no item INERTE (captura) ANTES do handler da ferramenta → abre upgrade, ferramenta não age
   document.addEventListener('click', function (e) {
     var t = e.target, el2 = (t && t.closest) ? t.closest('.pkg-inert') : null;
