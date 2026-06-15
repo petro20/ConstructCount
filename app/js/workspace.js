@@ -1435,6 +1435,7 @@
   function polyPerimeterLfAt(poly, mm) { if (!mm || !poly || poly.length < 2) return 0; let px = 0; for (let i = 0; i < poly.length; i++) { const a = poly[i], b = poly[(i + 1) % poly.length]; px += Math.hypot(b[0] - a[0], b[1] - a[1]); } return px * mm / 304.8; }
   F._wsAreaBaseLfAt = (ar, mm) => areaPolys(ar).reduce((s, p) => s + polyPerimeterLfAt(p, mm), 0);   // base com escala explícita (relatório do projeto)
   F._wsMm = () => S.mmPerPx;   // escala (mm/px) da folha atual
+  F._wsLevel = () => { const m = (S.pages || []).find(p => p.page === S.page) || {}; return m.level || ''; };   // nível/pavimento da folha atual
   // folhas com áreas + escala de cada uma (p/ relatório do projeto inteiro)
   F._wsPagesAreas = () => (S.pages || []).map(p => ({ page: p.page, sheet: p.sheet || ('Folha ' + p.page), level: p.level || '', mmPerPx: (p.page === S.page ? S.mmPerPx : null) || p.mm_per_px || null, areas: (p.page === S.page) ? (S.areas || []) : loadAreas(p.page) })).filter(x => (x.areas || []).length);
   // ---- UNIÃO de retângulos eixo-alinhados → "1 formato só" (bordas comuns somem, sobreposição não conta 2x) ----

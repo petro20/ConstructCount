@@ -122,12 +122,12 @@
     });
     return Object.keys(by).map(function (t) { var g = by[t]; g.sf = F._wsAreasNetSf ? F._wsAreasNetSf(g._a, MM) : g._a.reduce(function (s, a) { return s + (a.sf || 0) * (a.neg ? -1 : 1); }, 0); return g; }).filter(function (g) { return Math.abs(g.sf) > 0.01; });
   }
-  function priceRows(gs, kind, baseH) {
-    var floor = kind === 'floor', out = [];
+  function priceRows(gs, kind, baseH, level) {
+    var floor = kind === 'floor', out = [], lvl = level ? (' - ' + titleCase(level)) : '';
     gs.forEach(function (g) {
       var mr = floor ? rate('floorMat', 0) : rate('ceilMat', 0), lr = floor ? rate('floorLab', 0) : rate('ceilLab', 0);
       var mat = g.sf * mr * wasteMult(), lab = g.sf * lr, cost = lineCost(mat, lab);
-      out.push({ item: (floor ? tr('Piso') : tr('Forro')) + ' ' + g.tag, tag: g.tag, material: g.material || '', manufacturer: g.manufacturer || '', qty: g.sf, unit: 'SF', price: mr, mat: mat, lab: lab, cost: cost, sale: lineSale(cost), base: false });
+      out.push({ item: (floor ? tr('Piso') : tr('Forro')) + (g.tag && g.tag !== '—' ? ' ' + g.tag : '') + lvl, tag: g.tag, material: g.material || '', manufacturer: g.manufacturer || '', qty: g.sf, unit: 'SF', price: mr, mat: mat, lab: lab, cost: cost, sale: lineSale(cost), base: false });
       if (floor && g.baseLf > 0.01) {
         var bsf = g.baseLf * (baseH / 12);   // área do rodapé em SF (perímetro × altura)
         var br = rate('baseMat', 0), bmat = bsf * br * wasteMult(), blab = bsf * rate('baseLab', 0), bc = lineCost(bmat, blab);
@@ -139,15 +139,15 @@
   function sumRows(rows) { var t = { mat: 0, lab: 0, cost: 0, sale: 0, sf: 0, baseLf: 0 }; rows.forEach(function (r) { t.mat += r.mat; t.lab += r.lab; t.cost += r.cost; t.sale += r.sale; if (r.unit === 'SF') t.sf += r.qty; else t.baseLf += r.qty; }); return t; }
 
   // dados de UMA folha (lista de áreas) p/ relatório
-  function sheetData(areas, mm) {
+  function sheetData(areas, mm, level) {
     var baseH = F._wsAreaBaseH ? F._wsAreaBaseH() : 0;
-    var f = priceRows(groupsForAreas(areas, 'floor', mm), 'floor', baseH), c = priceRows(groupsForAreas(areas, 'ceiling', mm), 'ceiling', baseH);
+    var f = priceRows(groupsForAreas(areas, 'floor', mm), 'floor', baseH, level), c = priceRows(groupsForAreas(areas, 'ceiling', mm), 'ceiling', baseH, level);
     return { floor: f, ceiling: c, totFloor: sumRows(f), totCeiling: sumRows(c), grand: { cost: sumRows(f).cost + sumRows(c).cost, sale: sumRows(f).sale + sumRows(c).sale } };
   }
 
   // dados p/ os RELATÓRIOS de Piso/Forro — FOLHA ATUAL
   F.floorReportData = function () {
-    var d = sheetData(F._wsAreas ? F._wsAreas() : [], null);
+    var d = sheetData(F._wsAreas ? F._wsAreas() : [], null, F._wsLevel ? F._wsLevel() : '');
     d.rates = F._floorRates ? F._floorRates() : {}; d.waste = rate('waste', 0); d.tax = rate('tax', 0); d.markup = rate('markup', 0);
     d.region = (F.framing && F.framing.region) || '';
     return d;
@@ -157,7 +157,7 @@
   F.floorReportDataAll = function () {
     var pages = F._wsPagesAreas ? F._wsPagesAreas() : [];
     var sheets = pages.map(function (pg) {
-      var sd = sheetData(pg.areas, pg.mmPerPx);
+      var sd = sheetData(pg.areas, pg.mmPerPx, pg.level);
       sd.page = pg.page; sd.sheet = pg.sheet; sd.level = pg.level || '';
       return sd;
     }).filter(function (sd) { return sd.floor.length || sd.ceiling.length; });
