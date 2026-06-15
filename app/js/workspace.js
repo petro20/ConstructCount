@@ -82,6 +82,10 @@
     });
     S.lines = (S.lines || []).filter(l => l.page === S.page).concat(otherLines);   // mantém a folha atual (memória) + as demais
     renderPagesList();
+    // lê o NÍVEL/pavimento (FIRST FLOOR…) de cada folha AUTOMATICAMENTE → aparece na árvore sem precisar de "Ler escopo"
+    if (S.prov && S.prov.readLevels && (S.pages || []).some(pg => !pg.level)) {
+      try { const lr = await S.prov.readLevels(); const lv = (lr && lr.levels) || {}; let n = 0; (S.pages || []).forEach(pg => { const l = lv[pg.page] || lv[String(pg.page)]; if (l) { pg.level = l; n++; } }); if (n) renderPagesList(); } catch (e) {}
+    }
   }
   F._saveFraming = () => { if (S.prov && S.prov.saveFraming && F._framingSnapshot) { try { S.prov.saveFraming(F._framingSnapshot()); } catch (e) {} } };
 
