@@ -230,8 +230,8 @@
 
   async function start() {
     if (started) return; started = true;
-    // no DESKTOP o interruptor mestre é o license_client.REQUIRED (Python)
-    if (isDesktop()) { try { var rq = await window.pywebview.api.license_required(); if (rq && rq.required) LICENSING = true; } catch (e) {} }
+    // no DESKTOP o interruptor mestre é o license_client.REQUIRED (Python) — RESPEITA o on/off (env CONSTRUCTCOUNT_LICENSE_REQUIRED=0 desliga p/ dev)
+    if (isDesktop()) { try { var rq = await window.pywebview.api.license_required(); LICENSING = !!(rq && rq.required); } catch (e) {} }
     gate();
   }
   F.recheckLicense = gate;
