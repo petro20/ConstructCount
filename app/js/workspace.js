@@ -326,9 +326,11 @@
   // atual da memória e as demais do localStorage (áreas persistem por folha).
   function pageAreaSummary(pageNo) {
     const list = ((pageNo === S.page) ? (S.areas || []) : loadAreas(pageNo)) || [];
-    const f = areasNetSf(list.filter(a => (a.kind || 'floor') !== 'ceiling'));   // UNIÃO: sobreposição 1×
-    const c = areasNetSf(list.filter(a => a.kind === 'ceiling'));
-    let baseLf = 0; list.forEach(a => { if ((a.kind || 'floor') !== 'ceiling' && !a.neg) baseLf += areaBaseLf(a); });
+    const meta = (S.pages || []).find(p => p.page === pageNo) || {};
+    const mm = (pageNo === S.page ? S.mmPerPx : null) || meta.mm_per_px || null;   // escala DESTA folha
+    const f = areasNetSf(list.filter(a => (a.kind || 'floor') !== 'ceiling'), mm);   // UNIÃO: sobreposição 1×
+    const c = areasNetSf(list.filter(a => a.kind === 'ceiling'), mm);
+    let baseLf = 0; list.forEach(a => { if ((a.kind || 'floor') !== 'ceiling' && !a.neg) baseLf += (mm ? F._wsAreaBaseLfAt(a, mm) : areaBaseLf(a)); });
     const baseSf = baseLf * ((S.areaBaseH || 0) / 12);   // base = perímetro do piso × altura → SF
     return { floor: f + baseSf, ceiling: c, baseSf: baseSf, any: (f + baseSf) !== 0 || c !== 0 };   // Piso = piso + base (SF)
   }
@@ -1358,7 +1360,12 @@
   }
   function areaBaseLf(ar) { return areaPolys(ar).reduce((s, p) => s + polyPerimeterLf(p), 0); }
   function polyKey(poly) { return poly.map(p => Math.round(p[0] / 4) + ',' + Math.round(p[1] / 4)).join(';'); }   // ~4px de tolerância p/ achar partes repetidas
-  function pxToSf(areaPx) { return S.mmPerPx ? (areaPx * S.mmPerPx * S.mmPerPx / 92903.04) : 0; }
+  function pxToSf(areaPx, mm) { mm = mm || S.mmPerPx; return mm ? (areaPx * mm * mm / 92903.04) : 0; }
+  function polyPerimeterLfAt(poly, mm) { if (!mm || !poly || poly.length < 2) return 0; let px = 0; for (let i = 0; i < poly.length; i++) { const a = poly[i], b = poly[(i + 1) % poly.length]; px += Math.hypot(b[0] - a[0], b[1] - a[1]); } return px * mm / 304.8; }
+  F._wsAreaBaseLfAt = (ar, mm) => areaPolys(ar).reduce((s, p) => s + polyPerimeterLfAt(p, mm), 0);   // base com escala explícita (relatório do projeto)
+  F._wsMm = () => S.mmPerPx;   // escala (mm/px) da folha atual
+  // folhas com áreas + escala de cada uma (p/ relatório do projeto inteiro)
+  F._wsPagesAreas = () => (S.pages || []).map(p => ({ page: p.page, sheet: p.sheet || ('Folha ' + p.page), mmPerPx: (p.page === S.page ? S.mmPerPx : null) || p.mm_per_px || null, areas: (p.page === S.page) ? (S.areas || []) : loadAreas(p.page) })).filter(x => (x.areas || []).length);
   // ---- UNIÃO de retângulos eixo-alinhados → "1 formato só" (bordas comuns somem, sobreposição não conta 2x) ----
   function polyIsRect(poly) {
     if (!poly || poly.length !== 4) return false;
@@ -1409,7 +1416,7 @@
   }
   // junta um grupo de polígonos: se todos forem retângulos → UNIÃO (1 formato); senão concatena
   // SF coberto por uma grade de retângulos: célula conta se está num POSITIVO e não num NEGATIVO
-  function unionCellsSf(posRects, negRects) {
+  function unionCellsSf(posRects, negRects, mm) {
     if (!posRects.length) return 0;
     const xsS = new Set(), ysS = new Set();
     posRects.concat(negRects).forEach(r => { xsS.add(r[0]); xsS.add(r[2]); ysS.add(r[1]); ysS.add(r[3]); });
@@ -1424,7 +1431,7 @@
         areaPx += (xs[c + 1] - xs[c]) * (ys[r + 1] - ys[r]);
       }
     }
-    return pxToSf(areaPx);
+    return pxToSf(areaPx, mm);
   }
   function pointInPolyImg(x, y, poly) {                 // point-in-polygon em coords de IMAGEM
     let inside = false;
@@ -1441,7 +1448,7 @@
     return inside;
   }
   // UNIÃO por AMOSTRAGEM sobre ÁREAS: célula conta se está num POSITIVO (even-odd) e não num NEGATIVO
-  function sampleUnionAreasSf(posAreas, negAreas) {
+  function sampleUnionAreasSf(posAreas, negAreas, mm) {
     let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     posAreas.forEach(a => areaPolys(a).forEach(p => p.forEach(pt => { x0 = Math.min(x0, pt[0]); y0 = Math.min(y0, pt[1]); x1 = Math.max(x1, pt[0]); y1 = Math.max(y1, pt[1]); })));
     if (!(x1 > x0 && y1 > y0)) return 0;
@@ -1453,12 +1460,12 @@
         if (negAreas.some(a => pointInAreaImg(x, y, a))) continue;
         areaPx += cell;
       }
-    return pxToSf(areaPx);
+    return pxToSf(areaPx, mm);
   }
   // SF líquido de um conjunto de áreas: UNIÃO (sobreposição 1×) menos negativos.
   // Áreas MESCLADAS (sfLock) já têm o SF exato calculado (com buracos) → confia nele, não re-deriva.
   // Áreas LIVRES → união real (grade p/ retângulos, amostragem p/ o resto).
-  function areasNetSf(areas) {
+  function areasNetSf(areas, mm) {
     const all = (areas || []);
     const trusted = a => a.sfLock || areaPolys(a).length > 1;   // mesclada (multi-parte) → confia no SF já calculado
     let total = 0;
@@ -1468,8 +1475,8 @@
     if (pos.length) {
       const oneRect = a => { const ps = areaPolys(a); return ps.length === 1 && polyIsRect(ps[0]); };
       total += free.every(oneRect)
-        ? unionCellsSf(pos.map(a => polyToRect(areaPolys(a)[0])), neg.map(a => polyToRect(areaPolys(a)[0])))
-        : sampleUnionAreasSf(pos, neg);
+        ? unionCellsSf(pos.map(a => polyToRect(areaPolys(a)[0])), neg.map(a => polyToRect(areaPolys(a)[0])), mm)
+        : sampleUnionAreasSf(pos, neg, mm);
     }
     return total;
   }

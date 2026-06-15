@@ -96,8 +96,53 @@
     DOCL = null; if (F.flashExport) F.flashExport('✓ ' + tr('Lista de materiais') + ' (Excel) ✓');
   };
 
+  /* ---------- Projeto inteiro (PDF) — 1 página por FOLHA com takeoff ---------- */
+  F.floorExportProjectPDF = async function () {
+    if (!need(window.jspdf)) return;
+    var d = F.floorReportDataAll ? F.floorReportDataAll() : null;
+    if (!d || !d.sheets.length) return noData();
+    var L = await pickL(); if (!L) return;
+    var jsPDF = window.jspdf.jsPDF, doc = new jsPDF(), first = true;
+    d.sheets.forEach(function (s) {
+      if (!first) doc.addPage(); first = false;
+      if (F._pdfBrandHeader) F._pdfBrandHeader(doc, tr('Piso & Forro — Folha {s}', { s: s.sheet }));
+      doc.setTextColor(60); doc.setFontSize(9);
+      doc.text(tr('Folha {s} · Piso: {f} SF · Forro: {c} SF', { s: s.sheet, f: s.totFloor.sf.toFixed(0), c: s.totCeiling.sf.toFixed(0) }), 14, 36);
+      var head = [['ITEM', tr('Tipo de material'), tr('Fabricante'), tr('Qtd'), tr('Un'), tr('Custo'), tr('Venda')]];
+      var body = [];
+      var rowsP = function (rows) { return rows.map(function (r) { return [r.item, r.material || '—', r.manufacturer || '—', n1(r.qty), r.unit, money(r.cost), money(r.sale)]; }); };
+      if (s.floor.length) { body.push([{ content: '🟩 ' + tr('Piso'), colSpan: 7, styles: { fontStyle: 'bold', fillColor: [222, 247, 236] } }]); body = body.concat(rowsP(s.floor)); }
+      if (s.ceiling.length) { body.push([{ content: '🟦 ' + tr('Forro'), colSpan: 7, styles: { fontStyle: 'bold', fillColor: [219, 234, 254] } }]); body = body.concat(rowsP(s.ceiling)); }
+      doc.autoTable({
+        startY: 40, head: head, body: body, theme: 'striped',
+        headStyles: { fillColor: (F._brAccentRGB ? F._brAccentRGB() : [44, 71, 106]), textColor: 255, fontSize: 8 },
+        styles: { fontSize: 8, cellPadding: 1.6 }, columnStyles: { 3: { halign: 'right' }, 5: { halign: 'right' }, 6: { halign: 'right', fontStyle: 'bold' } }
+      });
+      var y = doc.lastAutoTable.finalY + 6; if (y > 270) { doc.addPage(); y = 24; }
+      doc.setFontSize(10); doc.setFont(undefined, 'bold'); doc.setTextColor(36, 52, 75);
+      doc.text(tr('Folha {s} — Venda: {v}', { s: s.sheet, v: money(s.grand.sale) }), 14, y);
+      doc.setFont(undefined, 'normal');
+    });
+    // página final: resumo por folha + total do projeto
+    doc.addPage(); if (F._pdfBrandHeader) F._pdfBrandHeader(doc, tr('Resumo do projeto — Piso & Forro'));
+    doc.autoTable({
+      startY: 38,
+      head: [[tr('Folha'), tr('Piso') + ' SF', tr('Forro') + ' SF', tr('Custo'), tr('Venda')]],
+      body: d.sheets.map(function (s) { return [s.sheet, s.totFloor.sf.toFixed(0), s.totCeiling.sf.toFixed(0), money(s.grand.cost), money(s.grand.sale)]; }),
+      foot: [[tr('TOTAL'), '', '', money(d.grand.cost), money(d.grand.sale)]],
+      headStyles: { fillColor: (F._brAccentRGB ? F._brAccentRGB() : [44, 71, 106]), textColor: 255 },
+      footStyles: { fillColor: [240, 240, 240], textColor: 20, fontStyle: 'bold' },
+      styles: { fontSize: 9, cellPadding: 2.5 }, columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } }
+    });
+    if (F._pdfBrandFooterAll) F._pdfBrandFooterAll(doc);
+    await F.saveBytes(fname('projeto', 'pdf'), doc.output('arraybuffer'));
+    DOCL = null; if (F.flashExport) F.flashExport('✓ ' + tr('Projeto (Piso & Forro)') + ' (PDF) ✓');
+  };
+
   // lista dos relatórios de Piso/Forro (Central de relatórios)
   F.floorReports = [
+    { id: 'confer', label: '✅ ' + 'Conferir acabamentos (tipo / fabricante)', fn: function () { if (F.openFinishConferencia) F.openFinishConferencia(); } },
+    { id: 'project', label: '🏢 ' + 'Projeto inteiro — por folha (PDF)', fn: function () { return F.floorExportProjectPDF(); } },
     { id: 'quote', label: '📄 ' + 'Orçamento ao cliente (PDF)', fn: function () { return F.floorExportQuotePDF(); } },
     { id: 'summary', label: '📊 ' + 'Resumo do takeoff (PDF)', fn: function () { return F.floorExportSummaryPDF(); } },
     { id: 'materials', label: '📦 ' + 'Lista de materiais / Pedido (Excel)', fn: function () { return F.floorExportMaterialsXLSX(); } }
