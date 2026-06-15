@@ -696,13 +696,14 @@
       if (T) { gCost += T.cost; gSale += T.sale; anyMoney = true; }
       cards.push({ disc: 'wall', ico: '🧱', name: tr('Parede'), metric: T ? (fmtN(T.lf) + ' LF · ' + fmtN(T.sf) + ' SF') : tr('sem traços'), cost: T ? T.cost : 0, sale: T ? T.sale : 0, money: !!T });
     }
+    const areaTot = (k) => F.areaTakeoffTotalsAll ? F.areaTakeoffTotalsAll(k) : (F.areaTakeoffTotals ? F.areaTakeoffTotals(k) : null);   // PROJETO INTEIRO (todas as folhas)
     if (!has || has('floor')) {
-      const t = F.areaTakeoffTotals ? F.areaTakeoffTotals('floor') : null;
+      const t = areaTot('floor');
       if (t) { gCost += t.cost; gSale += t.sale; if (t.sf > 0) anyMoney = true; }
       cards.push({ disc: 'floor', ico: '🟩', name: tr('Piso'), metric: fmtN(t ? t.sf : 0) + ' SF' + (t && t.baseLf ? (' · ' + fmtN(t.baseLf) + ' LF ' + tr('base')) : ''), cost: t ? t.cost : 0, sale: t ? t.sale : 0, money: !!(t && t.sf > 0) });
     }
     if (!has || has('ceiling')) {
-      const t = F.areaTakeoffTotals ? F.areaTakeoffTotals('ceiling') : null;
+      const t = areaTot('ceiling');
       if (t) { gCost += t.cost; gSale += t.sale; if (t.sf > 0) anyMoney = true; }
       cards.push({ disc: 'ceiling', ico: '🟦', name: tr('Forro'), metric: fmtN(t ? t.sf : 0) + ' SF', cost: t ? t.cost : 0, sale: t ? t.sale : 0, money: !!(t && t.sf > 0) });
     }

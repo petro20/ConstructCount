@@ -100,6 +100,22 @@
     return t;
   };
 
+  // totais da disciplina no PROJETO INTEIRO (todas as folhas) — p/ o Resumo por pacote
+  F.areaTakeoffTotalsAll = function (kind) {
+    var floor = kind === 'floor', baseH = F._wsAreaBaseH ? F._wsAreaBaseH() : 0;
+    var pages = F._wsPagesAreas ? F._wsPagesAreas() : [];
+    var t = { sf: 0, baseLf: 0, cost: 0, sale: 0, n: 0 };
+    pages.forEach(function (pg) {
+      groupsForAreas(pg.areas, kind, pg.mmPerPx).forEach(function (g) {
+        var mr = floor ? rate('floorMat', 0) : rate('ceilMat', 0), lr = floor ? rate('floorLab', 0) : rate('ceilLab', 0);
+        var mat = g.sf * mr * wasteMult(), lab = g.sf * lr;
+        t.sf += g.sf; t.cost += lineCost(mat, lab); t.sale += lineSale(lineCost(mat, lab)); t.n++;
+        if (floor && g.baseLf > 0.01) { var bsf = g.baseLf * (baseH / 12), bc = lineCost(bsf * rate('baseMat', 0) * wasteMult(), bsf * rate('baseLab', 0)); t.baseLf += g.baseLf; t.cost += bc; t.sale += lineSale(bc); }
+      });
+    });
+    return t;
+  };
+
   F.renderWindowsTakeoff = function (host) {
     host.innerHTML = '<div class="ftt-tablewrap" style="display:flex;align-items:center;justify-content:center;padding:24px">'
       + '<div style="text-align:center;color:#6c6960;line-height:1.8;max-width:520px">'
