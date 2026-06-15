@@ -235,6 +235,8 @@
 
   // lista dos relatórios de Piso/Forro (Central de relatórios) — mesma estrutura da Parede completa
   F.floorReports = [
+    { id: 'editor', label: '✏️ ' + 'Editor de relatório (blocos)', fn: function () { if (F.openFloorReportEditor) F.openFloorReportEditor(); } },
+    { id: 'visual', label: '🎨 ' + 'Editor visual completo (arrastar/soltar)', fn: function () { if (F.openFloorReportGrapes) F.openFloorReportGrapes(); } },
     { id: 'confer', label: '✅ ' + 'Conferir acabamentos (tipo / fabricante)', fn: function () { if (F.openFinishConferencia) F.openFinishConferencia(); } },
     { id: 'quote', label: '📄 ' + 'Orçamento ao cliente (PDF)', fn: function () { return F.floorExportProjectPDF(); } },
     { id: 'owner', label: '🔒 ' + 'Análise do proprietário — custo × venda (PDF)', fn: function () { return F.floorExportOwnerPDF(); } },
