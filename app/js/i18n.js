@@ -1155,6 +1155,8 @@ window.ConstructCount = window.ConstructCount || {};
     'Fabricante': { en: 'Manufacturer', es: 'Fabricante' },
     'Subtotal': { en: 'Subtotal', es: 'Subtotal' },
     'Tag': { en: 'Tag', es: 'Tag' },
+    'Nível': { en: 'Level', es: 'Nivel' },
+    'Disciplina': { en: 'Discipline', es: 'Disciplina' },
     'tipo': { en: 'type', es: 'tipo' },
     'fabricante': { en: 'manufacturer', es: 'fabricante' },
     'Nível/pavimento (lido do projeto)': { en: 'Level/floor (read from the project)', es: 'Nivel/piso (leído del proyecto)' },
