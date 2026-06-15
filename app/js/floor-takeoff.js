@@ -60,7 +60,7 @@
     for (var i = 0; i < fins.length; i++) { var x = fins[i]; if (x.code === code && x.kind === fk) { rec = x; break; } }
     if (!rec) { rec = { code: code, kind: fk, material: '', manufacturer: '', desc: '' }; fins.push(rec); }
     if (field === 'price') { rec.price = num(value); if (rec.priceMeta) rec.priceMeta.estimate = false; }
-    else { rec[field] = value; if (field === 'material') rec.desc = value; }
+    else { rec[field] = value; if (field === 'material') rec.desc = value; rec.userEdited = true; }
     F._scopeFinishes = fins;
     if (F._setFloorFinishes) F._setFloorFinishes(fins);
     if (F._refreshAreaTagList) F._refreshAreaTagList();
