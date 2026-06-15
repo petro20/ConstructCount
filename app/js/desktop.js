@@ -227,6 +227,7 @@
       detectRooms: (page, points) => api.detect_rooms(slug, page, points),
       readFinishSchedule: () => api.read_finish_schedule(slug),
       readLevels: () => api.read_levels(slug),
+      getTakeoffIndex: () => api.get_takeoff_index(slug),
       saveFraming: (data) => api.save_framing(slug, data),
       getFraming: () => api.get_framing(slug),
       setWindowDim: (code, w, h, t, m) => api.set_window_dim(slug, code, w, h, t, m),

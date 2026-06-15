@@ -65,7 +65,24 @@
     const first = S.pages.find(p => p.n_hex > 0) || S.pages[0];
     if (first) loadPage(first.page);
     maybeReadSheets();                          // lê os códigos das folhas (T-100…) em 2º plano
+    preloadTakeoffIndex();                       // pré-carrega o levantamento de TODAS as folhas (árvore já mostra onde há takeoff)
   };
+  // carrega linhas (parede) + áreas (piso/forro) de TODAS as folhas, sem imagens
+  async function preloadTakeoffIndex() {
+    if (!S.prov || !S.prov.getTakeoffIndex) return;
+    let r; try { r = await S.prov.getTakeoffIndex(); } catch (e) { return; }
+    const pages = (r && r.pages) || {};
+    S.areasByPage = S.areasByPage || {};
+    const otherLines = [];
+    Object.keys(pages).forEach(k => {
+      const pg = +k, d = pages[k] || {};
+      (d.areas || []).forEach(a => { if (a.page == null) a.page = pg; });
+      S.areasByPage[pg] = d.areas || [];
+      if (pg !== S.page) (d.lines || []).forEach(l => { l.page = pg; otherLines.push(l); });   // linhas das OUTRAS folhas
+    });
+    S.lines = (S.lines || []).filter(l => l.page === S.page).concat(otherLines);   // mantém a folha atual (memória) + as demais
+    renderPagesList();
+  }
   F._saveFraming = () => { if (S.prov && S.prov.saveFraming && F._framingSnapshot) { try { S.prov.saveFraming(F._framingSnapshot()); } catch (e) {} } };
 
   /** Lê os códigos das folhas (carimbo) em 2º plano e atualiza a lista ao vivo. */
@@ -1390,12 +1407,13 @@
   }
   // ----- ÁREA (medição rápida): polígono → SF. Persiste em localStorage (sem backend). -----
   function areaKey(page) { return 'cc_areas_' + (S.slug || 'proj') + '_' + page; }
-  function loadAreas(page) { try { return JSON.parse(localStorage.getItem(areaKey(page)) || '[]') || []; } catch (e) { return []; } }
+  function loadAreas(page) { if (S.areasByPage && S.areasByPage[page]) return S.areasByPage[page]; try { return JSON.parse(localStorage.getItem(areaKey(page)) || '[]') || []; } catch (e) { return []; } }
   function saveAreas() {
     // persiste no PROJETO (Python → areas-NNN.json) pra sobreviver ao fechar o app;
     // sempre grava também no localStorage como espelho/fallback (web e clientes antigos)
     if (S.prov && S.prov.saveAreas) { try { S.prov.saveAreas(S.page, (S.areas || []).filter(a => a.page === S.page)); } catch (e) {} }
     try { localStorage.setItem(areaKey(S.page), JSON.stringify(S.areas || [])); } catch (e) {}
+    if (S.areasByPage) S.areasByPage[S.page] = (S.areas || []).slice();   // mantém o índice da árvore fresco
   }
   function polyCentroid(path) { let x = 0, y = 0; path.forEach(p => { x += p[0]; y += p[1]; }); return [x / path.length, y / path.length]; }
   // uma ÁREA pode ter VÁRIAS partes (juntadas pela varinha em lote) ou só `path`
