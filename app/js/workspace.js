@@ -2409,7 +2409,7 @@
         markSaved(F.tr('Legenda movida')); draw(); return;
       }
       if (e.button === 2) {                          // soltou o direito
-        if (S.areaMode && !S.moved) {                // botão direito SEM arrastar em cima de um ponto = apaga o ponto
+        if (!S.moved) {                              // botão direito SEM arrastar em cima de um NÓ = apaga o nó (modo Área OU área selecionada)
           const hp = hitAreaPoint(e.offsetX, e.offsetY);
           if (hp) { removeAreaPoint(hp); endPan(); return; }
         }
