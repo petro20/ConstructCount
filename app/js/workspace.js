@@ -325,10 +325,12 @@
   // resumo de ÁREA por folha (Piso/Teto em SF) — p/ a árvore PÁGINAS. Lê a folha
   // atual da memória e as demais do localStorage (áreas persistem por folha).
   function pageAreaSummary(pageNo) {
-    const list = (pageNo === S.page) ? (S.areas || []) : loadAreas(pageNo);
-    const f = areasNetSf((list || []).filter(a => (a.kind || 'floor') !== 'ceiling'));   // UNIÃO: sobreposição 1×
-    const c = areasNetSf((list || []).filter(a => a.kind === 'ceiling'));
-    return { floor: f, ceiling: c, any: f !== 0 || c !== 0 };
+    const list = ((pageNo === S.page) ? (S.areas || []) : loadAreas(pageNo)) || [];
+    const f = areasNetSf(list.filter(a => (a.kind || 'floor') !== 'ceiling'));   // UNIÃO: sobreposição 1×
+    const c = areasNetSf(list.filter(a => a.kind === 'ceiling'));
+    let baseLf = 0; list.forEach(a => { if ((a.kind || 'floor') !== 'ceiling' && !a.neg) baseLf += areaBaseLf(a); });
+    const baseSf = baseLf * ((S.areaBaseH || 0) / 12);   // base = perímetro do piso × altura → SF
+    return { floor: f + baseSf, ceiling: c, baseSf: baseSf, any: (f + baseSf) !== 0 || c !== 0 };   // Piso = piso + base (SF)
   }
 
   // ----- menu de contexto (botão direito) das PÁGINAS -----
@@ -1458,9 +1460,10 @@
   // Áreas LIVRES → união real (grade p/ retângulos, amostragem p/ o resto).
   function areasNetSf(areas) {
     const all = (areas || []);
+    const trusted = a => a.sfLock || areaPolys(a).length > 1;   // mesclada (multi-parte) → confia no SF já calculado
     let total = 0;
-    all.filter(a => a.sfLock).forEach(a => total += (a.sf || 0) * (a.neg ? -1 : 1));   // mescladas: SF travado
-    const free = all.filter(a => !a.sfLock && areaPolys(a).length);
+    all.filter(trusted).forEach(a => total += (a.sf || 0) * (a.neg ? -1 : 1));
+    const free = all.filter(a => !trusted(a) && areaPolys(a).length);
     const pos = free.filter(a => !a.neg), neg = free.filter(a => a.neg);
     if (pos.length) {
       const oneRect = a => { const ps = areaPolys(a); return ps.length === 1 && polyIsRect(ps[0]); };
