@@ -36,11 +36,15 @@
       var k = a.kind || 'floor';
       if (k !== kind || (page != null && a.page !== page)) return;
       var tag = a.tag || '—';
-      var g = by[tag] = by[tag] || { tag: tag, material: (F._wsFinishDesc ? F._wsFinishDesc(k, a.tag || '') : ''), sf: 0, baseLf: 0 };
-      g.sf += (a.sf || 0) * (a.neg ? -1 : 1);
+      var g = by[tag] = by[tag] || { tag: tag, material: (F._wsFinishDesc ? F._wsFinishDesc(k, a.tag || '') : ''), sf: 0, baseLf: 0, _areas: [] };
+      g._areas.push(a);
       if (!a.neg && k !== 'ceiling') g.baseLf += (F._wsAreaBaseLf ? F._wsAreaBaseLf(a) : 0);
     });
-    return Object.keys(by).map(function (t) { return by[t]; }).filter(function (g) { return Math.abs(g.sf) > 0.01; });
+    return Object.keys(by).map(function (t) {
+      var g = by[t];
+      g.sf = F._wsAreasNetSf ? F._wsAreasNetSf(g._areas) : g._areas.reduce(function (s, a) { return s + (a.sf || 0) * (a.neg ? -1 : 1); }, 0);   // UNIÃO: sobreposição conta 1×
+      return g;
+    }).filter(function (g) { return Math.abs(g.sf) > 0.01; });
   }
   function lineCost(mat, lab) { return mat * (1 + rate('tax', 0) / 100) + lab; }
   function lineSale(cost) { return cost * (1 + rate('markup', 0) / 100); }

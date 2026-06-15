@@ -326,8 +326,8 @@
   // atual da memória e as demais do localStorage (áreas persistem por folha).
   function pageAreaSummary(pageNo) {
     const list = (pageNo === S.page) ? (S.areas || []) : loadAreas(pageNo);
-    let f = 0, c = 0;
-    (list || []).forEach(a => { const s = (a.sf || 0) * (a.neg ? -1 : 1); if (a.kind === 'ceiling') c += s; else f += s; });   // negativos descontam
+    const f = areasNetSf((list || []).filter(a => (a.kind || 'floor') !== 'ceiling'));   // UNIÃO: sobreposição 1×
+    const c = areasNetSf((list || []).filter(a => a.kind === 'ceiling'));
     return { floor: f, ceiling: c, any: f !== 0 || c !== 0 };
   }
 
@@ -1405,6 +1405,36 @@
     return { polys: polys, areaPx: areaPx };
   }
   // junta um grupo de polígonos: se todos forem retângulos → UNIÃO (1 formato); senão concatena
+  // SF coberto por uma grade de retângulos: célula conta se está num POSITIVO e não num NEGATIVO
+  function unionCellsSf(posRects, negRects) {
+    if (!posRects.length) return 0;
+    const xsS = new Set(), ysS = new Set();
+    posRects.concat(negRects).forEach(r => { xsS.add(r[0]); xsS.add(r[2]); ysS.add(r[1]); ysS.add(r[3]); });
+    const xs = [...xsS].sort((a, b) => a - b), ys = [...ysS].sort((a, b) => a - b);
+    let areaPx = 0;
+    for (let r = 0; r < ys.length - 1; r++) {
+      const cy = (ys[r] + ys[r + 1]) / 2;
+      for (let c = 0; c < xs.length - 1; c++) {
+        const cx = (xs[c] + xs[c + 1]) / 2;
+        if (!posRects.some(q => q[0] <= cx && cx <= q[2] && q[1] <= cy && cy <= q[3])) continue;   // fora de todo positivo
+        if (negRects.some(q => q[0] <= cx && cx <= q[2] && q[1] <= cy && cy <= q[3])) continue;     // descontado por negativo
+        areaPx += (xs[c + 1] - xs[c]) * (ys[r + 1] - ys[r]);
+      }
+    }
+    return pxToSf(areaPx);
+  }
+  // SF líquido de um conjunto de áreas: UNIÃO (sobreposição 1×) menos negativos. Retângulos → grade; senão soma.
+  function areasNetSf(areas) {
+    const pos = [], neg = []; let allRect = true;
+    (areas || []).forEach(a => areaPolys(a).forEach(poly => {
+      if (poly.length < 3) return;
+      if (!polyIsRect(poly)) allRect = false;
+      (a.neg ? neg : pos).push(poly);
+    }));
+    if (allRect && pos.length) return unionCellsSf(pos.map(polyToRect), neg.map(polyToRect));
+    return (areas || []).reduce((s, a) => s + (a.sf || 0) * (a.neg ? -1 : 1), 0);   // fallback (não-retângulo): soma
+  }
+  F._wsAreasNetSf = areasNetSf;
   function buildAreaGroup(polysList) {
     // UNIÃO EXATA dos retângulos: traça o formato REAL (corredor/grid), com os vãos VAZADOS (even-odd).
     // SF = área coberta real (rectUnion.areaPx) — não conta vão nem duplica sobreposição. sfLock: não
@@ -1422,8 +1452,10 @@
   function kindName(k) { return F.tr(k === 'ceiling' ? 'Teto' : 'Piso'); }
   function updateAreaTot() {
     const el = document.getElementById('wsAreaTot'); if (!el) return;
-    let f = 0, c = 0, base = 0;
-    (S.areas || []).forEach(a => { if (a.page !== S.page) return; const s = (a.sf || 0) * (a.neg ? -1 : 1); if (a.kind === 'ceiling') c += s; else { f += s; if (!a.neg) base += areaBaseLf(a); } });   // negativos DESCONTAM; base = perímetro do piso
+    const here = (S.areas || []).filter(a => a.page === S.page);
+    const f = areasNetSf(here.filter(a => (a.kind || 'floor') !== 'ceiling'));   // UNIÃO: sobreposição conta 1×
+    const c = areasNetSf(here.filter(a => a.kind === 'ceiling'));
+    let base = 0; here.forEach(a => { if ((a.kind || 'floor') !== 'ceiling' && !a.neg) base += areaBaseLf(a); });   // base = perímetro do piso
     const parts = [];
     if (f) parts.push('🟩 ' + F.tr('Piso') + ': ' + f.toFixed(1) + ' SF');
     if (base) { let bt = '📏 ' + F.tr('Base') + ': ' + base.toFixed(1) + ' LF'; if (S.areaBaseH > 0) bt += ' (' + (base * S.areaBaseH / 12).toFixed(1) + ' SF)'; parts.push(bt); }
