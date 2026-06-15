@@ -555,9 +555,10 @@
           c.addEventListener('click', () => { if (fkey) activateFinish(fkey); if (p.page !== S.page) selectPage(p.page, {}); else if (F._wsRedraw) F._wsRedraw(); });
           el.appendChild(c);
         };
-        (ar.floorGroups || []).forEach(g => areaRow('#22c55e', F.tr('Piso') + (g.tag && g.tag !== '—' ? ' ' + g.tag : ''), g.material + (g.manufacturer ? ' (' + g.manufacturer + ')' : ''), g.sf, 'floor:' + (g.tag || '—')));
-        if (ar.baseSf) areaRow('#a3e635', F.tr('Base'), '', ar.baseSf, null);
-        (ar.ceilGroups || []).forEach(g => areaRow('#38bdf8', F.tr('Teto') + (g.tag && g.tag !== '—' ? ' ' + g.tag : ''), g.material + (g.manufacturer ? ' (' + g.manufacturer + ')' : ''), g.sf, 'ceiling:' + (g.tag || '—')));
+        const lvlSuffix = p.level ? (' - ' + String(p.level).toLowerCase().replace(/\b\w/g, c => c.toUpperCase())) : '';   // ex.: " - First Floor"
+        (ar.floorGroups || []).forEach(g => areaRow('#22c55e', F.tr('Piso') + (g.tag && g.tag !== '—' ? ' ' + g.tag : '') + lvlSuffix, g.material + (g.manufacturer ? ' (' + g.manufacturer + ')' : ''), g.sf, 'floor:' + (g.tag || '—')));
+        if (ar.baseSf) areaRow('#a3e635', F.tr('Base') + lvlSuffix, '', ar.baseSf, null);
+        (ar.ceilGroups || []).forEach(g => areaRow('#38bdf8', F.tr('Teto') + (g.tag && g.tag !== '—' ? ' ' + g.tag : '') + lvlSuffix, g.material + (g.manufacturer ? ' (' + g.manufacturer + ')' : ''), g.sf, 'ceiling:' + (g.tag || '—')));
       }
     });
     const btn = $('#wsDelPages');
