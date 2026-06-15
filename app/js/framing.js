@@ -319,11 +319,14 @@
     }
     return ov;
   }
-  // abre o dock numa disciplina (cria se preciso) — NÃO alterna
+  // abre/fecha o dock numa disciplina (toggle): aberto + mesma aba (ou sem aba pedida) → fecha
   F.openTakeoff = function (disc) {
     var discs = discList();
     if (!discs.length) { if (F.flashExport) F.flashExport('⚠️ ' + tr('Nenhuma disciplina no seu plano.')); return; }
     var ok = function (id) { return discs.some(function (d) { return d.id === id; }); };
+    var cur = document.getElementById('frTakeoff');
+    var open = cur && cur.style.display !== 'none';
+    if (open && (!ok(disc) || disc === FR._disc)) { cur.style.display = 'none'; return; }   // clicar de novo na mesma → fecha
     FR._disc = ok(disc) ? disc : (ok(FR._disc) ? FR._disc : discs[0].id);
     var ov = ensureDock();
     ov.style.display = 'flex';
