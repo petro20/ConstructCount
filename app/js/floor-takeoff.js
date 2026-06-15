@@ -75,7 +75,7 @@
     });
     var ri = function (k, ph) { return '<input class="ftt-arate" data-rate="' + k + '" value="' + esc(String(rate(k, ''))) + '" placeholder="' + ph + '" inputmode="decimal">'; };
     var rbar = (floor
-      ? ('<b>' + tr('Piso') + '</b> $/SF: ' + ri('floorMat', 'mat') + ri('floorLab', 'M.O.') + ' &nbsp; <b>' + tr('Rodapé') + '</b> $/LF: ' + ri('baseMat', 'mat') + ri('baseLab', 'M.O.'))
+      ? ('<b>' + tr('Piso') + '</b> $/SF: ' + ri('floorMat', 'mat') + ri('floorLab', 'M.O.') + ' &nbsp; <b>' + tr('Rodapé') + '</b> $/SF: ' + ri('baseMat', 'mat') + ri('baseLab', 'M.O.'))
       : ('<b>' + tr('Forro') + '</b> $/SF: ' + ri('ceilMat', 'mat') + ri('ceilLab', 'M.O.')))
       + ' &nbsp; ' + tr('Sobra') + ' %: ' + ri('waste', '%') + ' &nbsp; ' + tr('Imposto') + ' %: ' + ri('tax', '%') + ' &nbsp; ' + tr('Ganho') + ' %: ' + ri('markup', '%');
     var headers = ['ITEM', tr('Material'), tr('Fabricante'), tr('Qtd'), tr('Un'), tr('Preço un.'), 'MATERIAL $', 'M.O. $', tr('Custo') + ' $', tr('Venda') + ' $'];
@@ -96,7 +96,7 @@
       var mr = floor ? rate('floorMat', 0) : rate('ceilMat', 0), lr = floor ? rate('floorLab', 0) : rate('ceilLab', 0);
       var mat = g.sf * mr * wasteMult(), lab = g.sf * lr, cost = lineCost(mat, lab);
       t.sf += g.sf; t.cost += cost; t.sale += lineSale(cost);
-      if (floor && g.baseLf > 0.01) { var bc = lineCost(g.baseLf * rate('baseMat', 0) * wasteMult(), g.baseLf * rate('baseLab', 0)); t.baseLf += g.baseLf; t.cost += bc; t.sale += lineSale(bc); }
+      if (floor && g.baseLf > 0.01) { var bsf = g.baseLf * ((F._wsAreaBaseH ? F._wsAreaBaseH() : 0) / 12); var bc = lineCost(bsf * rate('baseMat', 0) * wasteMult(), bsf * rate('baseLab', 0)); t.baseLf += g.baseLf; t.cost += bc; t.sale += lineSale(bc); }
     });
     return t;
   };
@@ -129,8 +129,9 @@
       var mat = g.sf * mr * wasteMult(), lab = g.sf * lr, cost = lineCost(mat, lab);
       out.push({ item: (floor ? tr('Piso') : tr('Forro')) + ' ' + g.tag, tag: g.tag, material: g.material || '', manufacturer: g.manufacturer || '', qty: g.sf, unit: 'SF', price: mr, mat: mat, lab: lab, cost: cost, sale: lineSale(cost), base: false });
       if (floor && g.baseLf > 0.01) {
-        var br = rate('baseMat', 0), bmat = g.baseLf * br * wasteMult(), blab = g.baseLf * rate('baseLab', 0), bc = lineCost(bmat, blab);
-        out.push({ item: tr('Rodapé (base)'), tag: g.tag, material: (baseH > 0 ? (baseH + '"') : ''), manufacturer: '', qty: g.baseLf, unit: 'LF', price: br, mat: bmat, lab: blab, cost: bc, sale: lineSale(bc), base: true });
+        var bsf = g.baseLf * (baseH / 12);   // área do rodapé em SF (perímetro × altura)
+        var br = rate('baseMat', 0), bmat = bsf * br * wasteMult(), blab = bsf * rate('baseLab', 0), bc = lineCost(bmat, blab);
+        out.push({ item: tr('Rodapé (base)') + ' · ' + g.baseLf.toFixed(0) + ' LF', tag: g.tag, material: (baseH > 0 ? (baseH + '" ' + tr('alt.')) : ''), manufacturer: '', qty: bsf, unit: 'SF', price: br, mat: bmat, lab: blab, cost: bc, sale: lineSale(bc), base: true });
       }
     });
     return out;
