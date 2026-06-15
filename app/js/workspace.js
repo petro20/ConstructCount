@@ -1453,15 +1453,22 @@
       }
     return pxToSf(areaPx);
   }
-  // SF líquido de um conjunto de áreas: UNIÃO (sobreposição 1×, buracos vazados) menos negativos.
+  // SF líquido de um conjunto de áreas: UNIÃO (sobreposição 1×) menos negativos.
+  // Áreas MESCLADAS (sfLock) já têm o SF exato calculado (com buracos) → confia nele, não re-deriva.
+  // Áreas LIVRES → união real (grade p/ retângulos, amostragem p/ o resto).
   function areasNetSf(areas) {
-    const pos = (areas || []).filter(a => !a.neg && areaPolys(a).length);
-    const neg = (areas || []).filter(a => a.neg && areaPolys(a).length);
-    if (!pos.length) return 0;
-    // caminho rápido: TODAS as áreas são 1 retângulo alinhado → grade exata
-    const oneRect = a => { const ps = areaPolys(a); return ps.length === 1 && polyIsRect(ps[0]); };
-    if ((areas || []).every(oneRect)) return unionCellsSf(pos.map(a => polyToRect(areaPolys(a)[0])), neg.map(a => polyToRect(areaPolys(a)[0])));
-    return sampleUnionAreasSf(pos, neg);   // qualquer caso (inclui mescladas com buracos) → amostragem even-odd
+    const all = (areas || []);
+    let total = 0;
+    all.filter(a => a.sfLock).forEach(a => total += (a.sf || 0) * (a.neg ? -1 : 1));   // mescladas: SF travado
+    const free = all.filter(a => !a.sfLock && areaPolys(a).length);
+    const pos = free.filter(a => !a.neg), neg = free.filter(a => a.neg);
+    if (pos.length) {
+      const oneRect = a => { const ps = areaPolys(a); return ps.length === 1 && polyIsRect(ps[0]); };
+      total += free.every(oneRect)
+        ? unionCellsSf(pos.map(a => polyToRect(areaPolys(a)[0])), neg.map(a => polyToRect(areaPolys(a)[0])))
+        : sampleUnionAreasSf(pos, neg);
+    }
+    return total;
   }
   F._wsAreasNetSf = areasNetSf;
   function buildAreaGroup(polysList) {
