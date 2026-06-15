@@ -29,9 +29,9 @@
     pxPerFt: null,  // escala calibrada (px da imagem por pé)
     floors: [], activeFloor: null,   // PISOS (cada um com altura) — o traço herda a altura do piso ativo
     scope: { framing: true, drywall: true, insulation: true, paint: true, floor: false, ceiling: false },   // ESCOPO da obra — definido ANTES do levantamento (piso/forro = pacotes próprios, por ÁREA, default off)
-    floorRates: { floorMat: 0, floorLab: 0, ceilMat: 0, ceilLab: 0, baseMat: 0, baseLab: 0, tax: 0, markup: 0 },   // preços Piso/Forro/Rodapé ($/SF, $/LF) + imposto/ganho % — por projeto
+    floorRates: { floorMat: 0, floorLab: 0, ceilMat: 0, ceilLab: 0, baseMat: 0, baseLab: 0, waste: 0, tax: 0, markup: 0 },   // preços Piso/Forro/Rodapé ($/SF, $/LF) + imposto/ganho % — por projeto
   };
-  var FLOOR_RATE_DEF = { floorMat: 0, floorLab: 0, ceilMat: 0, ceilLab: 0, baseMat: 0, baseLab: 0, tax: 0, markup: 0 };
+  var FLOOR_RATE_DEF = { floorMat: 0, floorLab: 0, ceilMat: 0, ceilLab: 0, baseMat: 0, baseLab: 0, waste: 0, tax: 0, markup: 0 };
   F._floorRates = function () { return FR.floorRates || (FR.floorRates = Object.assign({}, FLOOR_RATE_DEF)); };
   F._floorRateSet = function (k, v) { F._floorRates()[k] = num(v); persistFraming(); };
   // escopo: a mesma parede gera quantidades p/ cada ofício LIGADO

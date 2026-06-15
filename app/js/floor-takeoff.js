@@ -44,6 +44,7 @@
   }
   function lineCost(mat, lab) { return mat * (1 + rate('tax', 0) / 100) + lab; }
   function lineSale(cost) { return cost * (1 + rate('markup', 0) / 100); }
+  function wasteMult() { return 1 + rate('waste', 0) / 100; }   // % de sobra/perda aplicado ao MATERIAL
 
   function tdNum(v) { return '<td class="num">' + v + '</td>'; }
 
@@ -55,13 +56,13 @@
     var rows = [], tot = { mat: 0, lab: 0, cost: 0, sale: 0 };
     gs.forEach(function (g) {
       var mr = floor ? rate('floorMat', 0) : rate('ceilMat', 0), lr = floor ? rate('floorLab', 0) : rate('ceilLab', 0);
-      var mat = g.sf * mr, lab = g.sf * lr, cost = lineCost(mat, lab), sale = lineSale(cost);
+      var mat = g.sf * mr * wasteMult(), lab = g.sf * lr, cost = lineCost(mat, lab), sale = lineSale(cost);
       tot.mat += mat; tot.lab += lab; tot.cost += cost; tot.sale += sale;
       rows.push('<tr><td class="ftt-name"><b>' + (floor ? tr('Piso') : tr('Forro')) + '</b> ' + esc(g.tag) + '</td><td>' + esc(g.material || '—') + '</td>'
         + tdNum(fmtN(g.sf, 1)) + tdNum('SF') + tdNum(money(mr))
         + '<td class="num ftt-mat">' + money(mat) + '</td><td class="num ftt-lab">' + money(lab) + '</td><td class="num ftt-tot">' + money(cost) + '</td><td class="num ftt-sale">' + money(sale) + '</td></tr>');
       if (floor && g.baseLf > 0.01) {
-        var br = rate('baseMat', 0), bl = rate('baseLab', 0), bmat = g.baseLf * br, blab = g.baseLf * bl, bc = lineCost(bmat, blab), bs = lineSale(bc), bsf = g.baseLf * (baseH / 12);
+        var br = rate('baseMat', 0), bl = rate('baseLab', 0), bmat = g.baseLf * br * wasteMult(), blab = g.baseLf * bl, bc = lineCost(bmat, blab), bs = lineSale(bc), bsf = g.baseLf * (baseH / 12);
         tot.mat += bmat; tot.lab += blab; tot.cost += bc; tot.sale += bs;
         rows.push('<tr><td class="ftt-name">' + tr('Rodapé (base)') + (bsf > 0 ? (' · ' + fmtN(bsf, 1) + ' SF') : '') + '</td><td>' + (baseH > 0 ? (baseH + '" ' + tr('alt.')) : '—') + '</td>'
           + tdNum(fmtN(g.baseLf, 1)) + tdNum('LF') + tdNum(money(br))
@@ -72,7 +73,7 @@
     var rbar = (floor
       ? ('<b>' + tr('Piso') + '</b> $/SF: ' + ri('floorMat', 'mat') + ri('floorLab', 'M.O.') + ' &nbsp; <b>' + tr('Rodapé') + '</b> $/LF: ' + ri('baseMat', 'mat') + ri('baseLab', 'M.O.'))
       : ('<b>' + tr('Forro') + '</b> $/SF: ' + ri('ceilMat', 'mat') + ri('ceilLab', 'M.O.')))
-      + ' &nbsp; ' + tr('Imposto') + ' %: ' + ri('tax', '%') + ' &nbsp; ' + tr('Ganho') + ' %: ' + ri('markup', '%');
+      + ' &nbsp; ' + tr('Sobra') + ' %: ' + ri('waste', '%') + ' &nbsp; ' + tr('Imposto') + ' %: ' + ri('tax', '%') + ' &nbsp; ' + tr('Ganho') + ' %: ' + ri('markup', '%');
     var headers = ['ITEM', tr('Material'), tr('Qtd'), tr('Un'), tr('Preço un.'), 'MATERIAL $', 'M.O. $', tr('Custo') + ' $', tr('Venda') + ' $'];
     var body = rows.length ? rows.join('') : '<tr><td colspan="9" style="text-align:center;color:#8b887f;padding:18px">' + tr('Meça áreas de {k} (ferramenta ▱ Área) para aparecer aqui.', { k: floor ? tr('Piso') : tr('Forro') }) + '</td></tr>';
     var foot = '<tr><td colspan="5"><b>' + tr('Total') + '</b></td><td class="num ftt-mat"><b>' + money(tot.mat) + '</b></td><td class="num ftt-lab"><b>' + money(tot.lab) + '</b></td><td class="num ftt-tot"><b>' + money(tot.cost) + '</b></td><td class="num ftt-sale"><b>' + money(tot.sale) + '</b></td></tr>';
@@ -89,9 +90,9 @@
     var t = { sf: 0, baseLf: 0, cost: 0, sale: 0, n: gs.length };
     gs.forEach(function (g) {
       var mr = floor ? rate('floorMat', 0) : rate('ceilMat', 0), lr = floor ? rate('floorLab', 0) : rate('ceilLab', 0);
-      var mat = g.sf * mr, lab = g.sf * lr, cost = lineCost(mat, lab);
+      var mat = g.sf * mr * wasteMult(), lab = g.sf * lr, cost = lineCost(mat, lab);
       t.sf += g.sf; t.cost += cost; t.sale += lineSale(cost);
-      if (floor && g.baseLf > 0.01) { var bc = lineCost(g.baseLf * rate('baseMat', 0), g.baseLf * rate('baseLab', 0)); t.baseLf += g.baseLf; t.cost += bc; t.sale += lineSale(bc); }
+      if (floor && g.baseLf > 0.01) { var bc = lineCost(g.baseLf * rate('baseMat', 0) * wasteMult(), g.baseLf * rate('baseLab', 0)); t.baseLf += g.baseLf; t.cost += bc; t.sale += lineSale(bc); }
     });
     return t;
   };
