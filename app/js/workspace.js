@@ -1405,10 +1405,23 @@
     return { polys: polys, areaPx: areaPx };
   }
   // junta um grupo de polígonos: se todos forem retângulos → UNIÃO (1 formato); senão concatena
+  // envoltória convexa (Andrew monotone chain) — contorno único que envolve todos os pontos
+  function convexHull(points) {
+    const pts = points.slice().sort((a, b) => (a[0] - b[0]) || (a[1] - b[1]));
+    if (pts.length < 3) return pts.slice();
+    const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const lo = []; for (const p of pts) { while (lo.length >= 2 && cross(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+    const up = []; for (let i = pts.length - 1; i >= 0; i--) { const p = pts[i]; while (up.length >= 2 && cross(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop(); up.push(p); }
+    lo.pop(); up.pop(); return lo.concat(up);
+  }
   function buildAreaGroup(polysList) {
-    // UNIÃO = 1 marcação só com as PARTES REAIS (cada polígono como está); SF = SOMA das partes.
-    // NÃO vira retângulo: o desenho usa fill('evenodd') por parte, então os vãos continuam vazados.
-    return { parts: polysList.slice(), sf: polysList.reduce((s, p) => s + polySf(p), 0) };
+    // UNIÃO = 1 contorno único (envoltória) envolvendo tudo; SF = SOMA REAL das partes (sfLock: não recalcula
+    // pelo contorno, então o vão branco NÃO entra na conta). Base = perímetro do contorno.
+    const sf = polysList.reduce((s, p) => s + polySf(p), 0);
+    const allPts = []; polysList.forEach(p => p.forEach(pt => allPts.push(pt)));
+    const hull = convexHull(allPts);
+    if (hull.length >= 3) return { path: hull, sf: sf, sfLock: true };
+    return { parts: polysList.slice(), sf: sf };
   }
   // tipo de área: 'floor' (Piso, verde) | 'ceiling' (Teto/Forro, azul)
   function kindColor(k) { return k === 'ceiling' ? '#38bdf8' : '#22c55e'; }
@@ -1590,7 +1603,7 @@
     }
     const polys = areaPolys(hp.ar);
     if (!polys.length) { S.areas = S.areas.filter(a => a !== hp.ar); markSaved(F.tr('Área apagada')); }
-    else { hp.ar.sf = areaSf(hp.ar); markSaved(F.tr('Ponto removido')); }
+    else { if (!hp.ar.sfLock) hp.ar.sf = areaSf(hp.ar); markSaved(F.tr('Ponto removido')); }
     saveAreas(); updateAreaTot(); renderPagesList(); draw();
   }
   function selSet() { if (!S.selSet) S.selSet = new Set(); return S.selSet; }
@@ -1800,8 +1813,8 @@
     S.areas = (S.areas || []).filter(a => !set.has(a));
     const added = [];
     const tag = list[0].tag || '';
-    if (pos.length) { const g = buildAreaGroup(pos); const m = { parts: g.parts, sf: g.sf, page: S.page, kind: kind, tag: tag }; S.areas.push(m); added.push(m); }
-    if (neg.length) { const g = buildAreaGroup(neg); const m = { parts: g.parts, sf: g.sf, page: S.page, kind: kind, neg: true, tag: tag }; S.areas.push(m); added.push(m); }
+    if (pos.length) { const m = Object.assign({ page: S.page, kind: kind, tag: tag }, buildAreaGroup(pos)); S.areas.push(m); added.push(m); }
+    if (neg.length) { const m = Object.assign({ page: S.page, kind: kind, tag: tag, neg: true }, buildAreaGroup(neg)); S.areas.push(m); added.push(m); }
     if (S.areaSel) { S.areaSel.clear(); added.forEach(m => S.areaSel.add(m)); }
     saveAreas(); updateAreaTot(); renderPagesList(); draw();
     const net = added.reduce((s, m) => s + (m.sf || 0) * (m.neg ? -1 : 1), 0);
@@ -2360,7 +2373,7 @@
       if (S.dragAreaPt) {                     // arrastando um CANTO de área (editar)
         const [ix, iy] = snapPt(mix, miy);
         S.dragAreaPt.poly[S.dragAreaPt.i] = [ix, iy];
-        S.dragAreaPt.ar.sf = areaSf(S.dragAreaPt.ar);
+        if (!S.dragAreaPt.ar.sfLock) S.dragAreaPt.ar.sf = areaSf(S.dragAreaPt.ar);
         S.moved = true; draw(); return;
       }
       if (S.dragMeas) {                       // arrastando uma ponta de medida
@@ -2418,7 +2431,7 @@
       if (e.button !== 0) return;
       S.lpress = false;
       if (S.dragAreaPt) {                     // soltou um canto de área
-        if (S.moved) { S.dragAreaPt.ar.sf = areaSf(S.dragAreaPt.ar); saveAreas(); updateAreaTot(); renderPagesList(); markSaved(F.tr('Área editada')); }
+        if (S.moved) { if (!S.dragAreaPt.ar.sfLock) S.dragAreaPt.ar.sf = areaSf(S.dragAreaPt.ar); saveAreas(); updateAreaTot(); renderPagesList(); markSaved(F.tr('Área editada')); }
         S.dragAreaPt = null; applyCursor(); draw(); return;
       }
       if (S.dragMeas) {
