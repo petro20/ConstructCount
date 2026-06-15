@@ -63,7 +63,6 @@
     withRows.forEach(function (s) {
       var rows = floor ? s.floor : s.ceiling;
       var st = { mat: 0, lab: 0, cost: 0, sale: 0 };
-      rowsHtml += '<tr class="ftt-sheethdr"><td colspan="10">🗂 ' + tr('Folha') + ' ' + esc(s.sheet) + (s.level ? (' · ' + esc(titleCase(s.level))) : '') + '</td></tr>';
       rows.forEach(function (r) {
         tot.mat += r.mat; tot.lab += r.lab; tot.cost += r.cost; tot.sale += r.sale;
         st.mat += r.mat; st.lab += r.lab; st.cost += r.cost; st.sale += r.sale;
