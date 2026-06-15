@@ -157,7 +157,7 @@
     var pages = F._wsPagesAreas ? F._wsPagesAreas() : [];
     var sheets = pages.map(function (pg) {
       var sd = sheetData(pg.areas, pg.mmPerPx);
-      sd.page = pg.page; sd.sheet = pg.sheet;
+      sd.page = pg.page; sd.sheet = pg.sheet; sd.level = pg.level || '';
       return sd;
     }).filter(function (sd) { return sd.floor.length || sd.ceiling.length; });
     var grand = { cost: 0, sale: 0 }; sheets.forEach(function (s) { grand.cost += s.grand.cost; grand.sale += s.grand.sale; });

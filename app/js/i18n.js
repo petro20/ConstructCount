@@ -1153,6 +1153,8 @@ window.ConstructCount = window.ConstructCount || {};
     'ITEM': { en: 'ITEM', es: 'ÍTEM' },
     'Tipo de material': { en: 'Material type', es: 'Tipo de material' },
     'Fabricante': { en: 'Manufacturer', es: 'Fabricante' },
+    'Nível/pavimento (lido do projeto)': { en: 'Level/floor (read from the project)', es: 'Nivel/piso (leído del proyecto)' },
+    'níveis ({n})': { en: 'levels ({n})', es: 'niveles ({n})' },
     'Conferir acabamentos (tipo / fabricante)': { en: 'Review finishes (type / manufacturer)', es: 'Revisar acabados (tipo / fabricante)' },
     'A IA lê da folha de medidas; confira e corrija o que precisar. Salvo no projeto e usado nos relatórios.': { en: 'AI reads from the measure sheet; review and fix as needed. Saved in the project and used in reports.', es: 'La IA lee de la hoja de medidas; revisa y corrige lo necesario. Guardado en el proyecto y usado en los informes.' },
     'Acabamentos salvos': { en: 'Finishes saved', es: 'Acabados guardados' },

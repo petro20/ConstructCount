@@ -443,7 +443,8 @@
         ? '<span class="text-xs bg-emerald-600 text-white rounded px-1.5">' + p.n_hex + '</span>'
         : '<span class="text-xs text-steel-500">—</span>';
       const sched = S.schedulePages.indexOf(p.page) >= 0 ? '<span title="' + F.tr('folha de medidas') + '" class="text-xs">📐</span>' : '';
-      const name = p.sheet ? (p.sheet + ' <span class="text-steel-400 text-xs">(' + p.page + ')</span>') : F.tr('Folha {p}', { p: p.page });
+      const lvl = p.level ? ' <span class="text-amber-300/90 text-[11px]" title="' + F.tr('Nível/pavimento (lido do projeto)') + '">· ' + sumEsc(p.level) + '</span>' : '';
+      const name = (p.sheet ? (p.sheet + ' <span class="text-steel-400 text-xs">(' + p.page + ')</span>') : F.tr('Folha {p}', { p: p.page })) + lvl;
       const nameEl = document.createElement('span');
       nameEl.className = 'flex-1 truncate'; nameEl.innerHTML = name;
       row.appendChild(nameEl);
@@ -1375,7 +1376,7 @@
   F._wsAreaBaseLfAt = (ar, mm) => areaPolys(ar).reduce((s, p) => s + polyPerimeterLfAt(p, mm), 0);   // base com escala explícita (relatório do projeto)
   F._wsMm = () => S.mmPerPx;   // escala (mm/px) da folha atual
   // folhas com áreas + escala de cada uma (p/ relatório do projeto inteiro)
-  F._wsPagesAreas = () => (S.pages || []).map(p => ({ page: p.page, sheet: p.sheet || ('Folha ' + p.page), mmPerPx: (p.page === S.page ? S.mmPerPx : null) || p.mm_per_px || null, areas: (p.page === S.page) ? (S.areas || []) : loadAreas(p.page) })).filter(x => (x.areas || []).length);
+  F._wsPagesAreas = () => (S.pages || []).map(p => ({ page: p.page, sheet: p.sheet || ('Folha ' + p.page), level: p.level || '', mmPerPx: (p.page === S.page ? S.mmPerPx : null) || p.mm_per_px || null, areas: (p.page === S.page) ? (S.areas || []) : loadAreas(p.page) })).filter(x => (x.areas || []).length);
   // ---- UNIÃO de retângulos eixo-alinhados → "1 formato só" (bordas comuns somem, sobreposição não conta 2x) ----
   function polyIsRect(poly) {
     if (!poly || poly.length !== 4) return false;
@@ -2038,6 +2039,14 @@
           if (on('floor') && bs.length) did.push(F.tr('base ({n})', { n: bs.length }));
           if (on('ceiling') && cl.length) did.push(F.tr('forro ({n})', { n: cl.length }));
         }
+      } catch (e) {}
+    }
+    // NÍVEL/PAVIMENTO de cada folha (FIRST FLOOR, ROOF…) — do título da prancha
+    if (S.prov && S.prov.readLevels) {
+      try {
+        const r = await S.prov.readLevels(); const lv = (r && r.levels) || {};
+        let n = 0; (S.pages || []).forEach(pg => { const l = lv[pg.page]; if (l) { pg.level = l; n++; } });
+        if (n) { did.push(F.tr('níveis ({n})', { n: n })); renderPagesList(); }
       } catch (e) {}
     }
     // JANELAS / PORTAS → schedule (se houver folha de medidas marcada)

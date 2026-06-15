@@ -105,9 +105,10 @@
     var jsPDF = window.jspdf.jsPDF, doc = new jsPDF(), first = true;
     d.sheets.forEach(function (s) {
       if (!first) doc.addPage(); first = false;
-      if (F._pdfBrandHeader) F._pdfBrandHeader(doc, tr('Piso & Forro — Folha {s}', { s: s.sheet }));
+      var sLabel = s.sheet + (s.level ? (' · ' + s.level) : '');
+      if (F._pdfBrandHeader) F._pdfBrandHeader(doc, tr('Piso & Forro — Folha {s}', { s: sLabel }));
       doc.setTextColor(60); doc.setFontSize(9);
-      doc.text(tr('Folha {s} · Piso: {f} SF · Forro: {c} SF', { s: s.sheet, f: s.totFloor.sf.toFixed(0), c: s.totCeiling.sf.toFixed(0) }), 14, 36);
+      doc.text(tr('Folha {s} · Piso: {f} SF · Forro: {c} SF', { s: sLabel, f: s.totFloor.sf.toFixed(0), c: s.totCeiling.sf.toFixed(0) }), 14, 36);
       var head = [['ITEM', tr('Tipo de material'), tr('Fabricante'), tr('Qtd'), tr('Un'), tr('Custo'), tr('Venda')]];
       var body = [];
       var rowsP = function (rows) { return rows.map(function (r) { return [r.item, r.material || '—', r.manufacturer || '—', n1(r.qty), r.unit, money(r.cost), money(r.sale)]; }); };
@@ -120,7 +121,7 @@
       });
       var y = doc.lastAutoTable.finalY + 6; if (y > 270) { doc.addPage(); y = 24; }
       doc.setFontSize(10); doc.setFont(undefined, 'bold'); doc.setTextColor(36, 52, 75);
-      doc.text(tr('Folha {s} — Venda: {v}', { s: s.sheet, v: money(s.grand.sale) }), 14, y);
+      doc.text(tr('Folha {s} — Venda: {v}', { s: sLabel, v: money(s.grand.sale) }), 14, y);
       doc.setFont(undefined, 'normal');
     });
     // página final: resumo por folha + total do projeto
@@ -128,7 +129,7 @@
     doc.autoTable({
       startY: 38,
       head: [[tr('Folha'), tr('Piso') + ' SF', tr('Forro') + ' SF', tr('Custo'), tr('Venda')]],
-      body: d.sheets.map(function (s) { return [s.sheet, s.totFloor.sf.toFixed(0), s.totCeiling.sf.toFixed(0), money(s.grand.cost), money(s.grand.sale)]; }),
+      body: d.sheets.map(function (s) { return [s.sheet + (s.level ? (' · ' + s.level) : ''), s.totFloor.sf.toFixed(0), s.totCeiling.sf.toFixed(0), money(s.grand.cost), money(s.grand.sale)]; }),
       foot: [[tr('TOTAL'), '', '', money(d.grand.cost), money(d.grand.sale)]],
       headStyles: { fillColor: (F._brAccentRGB ? F._brAccentRGB() : [44, 71, 106]), textColor: 255 },
       footStyles: { fillColor: [240, 240, 240], textColor: 20, fontStyle: 'bold' },
