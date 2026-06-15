@@ -2186,14 +2186,16 @@
     pg('#pgRestore', restoreCurrentMarks);
     pg('#pgLegend', () => { S.legend = !S.legend; draw(); markSaved(S.legend ? F.tr('Legenda: ligada') : F.tr('Legenda: oculta')); });
     { const stl = $('#stLegend'); if (stl) stl.addEventListener('click', () => { S.legend = !S.legend; draw(); markSaved(S.legend ? F.tr('Legenda: ligada') : F.tr('Legenda: oculta')); }); }
-    { const sf = $('#stFraming'); if (sf) sf.addEventListener('click', async () => {
+    // editor detalhado da Parede (preços/tipos) — usado pela aba Parede do Takeoff unificado
+    F.openWallEditor = async () => {
       if (!F.toggleFramingTakeoff) { alert(F.tr('Takeoff de Framing indisponível.')); return; }
       if (F.framing && !F.framing._heights && S.prov && S.prov.readHeights) {   // lê as alturas (CLG HT) 1x
         try { const r = await S.prov.readHeights(); F.framing._heights = (r && r.heights) || []; } catch (e) { F.framing._heights = []; }
         populateFloorHeight();   // alturas da IA entram no seletor de altura do piso
       }
       F.toggleFramingTakeoff(S.lines, S.layers);
-    }); }
+    };
+    { const sf = $('#stFraming'); if (sf) sf.addEventListener('click', () => { if (F.openTakeoff) F.openTakeoff('wall'); else F.openWallEditor(); }); }
 
     // seções (grupos de takeoff)
     const sec = $('#wsSection'); if (sec) sec.addEventListener('change', async () => {
@@ -2538,7 +2540,7 @@
     }); }
     { const wda = $('#wsAreaDetectAll'); if (wda) wda.addEventListener('click', () => detectAllRooms()); }
     { const wam = $('#wsAreaMerge'); if (wam) wam.addEventListener('click', () => mergeAreas()); }
-    { const wft = $('#wsFloorTakeoff'); if (wft) wft.addEventListener('click', () => { if (F.openFloorTakeoff) F.openFloorTakeoff(); }); }
+    { const wft = $('#wsFloorTakeoff'); if (wft) wft.addEventListener('click', () => { if (F.openTakeoff) F.openTakeoff(); }); }
     const wdm = $('#wsDelMeas'); if (wdm) wdm.addEventListener('click', deleteSelMeas);
     const wcm = $('#wsClearMeas'); if (wcm) wcm.addEventListener('click', () => {
       if (!S.measures.length) { markSaved(F.tr('Sem medidas')); return; }
