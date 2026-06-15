@@ -1147,6 +1147,8 @@ window.ConstructCount = window.ConstructCount || {};
     '📊 Takeoff de Piso/Forro': { en: '📊 Floor/Ceiling Takeoff', es: '📊 Cómputo de Piso/Cielo' },
     'Parede': { en: 'Wall', es: 'Pared' },
     'Janelas e Portas': { en: 'Windows & Doors', es: 'Ventanas y Puertas' },
+    'Disciplina do takeoff': { en: 'Takeoff discipline', es: 'Disciplina del cómputo' },
+    'alt.': { en: 'h.', es: 'alt.' },
     'Sem dados ainda.': { en: 'No data yet.', es: 'Sin datos aún.' },
     'Editar parede': { en: 'Edit wall', es: 'Editar pared' },
     'Abrir Relatórios': { en: 'Open Reports', es: 'Abrir Informes' },

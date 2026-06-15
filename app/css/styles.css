@@ -422,6 +422,20 @@ button:focus-visible {
 #frTakeoff .ftt-scope:hover { border-color: #e7b53f; }
 #frTakeoff .ftt-scope.locked { opacity: .5; cursor: not-allowed; background: #2b2926; border-color: #4a463f; color: #8b887f; }
 #frTakeoff .ftt-scope.locked:hover { border-color: #4a463f; }
+/* abas de DISCIPLINA do Takeoff unificado (Parede/Piso/Forro/Janelas) */
+#frTakeoff .ftt-discs { display: inline-flex; align-items: center; gap: 4px; padding: 2px; border-radius: 999px; background: rgba(255,255,255,.06); }
+#frTakeoff .ftt-disc { font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 999px; border: 1px solid transparent; background: transparent; color: #b9b4a8; cursor: pointer; white-space: nowrap; }
+#frTakeoff .ftt-disc:hover { color: #fff; background: rgba(255,255,255,.08); }
+#frTakeoff .ftt-disc.on { background: #d9a02a; border-color: #e7b53f; color: #2a2208; }
+/* barra de preços das abas Piso/Forro */
+#frTakeoff .ftt-arates { gap: 5px; }
+#frTakeoff .ftt-arate { width: 58px; border: 1px solid #d8d4cc; border-radius: 6px; padding: 3px 6px; font-size: 12px; color: #262420; background: #fff; }
+#frTakeoff .ftt-arate:focus { outline: none; border-color: #d9a02a; }
+/* alças de redimensionar os painéis laterais */
+.ws-resize { flex: 0 0 5px; align-self: stretch; cursor: col-resize; background: transparent; position: relative; z-index: 6; transition: background .12s; }
+.ws-resize:hover, .ws-resize.on { background: rgba(217,160,42,.55); }
+.ws-resize::after { content: ""; position: absolute; top: 50%; left: 50%; width: 3px; height: 34px; margin: -17px 0 0 -1.5px; border-radius: 3px; background: rgba(255,255,255,.18); }
+.ws-resize:hover::after, .ws-resize.on::after { background: rgba(255,255,255,.6); }
 #frTakeoff .ftt-reportsbtn { flex: 0 0 auto; margin-left: 10px; font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 8px; border: 1px solid #56524a; background: #34312b; color: #f0d98a; cursor: pointer; white-space: nowrap; }
 #frTakeoff .ftt-reportsbtn:hover { border-color: #d9a02a; background: #3f3a2a; }
 .ftt-repmenu { position: fixed; z-index: 100001; min-width: 250px; background: #1f2937; border: 1px solid #374151; border-radius: 10px; padding: 5px; box-shadow: 0 12px 34px rgba(0,0,0,.5); font: 600 12.5px Inter, system-ui, sans-serif; color: #e5e7eb; }

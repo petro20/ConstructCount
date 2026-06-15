@@ -279,6 +279,59 @@
   };
   F._renderFramingPanel = function () { var ov = document.getElementById('frTakeoff'); if (ov && ov.style.display !== 'none') renderFramingTakeoff(ov); };
 
+  // ---- Takeoff UNIFICADO: disciplinas (abas) conforme o PACOTE do usuário ----
+  function discList() {
+    var has = F.hasPackage, d = [];
+    if (!has || has('wall')) d.push({ id: 'wall', lb: '🧱 ' + tr('Parede') });
+    if (!has || has('floor')) d.push({ id: 'floor', lb: '🟩 ' + tr('Piso') });
+    if (!has || has('ceiling')) d.push({ id: 'ceiling', lb: '🟦 ' + tr('Forro') });
+    if (!has || has('windows_doors')) d.push({ id: 'windows', lb: '🪟 ' + tr('Janelas e Portas') });
+    return d;
+  }
+  function discTabsHTML(active) {
+    var ds = discList();
+    if (ds.length <= 1) return '';   // 1 só disciplina → não mostra abas
+    return '<span class="ftt-discs" title="' + tr('Disciplina do takeoff') + '">'
+      + ds.map(function (d) { return '<button class="ftt-disc' + (d.id === active ? ' on' : '') + '" data-disc="' + d.id + '">' + d.lb + '</button>'; }).join('') + '</span>';
+  }
+  function wireDiscTabs(ov) {
+    ov.querySelectorAll('.ftt-disc').forEach(function (b) { b.addEventListener('click', function () { FR._disc = b.getAttribute('data-disc'); renderFramingTakeoff(ov); }); });
+  }
+  function wireGrip(ov) {
+    var grip = ov.querySelector('.ftt-grip');
+    if (!grip) return;
+    grip.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+      var startY = e.clientY, startH = ov.offsetHeight;
+      document.body.style.userSelect = 'none';
+      function mv(ev) { var h = startH + (startY - ev.clientY); h = Math.max(140, Math.min((window.innerHeight || 800) - 90, h)); ov.style.height = h + 'px'; FR._takeoffH = h; }
+      function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); document.body.style.userSelect = ''; }
+      document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+    });
+  }
+  function ensureDock() {
+    var ov = document.getElementById('frTakeoff');
+    if (!ov) {
+      var ws = document.getElementById('workspace') || document.body;
+      ov = document.createElement('div'); ov.id = 'frTakeoff';
+      ov.style.cssText = 'position:absolute;left:0;right:0;bottom:24px;height:272px;z-index:44;background:#fff;border-top:2px solid #c4881a;box-shadow:0 -8px 24px rgba(0,0,0,.35);display:flex;flex-direction:column;overflow:hidden;color:#262420';
+      ws.appendChild(ov);
+    }
+    return ov;
+  }
+  // abre o dock numa disciplina (cria se preciso) — NÃO alterna
+  F.openTakeoff = function (disc) {
+    var discs = discList();
+    if (!discs.length) { if (F.flashExport) F.flashExport('⚠️ ' + tr('Nenhuma disciplina no seu plano.')); return; }
+    var ok = function (id) { return discs.some(function (d) { return d.id === id; }); };
+    FR._disc = ok(disc) ? disc : (ok(FR._disc) ? FR._disc : discs[0].id);
+    var ov = ensureDock();
+    ov.style.display = 'flex';
+    ov.style.height = (FR._takeoffH || 272) + 'px';
+    if (F._positionFraming) F._positionFraming();
+    renderFramingTakeoff(ov);
+  };
+
   // compute por TIPO (lines daquele tipo, com a altura do piso de cada traço)
   function computeType(wtId) {
     var lines = (F._framingLines ? F._framingLines() : []) || [];
@@ -419,6 +472,26 @@
 
   // Takeoff de Framing como TABELA editável no painel INFERIOR (igual ao Resumo) — colunas seguem o ESCOPO
   function renderFramingTakeoff(ov) {
+    // disciplina ativa (aba): só as que o usuário tem
+    var discs = discList();
+    if (!discs.length) { ov.innerHTML = '<div class="ftt-top"><span>📊 ' + tr('Takeoff') + '</span><button id="ftClose" class="ft-x" style="margin-left:auto">✕</button></div><div style="flex:1;display:flex;align-items:center;justify-content:center;color:#6c6960">' + tr('Nenhuma disciplina no seu plano.') + '</div>'; var c0 = ov.querySelector('#ftClose'); if (c0) c0.addEventListener('click', function () { ov.style.display = 'none'; }); return; }
+    if (!discs.some(function (d) { return d.id === FR._disc; })) FR._disc = discs[0].id;
+    var DISC = FR._disc;
+    if (DISC === 'floor' || DISC === 'ceiling' || DISC === 'windows') {
+      ov.innerHTML = '<div class="ftt-grip" title="' + tr('Arraste para aumentar/diminuir a tabela') + '"></div>'
+        + '<div class="ftt-top"><span>📊 ' + tr('Takeoff') + '</span>' + discTabsHTML(DISC) + '<span style="flex:1"></span>'
+        + '<button id="ftReports" class="ftt-reportsbtn" title="' + tr('Abrir a Central de relatórios') + '">📄 ' + tr('Relatórios') + '</button>'
+        + '<button id="ftClose" class="ft-x">✕</button></div>'
+        + '<div class="ftt-areahost" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0"></div>';
+      ov.querySelector('#ftClose').addEventListener('click', function () { ov.style.display = 'none'; });
+      { var rb0 = ov.querySelector('#ftReports'); if (rb0) rb0.addEventListener('click', function (e) { e.stopPropagation(); if (F.openReportsHub) F.openReportsHub(); }); }
+      wireGrip(ov); wireDiscTabs(ov);
+      var host = ov.querySelector('.ftt-areahost');
+      if (DISC === 'windows') { if (F.renderWindowsTakeoff) F.renderWindowsTakeoff(host); }
+      else if (F.renderAreaTakeoff) F.renderAreaTakeoff(host, DISC, function () { renderFramingTakeoff(ov); });
+      return;
+    }
+    // ---- disciplina = Parede (fluxo de Framing nativo) ----
     if ((!FR.activeWT || !wtById(FR.activeWT)) && FR.wallTypes[0]) FR.activeWT = FR.wallTypes[0].id;
     var sc = {};   // escopo EFETIVO: ligado E comprado (nada grátis)
     ['framing', 'drywall', 'insulation', 'paint'].forEach(function (k) { sc[k] = FR.scope[k] && F.framingHasScope(k); });
@@ -520,6 +593,7 @@
     ov.innerHTML =
       '<div class="ftt-grip" title="' + tr('Arraste para aumentar/diminuir a tabela') + '"></div>'
       + '<div class="ftt-top"><span>📊 ' + tr('Takeoff') + '</span>'
+      + discTabsHTML('wall')
       + '<span class="ftt-scopes" title="' + tr('Escopo da obra — quais ofícios o takeoff cobre') + '">' + scopeChips + '</span>'
       + '<span class="ftt-pr">' + prHTML + '</span>'
       + '<button id="ftReports" class="ftt-reportsbtn" title="' + tr('Abrir a Central de relatórios') + '">📄 ' + tr('Relatórios') + '</button>'
@@ -535,17 +609,7 @@
     ov.querySelectorAll('.ftt-scope').forEach(function (b) { b.addEventListener('click', function () { F.framingToggleScope(b.getAttribute('data-scope')); if (F._syncScope) F._syncScope(); renderFramingTakeoff(ov); }); });
     ov.querySelector('#ftClose').addEventListener('click', function () { ov.style.display = 'none'; });
     { var rb = ov.querySelector('#ftReports'); if (rb) rb.addEventListener('click', function (e) { e.stopPropagation(); if (F.openReportsHub) F.openReportsHub(); }); }
-
-    // ALÇA: arrastar p/ aumentar/diminuir a tabela
-    var grip = ov.querySelector('.ftt-grip');
-    if (grip) grip.addEventListener('mousedown', function (e) {
-      e.preventDefault();
-      var startY = e.clientY, startH = ov.offsetHeight;
-      document.body.style.userSelect = 'none';
-      function mv(ev) { var h = startH + (startY - ev.clientY); h = Math.max(140, Math.min((window.innerHeight || 800) - 90, h)); ov.style.height = h + 'px'; FR._takeoffH = h; }
-      function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); document.body.style.userSelect = ''; }
-      document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
-    });
+    wireGrip(ov); wireDiscTabs(ov);
 
     // EDITAR tipo (✎ ou ⚠️) — abre/fecha a linha-editor
     function openEdit(id) { FR._editWT = (FR._editWT === id) ? null : id; if (FR._editWT) FR.activeWT = id; renderFramingTakeoff(ov); }

@@ -2153,15 +2153,39 @@
   function panelToggle(side, collapse) {
     const panel = $(side === 'left' ? '#wsLeft' : '#wsRight');
     const bar = $(side === 'left' ? '#wsLeftBar' : '#wsRightBar');
+    const grip = $(side === 'left' ? '#wsLeftResize' : '#wsRightResize');
     if (panel) panel.style.display = collapse ? 'none' : '';
     if (bar) bar.style.display = collapse ? 'flex' : 'none';
-    setTimeout(() => { resize(); draw(); }, 0);     // canvas ganhou/perdeu espaço
+    if (grip) grip.style.display = collapse ? 'none' : '';
+    setTimeout(() => { resize(); draw(); if (F._positionFraming) F._positionFraming(); }, 0);     // canvas ganhou/perdeu espaço
+  }
+
+  // alças de redimensionar os 2 painéis laterais (largura persistida)
+  function setupPanelResize() {
+    const apply = (panel, w) => { if (panel) { panel.style.width = w + 'px'; panel.style.flex = '0 0 ' + w + 'px'; } };
+    try { const lw = parseInt(localStorage.getItem('cc_wsLeftW'), 10); if (lw) apply($('#wsLeft'), lw); } catch (e) {}
+    try { const rw = parseInt(localStorage.getItem('cc_wsRightW'), 10); if (rw) apply($('#wsRight'), rw); } catch (e) {}
+    const drag = (handleSel, panelSel, key, fromLeft) => {
+      const h = $(handleSel); if (!h) return;
+      h.addEventListener('mousedown', (e) => {
+        const panel = $(panelSel); if (!panel) return;
+        e.preventDefault();
+        const startX = e.clientX, startW = panel.offsetWidth;
+        document.body.style.userSelect = 'none'; document.body.style.cursor = 'col-resize'; h.classList.add('on');
+        const mv = (ev) => { let w = startW + (fromLeft ? (ev.clientX - startX) : (startX - ev.clientX)); w = Math.max(170, Math.min(620, w)); apply(panel, w); resize(); draw(); if (F._positionFraming) F._positionFraming(); };
+        const up = () => { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); document.body.style.userSelect = ''; document.body.style.cursor = ''; h.classList.remove('on'); try { localStorage.setItem(key, String(panel.offsetWidth)); } catch (e) {} };
+        document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+      });
+    };
+    drag('#wsLeftResize', '#wsLeft', 'cc_wsLeftW', true);
+    drag('#wsRightResize', '#wsRight', 'cc_wsRightW', false);
   }
 
   function bindOnce() {
     if (bound) return; bound = true;
     setupCollapsibles();
     buildSmartPanel();
+    setupPanelResize();
     const lc = $('#wsLeftCollapse'); if (lc) lc.addEventListener('click', () => panelToggle('left', true));
     const le = $('#wsLeftExpand'); if (le) le.addEventListener('click', () => panelToggle('left', false));
     document.querySelectorAll('.wsLeftIco').forEach(b => b.addEventListener('click', () => panelToggle('left', false)));
@@ -2186,16 +2210,16 @@
     pg('#pgRestore', restoreCurrentMarks);
     pg('#pgLegend', () => { S.legend = !S.legend; draw(); markSaved(S.legend ? F.tr('Legenda: ligada') : F.tr('Legenda: oculta')); });
     { const stl = $('#stLegend'); if (stl) stl.addEventListener('click', () => { S.legend = !S.legend; draw(); markSaved(S.legend ? F.tr('Legenda: ligada') : F.tr('Legenda: oculta')); }); }
-    // editor detalhado da Parede (preços/tipos) — usado pela aba Parede do Takeoff unificado
+    // abre o Takeoff unificado na aba Parede (lê alturas 1x p/ o cálculo de framing)
     F.openWallEditor = async () => {
-      if (!F.toggleFramingTakeoff) { alert(F.tr('Takeoff de Framing indisponível.')); return; }
       if (F.framing && !F.framing._heights && S.prov && S.prov.readHeights) {   // lê as alturas (CLG HT) 1x
         try { const r = await S.prov.readHeights(); F.framing._heights = (r && r.heights) || []; } catch (e) { F.framing._heights = []; }
         populateFloorHeight();   // alturas da IA entram no seletor de altura do piso
       }
-      F.toggleFramingTakeoff(S.lines, S.layers);
+      if (F.openTakeoff) F.openTakeoff('wall');
+      else if (F.toggleFramingTakeoff) F.toggleFramingTakeoff(S.lines, S.layers);
     };
-    { const sf = $('#stFraming'); if (sf) sf.addEventListener('click', () => { if (F.openTakeoff) F.openTakeoff('wall'); else F.openWallEditor(); }); }
+    { const sf = $('#stFraming'); if (sf) sf.addEventListener('click', () => F.openWallEditor()); }
 
     // seções (grupos de takeoff)
     const sec = $('#wsSection'); if (sec) sec.addEventListener('change', async () => {
