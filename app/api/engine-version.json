@@ -1,1 +1,1 @@
-{ "engine": "2026.06.12", "note": "Parser de tipos de parede: formato de detalhes de seção (A - WALL TYPE) + padrões remotos + aprendizado." }
+{ "engine": "2026.06.15", "note": "Acabamentos por posição (tipo/fabricante), níveis/pavimentos por folha, índice de takeoff de todas as folhas e relatórios de Piso & Forro. Atualize para a v1.0.5 no portal." }
