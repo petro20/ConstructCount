@@ -110,5 +110,30 @@
     var rb = host.querySelector('#fktOpenReports'); if (rb) rb.addEventListener('click', function () { if (F.openReportsHub) F.openReportsHub(); });
   };
 
+  // dados p/ os RELATÓRIOS de Piso/Forro (linhas com preço por tag + rodapé) — folha atual
+  F.floorReportData = function () {
+    function lines(kind) {
+      var floor = kind === 'floor', gs = areaGroups(kind), baseH = F._wsAreaBaseH ? F._wsAreaBaseH() : 0, out = [];
+      gs.forEach(function (g) {
+        var mr = floor ? rate('floorMat', 0) : rate('ceilMat', 0), lr = floor ? rate('floorLab', 0) : rate('ceilLab', 0);
+        var mat = g.sf * mr * wasteMult(), lab = g.sf * lr, cost = lineCost(mat, lab);
+        out.push({ item: (floor ? tr('Piso') : tr('Forro')) + ' ' + g.tag, tag: g.tag, material: g.material || '', qty: g.sf, unit: 'SF', price: mr, mat: mat, lab: lab, cost: cost, sale: lineSale(cost), base: false });
+        if (floor && g.baseLf > 0.01) {
+          var br = rate('baseMat', 0), bl = rate('baseLab', 0), bmat = g.baseLf * br * wasteMult(), blab = g.baseLf * bl, bc = lineCost(bmat, blab);
+          out.push({ item: tr('Rodapé (base)'), tag: g.tag, material: (baseH > 0 ? (baseH + '"') : ''), qty: g.baseLf, unit: 'LF', price: br, mat: bmat, lab: blab, cost: bc, sale: lineSale(bc), base: true });
+        }
+      });
+      return out;
+    }
+    var sum = function (rows) { var t = { mat: 0, lab: 0, cost: 0, sale: 0, sf: 0, baseLf: 0 }; rows.forEach(function (r) { t.mat += r.mat; t.lab += r.lab; t.cost += r.cost; t.sale += r.sale; if (r.unit === 'SF') t.sf += r.qty; else t.baseLf += r.qty; }); return t; };
+    var f = lines('floor'), c = lines('ceiling');
+    return {
+      rates: F._floorRates ? F._floorRates() : {}, waste: rate('waste', 0), tax: rate('tax', 0), markup: rate('markup', 0),
+      region: (F.framing && F.framing.region) || '',
+      floor: f, ceiling: c, totFloor: sum(f), totCeiling: sum(c),
+      grand: { cost: sum(f).cost + sum(c).cost, sale: sum(f).sale + sum(c).sale }
+    };
+  };
+
   F.openFloorTakeoff = function () { if (F.openTakeoff) F.openTakeoff('floor'); };   // compat
 })();

@@ -95,6 +95,26 @@
         card.addEventListener('click', () => { try { r.fn(); } catch (e) { if (F.flashExport) F.flashExport('⚠️ ' + ((e && e.message) || 'erro')); } });
         list.appendChild(card);
       });
+      // ----- Piso & Forro -----
+      const fl = $('#repFloorList');
+      if (fl) {
+        fl.innerHTML = '';
+        if (!owned) {
+          const d = document.createElement('div');
+          d.className = 'rep-lock';
+          d.innerHTML = '🔒 ' + F.tr('Relatórios é um add-on (US$ 15/mês)') + '<button class="cc-btn cc-btn-primary"><span>💳</span><span>' + F.tr('Assinar Relatórios') + '</span></button>';
+          d.querySelector('button').addEventListener('click', () => window.open('https://constructcount.com/checkout.php?plan=reports', '_blank'));
+          fl.appendChild(d);
+        } else {
+          (F.floorReports || []).forEach(r => {
+            const card = document.createElement('button');
+            card.className = 'rep-card';
+            card.innerHTML = '<span class="rep-t">' + F.tr(r.label) + '</span>';
+            card.addEventListener('click', () => { try { r.fn(); } catch (e) { if (F.flashExport) F.flashExport('⚠️ ' + ((e && e.message) || 'erro')); } });
+            fl.appendChild(card);
+          });
+        }
+      }
     }
     F._renderReportsHub = renderReportsHub;
     F.openReportsHub = () => { const ws = $('#workspace'); if (ws && !ws.classList.contains('hidden')) ws.classList.add('hidden'); const t = document.querySelector('.rb-tab[data-tab="rbReports"]'); if (t) t.click(); };
