@@ -514,7 +514,8 @@
     }));
     S.measures = Array.isArray(data.measures) ? data.measures : [];   // medidas salvas
     // áreas desta folha: PREFERE o que o motor (Python) salvou no projeto; senão localStorage (fallback web/cliente antigo)
-    S.areas = Array.isArray(data.areas) ? data.areas : loadAreas(S.page);
+    S.areas = (Array.isArray(data.areas) ? data.areas : loadAreas(S.page)) || [];
+    S.areas.forEach(a => { if (a.page == null) a.page = page; });   // garante o campo page (senão somem do total filtrado por folha)
     S.areaPts = []; if (S.areaSel) S.areaSel.clear(); updateAreaTot();
     // traços do Linear salvos desta folha → substituem os desta página em memória
     S.lines = (S.lines || []).filter(l => l.page !== S.page);
