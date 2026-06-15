@@ -402,6 +402,33 @@
     typeSortItems(items);
     showCtxMenu(x, y, items);
   }
+  // ---- ACABAMENTOS de Piso/Forro na árvore: mesmas ações dos tipos de parede ----
+  function finishKeyOf(a) { return (a.kind === 'ceiling' ? 'ceiling' : 'floor') + ':' + (a.tag || '—'); }
+  function toggleFinishHidden(fkey) { if (!S.hiddenFinishes) S.hiddenFinishes = new Set(); S.hiddenFinishes.has(fkey) ? S.hiddenFinishes.delete(fkey) : S.hiddenFinishes.add(fkey); draw(); renderPagesList(); }
+  function activateFinish(fkey) {
+    const i = fkey.indexOf(':'), kind = fkey.slice(0, i), tag = fkey.slice(i + 1);
+    S.areaKind = kind; S.areaTag = (tag === '—' ? '' : tag);
+    const ks = $('#wsAreaKind'); if (ks) ks.value = kind;
+    const tg = $('#wsAreaTag'); if (tg) tg.value = S.areaTag;
+    if (F._refreshAreaTagList) F._refreshAreaTagList();
+  }
+  function finishesMenu(x, y, fkey, page) {
+    const i = fkey.indexOf(':'), kind = fkey.slice(0, i), tag = fkey.slice(i + 1), isC = kind === 'ceiling';
+    const list = (page === S.page) ? (S.areas || []) : loadAreas(page);
+    const areasOf = (list || []).filter(a => finishKeyOf(a) === fkey);
+    const hidden = S.hiddenFinishes && S.hiddenFinishes.has(fkey);
+    const nm = (isC ? F.tr('Forro') : F.tr('Piso')) + (tag !== '—' ? ' ' + tag : '');
+    const items = [{ hdr: nm }];
+    items.push({ label: F.tr('Ativar este acabamento'), act: () => { activateFinish(fkey); if (page !== S.page) selectPage(page, {}); else draw(); renderPagesList(); } });
+    items.push({ label: hidden ? F.tr('Mostrar (cor)') : F.tr('Ocultar (cor)'), act: () => toggleFinishHidden(fkey) });
+    items.push({ sep: true });
+    items.push({ label: F.tr('Selecionar áreas deste acabamento') + (areasOf.length ? ' (' + areasOf.length + ')' : ''), dis: page !== S.page || !areasOf.length, act: () => { if (!S.areaSel) S.areaSel = new Set(); S.areaSel.clear(); areasOf.forEach(a => S.areaSel.add(a)); draw(); markSaved(F.tr('{n} área(s) selecionada(s) · Del p/ apagar', { n: areasOf.length })); } });
+    items.push({ label: F.tr('Abrir Takeoff'), act: () => { if (F.openTakeoff) F.openTakeoff(isC ? 'ceiling' : 'floor'); } });
+    items.push({ sep: true });
+    items.push({ label: F.tr('Editar acabamento (tipo/fabricante)'), act: () => { if (F.openFinishConferencia) F.openFinishConferencia(); } });
+    items.push({ label: F.tr('Deletar áreas deste acabamento'), danger: true, dis: page !== S.page || !areasOf.length, act: () => { if (!confirm(F.tr('Apagar as {n} área(s) deste acabamento nesta folha?', { n: areasOf.length }))) return; pushUndo(); const del = new Set(areasOf); S.areas = (S.areas || []).filter(a => !del.has(a)); saveAreas(); updateAreaTot(); renderPagesList(); draw(); markSaved(F.tr('{n} áreas apagadas', { n: areasOf.length })); } });
+    showCtxMenu(x, y, items);
+  }
   // renderiza um menu de contexto (lista de itens) na posição do cursor
   function showCtxMenu(x, y, items) {
     closePagesMenu();
@@ -489,22 +516,26 @@
           c.addEventListener('click', () => { if (F.framing) F.framing.activeWT = t.id; if (F._syncWallTypeSelect) F._syncWallTypeSelect(); if (p.page !== S.page) selectPage(p.page, {}); else if (F._wsRedraw) F._wsRedraw(); });
           el.appendChild(c);
         });
-        // ÁREA por ACABAMENTO (nome lido do projeto): Piso/Forro por tag + Base
-        const areaRow = (color, label, sub, sf) => {
+        // ÁREA por ACABAMENTO (nome do projeto): mesmas ações dos tipos de parede (ocultar/ativar/menu)
+        const areaRow = (color, label, sub, sf, fkey) => {
+          const hF = fkey && S.hiddenFinishes && S.hiddenFinishes.has(fkey);
           const c = document.createElement('div');
-          c.setAttribute('data-pageno', p.page);
-          c.className = 'pl-8 pr-2 py-1 flex items-center gap-2 text-sm cursor-pointer hover:bg-steel-700/60';
-          const sw = document.createElement('span'); sw.style.cssText = 'width:12px;height:12px;border-radius:3px;flex:0 0 auto;background:' + color;
-          const nm = document.createElement('span'); nm.className = 'flex-1 truncate text-steel-200';
+          c.setAttribute('data-pageno', p.page); if (fkey) c.setAttribute('data-finish', fkey);
+          c.className = 'pl-8 pr-2 py-1 flex items-center gap-2 text-sm cursor-pointer hover:bg-steel-700/60' + (hF ? ' opacity-40' : '');
+          const sw = document.createElement('span');
+          if (fkey) sw.title = F.tr('Duplo-clique p/ ocultar/mostrar este acabamento');
+          sw.style.cssText = 'width:12px;height:12px;border-radius:3px;flex:0 0 auto;' + (fkey ? 'cursor:pointer;' : '') + (hF ? ('background:transparent;border:2px solid ' + color) : ('background:' + color));
+          if (fkey) { sw.addEventListener('click', ev => ev.stopPropagation()); sw.addEventListener('dblclick', ev => { ev.stopPropagation(); toggleFinishHidden(fkey); }); }
+          const nm = document.createElement('span'); nm.className = 'flex-1 truncate text-steel-200' + (hF ? ' line-through' : '');
           nm.textContent = label; if (sub) { const s2 = document.createElement('span'); s2.className = 'text-steel-400'; s2.textContent = ' · ' + sub; nm.appendChild(s2); }
           const q = document.createElement('span'); q.className = 'text-steel-300 tabular-nums text-xs'; q.textContent = sf.toFixed(1) + ' SF';
           c.appendChild(sw); c.appendChild(nm); c.appendChild(q);
-          c.addEventListener('click', () => { if (p.page !== S.page) selectPage(p.page, {}); });
+          c.addEventListener('click', () => { if (fkey) activateFinish(fkey); if (p.page !== S.page) selectPage(p.page, {}); else if (F._wsRedraw) F._wsRedraw(); });
           el.appendChild(c);
         };
-        (ar.floorGroups || []).forEach(g => areaRow('#22c55e', F.tr('Piso') + (g.tag && g.tag !== '—' ? ' ' + g.tag : ''), g.material + (g.manufacturer ? ' (' + g.manufacturer + ')' : ''), g.sf));
-        if (ar.baseSf) areaRow('#a3e635', F.tr('Base'), '', ar.baseSf);
-        (ar.ceilGroups || []).forEach(g => areaRow('#38bdf8', F.tr('Teto') + (g.tag && g.tag !== '—' ? ' ' + g.tag : ''), g.material + (g.manufacturer ? ' (' + g.manufacturer + ')' : ''), g.sf));
+        (ar.floorGroups || []).forEach(g => areaRow('#22c55e', F.tr('Piso') + (g.tag && g.tag !== '—' ? ' ' + g.tag : ''), g.material + (g.manufacturer ? ' (' + g.manufacturer + ')' : ''), g.sf, 'floor:' + (g.tag || '—')));
+        if (ar.baseSf) areaRow('#a3e635', F.tr('Base'), '', ar.baseSf, null);
+        (ar.ceilGroups || []).forEach(g => areaRow('#38bdf8', F.tr('Teto') + (g.tag && g.tag !== '—' ? ' ' + g.tag : ''), g.material + (g.manufacturer ? ' (' + g.manufacturer + ')' : ''), g.sf, 'ceiling:' + (g.tag || '—')));
       }
     });
     const btn = $('#wsDelPages');
@@ -883,6 +914,7 @@
     // ÁREA — polígonos finalizados desta folha (verde translúcido + SF no centro)
     (S.areas || []).forEach(ar => {
       if (ar.page !== S.page) return;
+      if (S.hiddenFinishes && S.hiddenFinishes.has((ar.kind === 'ceiling' ? 'ceiling' : 'floor') + ':' + (ar.tag || '—'))) return;   // acabamento oculto
       const polys = areaPolys(ar).filter(pp => pp && pp.length >= 3);
       if (!polys.length) return;
       const k = ar.kind || 'floor', seld = S.areaSel && S.areaSel.has(ar), neg = !!ar.neg;
@@ -2371,6 +2403,8 @@
       e.preventDefault();
       const tEl = e.target.closest('[data-wt]');
       if (tEl) { typesMenu(e.clientX, e.clientY, tEl.getAttribute('data-wt'), Number(tEl.getAttribute('data-pageno'))); return; }   // botão direito num TIPO
+      const fEl = e.target.closest('[data-finish]');
+      if (fEl) { finishesMenu(e.clientX, e.clientY, fEl.getAttribute('data-finish'), Number(fEl.getAttribute('data-pageno'))); return; }   // botão direito num ACABAMENTO
       const row = e.target.closest('[data-pageno]');
       pagesMenu(e.clientX, e.clientY, row ? Number(row.getAttribute('data-pageno')) : null);   // botão direito numa FOLHA / área
     }); }
