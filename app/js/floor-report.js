@@ -42,9 +42,9 @@
     };
     var sub = function (lbl, t) { return [{ content: lbl, colSpan: 6, styles: { halign: 'right', fontStyle: 'bold', fillColor: [247, 243, 234] } }, { content: money(t.cost), styles: { halign: 'right', fillColor: [247, 243, 234] } }, { content: money(t.sale), styles: { halign: 'right', fontStyle: 'bold', fillColor: [247, 243, 234] } }]; };
     d.sheets.forEach(function (s) {
-      body.push([{ content: '🗂 ' + tr('Folha') + ' ' + s.sheet + (s.level ? (' · ' + titleCase(s.level)) : ''), colSpan: 8, styles: { fontStyle: 'bold', fillColor: AC, textColor: 255 } }]);
-      if (s.floor.length) { body.push([{ content: '🟩 ' + tr('Piso'), colSpan: 8, styles: { fontStyle: 'bold', fillColor: [222, 247, 236] } }]); body = body.concat(rowsOf(s.floor, s.level)); }
-      if (s.ceiling.length) { body.push([{ content: '🟦 ' + tr('Forro'), colSpan: 8, styles: { fontStyle: 'bold', fillColor: [219, 234, 254] } }]); body = body.concat(rowsOf(s.ceiling, s.level)); }
+      body.push([{ content: '' + tr('Folha') + ' ' + s.sheet + (s.level ? (' · ' + titleCase(s.level)) : ''), colSpan: 8, styles: { fontStyle: 'bold', fillColor: AC, textColor: 255 } }]);
+      if (s.floor.length) { body.push([{ content: '' + tr('Piso'), colSpan: 8, styles: { fontStyle: 'bold', fillColor: [222, 247, 236] } }]); body = body.concat(rowsOf(s.floor, s.level)); }
+      if (s.ceiling.length) { body.push([{ content: '' + tr('Forro'), colSpan: 8, styles: { fontStyle: 'bold', fillColor: [219, 234, 254] } }]); body = body.concat(rowsOf(s.ceiling, s.level)); }
       body.push(sub(tr('Subtotal') + ' ' + s.sheet, s.grand));
     });
     doc.autoTable({
@@ -76,7 +76,7 @@
     var body = [];
     var rowsOf = function (rows, level) { return rows.map(function (r) { return [itemLabel(r, level), r.tag || '—', r.material || '—', r.manufacturer || '—', n1(r.qty), r.unit]; }); };
     d.sheets.forEach(function (s) {
-      body.push([{ content: '🗂 ' + tr('Folha') + ' ' + s.sheet + (s.level ? (' · ' + titleCase(s.level)) : ''), colSpan: 6, styles: { fontStyle: 'bold', fillColor: AC, textColor: 255 } }]);
+      body.push([{ content: '' + tr('Folha') + ' ' + s.sheet + (s.level ? (' · ' + titleCase(s.level)) : ''), colSpan: 6, styles: { fontStyle: 'bold', fillColor: AC, textColor: 255 } }]);
       if (s.floor.length) body = body.concat(rowsOf(s.floor, s.level));
       if (s.ceiling.length) body = body.concat(rowsOf(s.ceiling, s.level));
     });
@@ -108,11 +108,34 @@
     DOCL = null; if (F.flashExport) F.flashExport('✓ ' + tr('Lista de materiais') + ' (Excel) ✓');
   };
 
+  /* ---------- Planta marcada (PDF) — folhas com as áreas de Piso/Forro desenhadas ---------- */
+  F.floorExportMarkedPlanPDF = async function () {
+    if (!need(window.jspdf)) return;
+    if (!F._areaPageRender || !F._wsPagesAreas) { if (F.flashExport) F.flashExport('⚠️ ' + tr('Disponível no app de desktop.')); return; }
+    var pages = F._wsPagesAreas(); if (!pages.length) return noData();
+    var L = await pickL(); if (!L) return;
+    var jsPDF = window.jspdf.jsPDF, doc = new jsPDF({ orientation: 'landscape' }), PW = 297, PH = 210, first = true;
+    for (var i = 0; i < pages.length; i++) {
+      var pg = pages[i], r = null;
+      try { r = await F._areaPageRender(pg.page); } catch (e) { r = null; }
+      if (!r) continue;
+      if (!first) doc.addPage(); first = false;
+      if (F._pdfBrandHeader) F._pdfBrandHeader(doc, tr('Planta marcada — Piso & Forro · {s}', { s: pg.sheet + (pg.level ? (' · ' + titleCase(pg.level)) : '') }));
+      var sc = Math.min((PW - 20) / r.w, (PH - 38) / r.h), iw = r.w * sc, ih = r.h * sc;
+      try { doc.addImage(r.dataUrl, 'JPEG', (PW - iw) / 2, 32, iw, ih); } catch (e) {}
+    }
+    if (first) return noData();
+    if (F._pdfBrandFooterAll) F._pdfBrandFooterAll(doc);
+    await F.saveBytes(fname('planta-marcada', 'pdf'), doc.output('arraybuffer'));
+    DOCL = null; if (F.flashExport) F.flashExport('✓ ' + tr('Planta marcada') + ' (PDF) ✓');
+  };
+
   // lista dos relatórios de Piso/Forro (Central de relatórios)
   F.floorReports = [
     { id: 'confer', label: '✅ ' + 'Conferir acabamentos (tipo / fabricante)', fn: function () { if (F.openFinishConferencia) F.openFinishConferencia(); } },
     { id: 'quote', label: '📄 ' + 'Orçamento ao cliente — projeto (PDF)', fn: function () { return F.floorExportProjectPDF(); } },
     { id: 'summary', label: '📊 ' + 'Resumo técnico — projeto (PDF)', fn: function () { return F.floorExportSummaryPDF(); } },
-    { id: 'materials', label: '📦 ' + 'Lista de materiais / Pedido (Excel)', fn: function () { return F.floorExportMaterialsXLSX(); } }
+    { id: 'materials', label: '📦 ' + 'Lista de materiais / Pedido (Excel)', fn: function () { return F.floorExportMaterialsXLSX(); } },
+    { id: 'plan', label: '🗺️ ' + 'Planta marcada (PDF)', fn: function () { return F.floorExportMarkedPlanPDF(); } }
   ];
 })();

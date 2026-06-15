@@ -1931,6 +1931,41 @@
   };
   F._wsRedraw = () => { try { draw(); } catch (e) {} };   // o painel de Framing pede redraw (cor por tipo)
 
+  // renderiza a PLANTA de uma folha com as ÁREAS (Piso verde / Forro azul) desenhadas — p/ "Planta marcada" de Piso/Forro
+  F._areaPageRender = async (page) => {
+    let data; try { data = await S.prov.getPage(page); } catch (e) { return null; }
+    if (!data || !data.image_b64) return null;
+    const src = data.image_b64.startsWith('data:') ? data.image_b64 : ('data:image/png;base64,' + data.image_b64);
+    const img = new Image();
+    await new Promise(res => { img.onload = res; img.onerror = res; img.src = src; });
+    if (!img.width) return null;
+    const oc = document.createElement('canvas'); oc.width = img.width; oc.height = img.height;
+    const c = oc.getContext('2d'); c.drawImage(img, 0, 0);
+    const areas = (page === S.page) ? (S.areas || []) : loadAreas(page);
+    const lw = Math.max(2, img.width / 900);
+    (areas || []).forEach(ar => {
+      if (ar.page != null && ar.page !== page) return;
+      const k = ar.kind === 'ceiling' ? 'ceiling' : 'floor', neg = !!ar.neg;
+      const polys = (ar.parts && ar.parts.length) ? ar.parts : (ar.path ? [ar.path] : []);
+      if (!polys.length) return;
+      c.beginPath();
+      polys.forEach(poly => { poly.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); });
+      c.fillStyle = neg ? 'rgba(239,68,68,.22)' : (k === 'ceiling' ? 'rgba(56,189,248,.26)' : 'rgba(34,197,94,.28)');
+      c.fill('evenodd');
+      c.strokeStyle = neg ? 'rgba(239,68,68,.95)' : (k === 'ceiling' ? 'rgba(14,165,233,.95)' : 'rgba(22,163,74,.95)');
+      c.lineWidth = lw; c.lineJoin = 'round'; c.stroke();
+      if (ar.tag) {
+        let big = polys[0], bigA = -1;
+        polys.forEach(poly => { let a2 = 0; for (let i = 0; i < poly.length; i++) { const p = poly[i], q = poly[(i + 1) % poly.length]; a2 += p[0] * q[1] - q[0] * p[1]; } a2 = Math.abs(a2); if (a2 > bigA) { bigA = a2; big = poly; } });
+        let cx = 0, cy = 0; big.forEach(p => { cx += p[0]; cy += p[1]; }); cx /= big.length; cy /= big.length;
+        const fs = Math.max(13, img.width / 95); c.font = '700 ' + fs + 'px sans-serif';
+        const tw = c.measureText(ar.tag).width; c.fillStyle = 'rgba(15,14,11,.82)'; c.fillRect(cx - tw / 2 - 5, cy - fs * 0.7, tw + 10, fs * 1.35);
+        c.fillStyle = '#fff'; c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillText(ar.tag, cx - tw / 2, cy + 1);
+      }
+    });
+    return { dataUrl: oc.toDataURL('image/jpeg', 0.82), w: img.width, h: img.height };
+  };
+
   // seleção de traços Linear (igual às marcas do Contar): clicar seleciona, Del apaga
   function distToSeg(px, py, ax, ay, bx, by) {
     const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy;

@@ -1160,6 +1160,7 @@ window.ConstructCount = window.ConstructCount || {};
     'IA busca o preço por região de cada material (você confirma)': { en: 'AI searches the regional price of each material (you confirm)', es: 'La IA busca el precio por región de cada material (tú confirmas)' },
     'Sem acabamentos para precificar (leia o escopo).': { en: 'No finishes to price (read the scope).', es: 'Sin acabados para cotizar (lee el alcance).' },
     '{n} preço(s) estimado(s)': { en: '{n} price(s) estimated', es: '{n} precio(s) estimado(s)' },
+    'Planta marcada — Piso & Forro · {s}': { en: 'Marked plan — Floor & Ceiling · {s}', es: 'Plano marcado — Piso & Cielo · {s}' },
     'tipo': { en: 'type', es: 'tipo' },
     'fabricante': { en: 'manufacturer', es: 'fabricante' },
     'Nível/pavimento (lido do projeto)': { en: 'Level/floor (read from the project)', es: 'Nivel/piso (leído del proyecto)' },
