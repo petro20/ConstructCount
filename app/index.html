@@ -362,7 +362,7 @@
             <div class="text-center mb-12">
               <div class="text-5xl mb-3">📐</div>
               <h1 class="text-3xl sm:text-4xl font-bold text-steel-800">Do PDF ao orçamento em minutos</h1>
-              <p class="text-steel-500 mt-3 max-w-2xl mx-auto text-lg">O ConstructCount lê a planta arquitetônica e levanta esquadrias e paredes (framing, drywall, insulation e pintura) — e entrega os documentos prontos. Veja o fluxo completo abaixo.</p>
+              <p class="text-steel-500 mt-3 max-w-2xl mx-auto text-lg">O ConstructCount lê a planta arquitetônica e levanta esquadrias, paredes (framing, drywall, insulation e pintura) e áreas de piso e forro — e entrega os documentos prontos. Veja o fluxo completo abaixo.</p>
             </div>
 
             <!-- TRILHA 1: JANELAS & PORTAS -->
@@ -421,6 +421,20 @@
               </ol>
             </div>
 
+            <!-- TRILHA 3: PISO & FORRO -->
+            <h2 class="text-xl font-bold text-steel-800 mb-1">🟩 Trilha 3 — Piso &amp; Forro</h2>
+            <p class="text-steel-500 text-sm mb-5">O fluxo dos pacotes de área: meça o piso e o forro por SF, a IA lê os acabamentos da legenda, e saem os mesmos relatórios da Parede.</p>
+            <div class="bg-white border border-steel-200 rounded-xl p-6 shadow-sm mb-14">
+              <ol class="space-y-3 text-sm text-steel-600">
+                <li><b class="text-steel-800">1. Escopo</b> — em FERRAMENTAS, ligue <b>Piso</b> (verde) e/ou <b>Teto/Forro</b> (azul). Cada um é um pacote à parte.</li>
+                <li><b class="text-steel-800">2. Meça as áreas</b> — calibre a escala (📏) e use a ferramenta de <b>Área</b>: clique nos cantos do cômodo (duplo-clique fecha) ou <b>Retângulo</b> com 2 cliques na diagonal. <b>SHIFT+clique</b> cria uma área negativa (vermelha) que desconta colunas, escadas e vãos.</li>
+                <li><b class="text-steel-800">3. Acabamentos por IA</b> — a IA lê a legenda de acabamentos (FLOOR / CEILING / WALL BASE FINISH LEGEND) e preenche o <b>tipo</b> e o <b>fabricante</b> de cada código (FF-01, VB-2…). Tudo cai na <b>Conferência</b> (⚠️) pra você validar — a IA pergunta, não chuta.</li>
+                <li><b class="text-steel-800">4. Tag e rodapé</b> — cada área recebe a <b>Tag</b> do acabamento (aparece no rótulo). O <b>rodapé (base)</b> tem a sua própria tag (VB-x) e quantidade em <b>SF</b> (perímetro do piso × altura).</li>
+                <li><b class="text-steel-800">5. Takeoff por folha</b> — clique em <b>Piso</b> ou <b>Forro</b> na barra de status: tabela editável agrupada por <b>nível</b> (First Floor, Second Floor…), com preço + sobra % + imposto → Custo → Ganho % → Venda. Defina a <b>Região</b> e use 💲 Buscar preços (IA).</li>
+                <li><b class="text-steel-800">6. Relatórios</b> — no botão <b>📄 Relatórios</b> (add-on), o mesmo conjunto da Parede para Piso & Forro: orçamento, lista de materiais, material por nível, cotação ao fornecedor, análise do proprietário, resumo, planta marcada — e os editores (blocos e visual) com escolha do tamanho de papel.</li>
+              </ol>
+            </div>
+
             <!-- DOIS CAMINHOS -->
             <h2 class="text-xl font-bold text-steel-800 mb-5">Dois tipos de PDF</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-14">
@@ -444,6 +458,7 @@
               <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🔀</div><div class="font-semibold text-steel-800">Split</div><div class="text-steel-500 text-sm mt-1">Duas folhas ao mesmo tempo, no menu PÁGINAS — compare planta e schedule.</div></div>
               <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">📐</div><div class="font-semibold text-steel-800">Ortho / Snap</div><div class="text-steel-500 text-sm mt-1">Medições retas e encaixe nos pontos, para marcações precisas.</div></div>
               <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🪟</div><div class="font-semibold text-steel-800">Janela selecionada</div><div class="text-steel-500 text-sm mt-1">Painel à direita mostra e edita o tipo e a medida da marca atual.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">📐</div><div class="font-semibold text-steel-800">Área (Piso/Forro)</div><div class="text-steel-500 text-sm mt-1">Meça pisos e forros por SF: clique nos cantos ou use o Retângulo; una várias áreas num só total.</div></div>
               <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🌐</div><div class="font-semibold text-steel-800">Idioma e unidade</div><div class="text-steel-500 text-sm mt-1">Alterne PT · EN · ES e m² / ft² na aba Configurações — vale também nos documentos.</div></div>
             </div>
 
@@ -473,6 +488,10 @@
               <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
                 <summary class="font-semibold text-steel-800 cursor-pointer">Como funciona o add-on Relatórios?</summary>
                 <div class="text-steel-500 text-sm mt-2">Os relatórios e editores do pacote Parede (orçamento, materiais, planta marcada, editor de blocos e visual, texto por IA) são um <b>add-on à parte</b> que você liga em qualquer pacote, na aba <b>Pacote</b>.</div>
+              </details>
+              <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
+                <summary class="font-semibold text-steel-800 cursor-pointer">Como levanto piso e forro?</summary>
+                <div class="text-steel-500 text-sm mt-2">Ligue <b>Piso</b> e/ou <b>Teto/Forro</b> no escopo, meça as áreas por SF na planta (ferramenta de Área) e a IA lê os acabamentos da legenda (tipo e fabricante). O rodapé entra com a própria tag (VB-x) em SF. Os relatórios são os mesmos da Parede completa.</div>
               </details>
             </div>
 
@@ -1207,7 +1226,7 @@
     </div>
   </div>
 
-  <script src="js/i18n.js?v=274"></script>
+  <script src="js/i18n.js?v=275"></script>
   <script src="js/license.js?v=214"></script>
   <script src="js/calculator.js?v=216"></script>
   <script src="js/svg-engine.js?v=200"></script>
