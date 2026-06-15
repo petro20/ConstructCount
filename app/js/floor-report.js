@@ -154,7 +154,7 @@
       var a = byLevel[lv][k] = byLevel[lv][k] || { disc: r.disc, code: r.code, material: r.material, manufacturer: r.manufacturer, unit: r.unit, qty: 0 };
       a.qty += r.qty;
     });
-    var aoa = [[tr('MATERIAL POR PISO')], []];
+    var aoa = [[tr('MATERIAL POR NÍVEL')], []];
     order.forEach(function (lv) {
       aoa.push([tr('Nível') + ': ' + lv]);
       aoa.push([tr('Disciplina'), tr('Tag'), tr('Tipo de material'), tr('Fabricante'), tr('Un'), tr('Qtd')]);
@@ -163,8 +163,8 @@
     });
     var ws = window.XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [{ wch: 9 }, { wch: 8 }, { wch: 26 }, { wch: 18 }, { wch: 5 }, { wch: 11 }];
     var wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, 'Por piso');
-    await F.saveBytes(fname('material-por-piso', 'xlsx'), window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
-    DOCL = null; if (F.flashExport) F.flashExport('✓ ' + tr('Material por piso') + ' (Excel) ✓');
+    await F.saveBytes(fname('material-por-nivel', 'xlsx'), window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
+    DOCL = null; if (F.flashExport) F.flashExport('✓ ' + tr('Material por nível') + ' (Excel) ✓');
   };
 
   /* ---------- Cotação ao FORNECEDOR (Excel — fornecedor preenche o preço) ---------- */
@@ -239,7 +239,7 @@
     { id: 'quote', label: '📄 ' + 'Orçamento ao cliente (PDF)', fn: function () { return F.floorExportProjectPDF(); } },
     { id: 'owner', label: '🔒 ' + 'Análise do proprietário — custo × venda (PDF)', fn: function () { return F.floorExportOwnerPDF(); } },
     { id: 'materials', label: '📦 ' + 'Lista de materiais / Pedido (Excel)', fn: function () { return F.floorExportMaterialsXLSX(); } },
-    { id: 'bylevel', label: '🏢 ' + 'Material por piso (Excel)', fn: function () { return F.floorExportByLevelXLSX(); } },
+    { id: 'bylevel', label: '🏢 ' + 'Material por nível (Excel)', fn: function () { return F.floorExportByLevelXLSX(); } },
     { id: 'rfq', label: '🧾 ' + 'Cotação ao fornecedor (Excel)', fn: function () { return F.floorExportSupplierRFQXLSX(); } },
     { id: 'summary', label: '📊 ' + 'Resumo do takeoff (PDF)', fn: function () { return F.floorExportSummaryPDF(); } },
     { id: 'plan', label: '🗺️ ' + 'Planta marcada (PDF)', fn: function () { return F.floorExportMarkedPlanPDF(); } }
