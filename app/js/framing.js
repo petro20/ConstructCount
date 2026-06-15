@@ -78,7 +78,6 @@
     wallSides(wt).forEach(function (id) { var c = sideCat(id); if (c === 'dry') dry++; else if (c === 'dryWR') dryWR++; else if (c === 'sheath') sheath++; });
     return { dry: dry, dryWR: dryWR, sheath: sheath };
   }
-  F.framingFaceBoards = faceBoards;
   F.framingWallSides = wallSides;
 
   F.framingCompute = function () {
@@ -372,8 +371,6 @@
   }
   function typePrice(m) { return priceParts(m).total; }       // CUSTO (material+sobra + MO)
   function saleOf(cost) { return cost * (1 + num(FR.markup) / 100); }   // VENDA = custo × (1 + ganho%)
-  F.framingPriceParts = priceParts;
-  F.framingSaleOf = saleOf;
 
   // materiais ATIVOS (por escopo) — base p/ a IA buscar tamanho + preço regional
   function materialCatalog() {
@@ -392,7 +389,6 @@
     if (on('paint')) out.push({ key: 'paintSf', label: 'Paint + primer (tape/spackle/paint, walls)', unit: 'SF' });
     return out;
   }
-  F.framingMaterialCatalog = materialCatalog;
 
   // IA estima TAMANHOS + PREÇOS da REGIÃO (busca na web) → pré-preenche como ESTIMATIVA (usuário confirma)
   F.framingFetchPrices = function (region) {

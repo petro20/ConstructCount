@@ -93,59 +93,6 @@
   }
   F._newProject = newProject;
 
-  /** Modal de SELEÇÃO de folhas (grade de miniaturas). Resolve {pages:[], sched:[]} ou null. */
-  F.pickSheets = function (pages) {
-    return new Promise((resolve) => {
-      const sel = new Set(), sched = new Set();
-      const mkbtn = (txt, extra) => { const b = document.createElement('button'); b.textContent = txt; b.className = 'px-3 py-1.5 rounded text-white text-sm ' + (extra || 'bg-steel-600 hover:bg-steel-500'); return b; };
-      const ov = document.createElement('div');
-      ov.className = 'fixed inset-0 z-[70] bg-steel-900/95 flex flex-col';
-      const head = document.createElement('div');
-      head.className = 'flex items-center gap-3 px-5 py-3 bg-steel-800 text-white flex-wrap shrink-0';
-      const ttl = document.createElement('div');
-      ttl.innerHTML = '<div class="font-semibold text-base">' + F.tr('Selecionar folhas para pesquisar') + '</div>' +
-        '<div class="text-steel-300 text-xs">' + F.tr('Marque as folhas (plantas) que o motor vai processar. Use 📐 para a folha de medidas (schedule).') + '</div>';
-      head.appendChild(ttl);
-      const btnAll = mkbtn(F.tr('Selecionar todas'));
-      const btnNone = mkbtn(F.tr('Limpar'));
-      const count = document.createElement('span'); count.className = 'text-steel-200 text-xs px-1';
-      const btnOk = mkbtn('', 'bg-emerald-600 hover:bg-emerald-500 font-semibold');
-      const btnCancel = mkbtn(F.tr('Cancelar'), 'bg-rose-600 hover:bg-rose-500');
-      const sp = document.createElement('span'); sp.className = 'ml-auto';
-      head.append(sp, btnAll, btnNone, count, btnOk, btnCancel);
-      ov.appendChild(head);
-      const grid = document.createElement('div');
-      grid.className = 'flex-1 overflow-y-auto p-4 grid gap-3';
-      grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(150px, 1fr))';
-      ov.appendChild(grid);
-      const updaters = [];
-      const bars = () => { count.textContent = F.tr('{n} selecionada(s)', { n: sel.size }); btnOk.textContent = F.tr('Processar selecionadas ({n})', { n: sel.size }); };
-      (pages || []).forEach(pg => {
-        const t = document.createElement('div');
-        t.className = 'rounded-lg overflow-hidden border-2 border-steel-700 bg-steel-800 cursor-pointer select-none transition';
-        t.innerHTML = '<img src="' + pg.thumb + '" class="w-full h-36 object-contain bg-white"/>' +
-          '<div class="flex items-center justify-between px-2 py-1 text-xs text-steel-100">' +
-          '<span>' + F.tr('Folha {p}', { p: pg.page }) + '</span>' +
-          '<button class="schedBtn px-1.5 rounded hover:bg-steel-600" title="' + F.tr('Folha de medidas (schedule)') + '">📐</button></div>';
-        const setUI = () => {
-          t.classList.toggle('border-emerald-500', sel.has(pg.page));
-          t.classList.toggle('border-steel-700', !sel.has(pg.page));
-          t.querySelector('.schedBtn').classList.toggle('bg-amber-500', sched.has(pg.page));
-        };
-        t.addEventListener('click', () => { if (sel.has(pg.page)) { sel.delete(pg.page); sched.delete(pg.page); } else sel.add(pg.page); setUI(); bars(); });
-        t.querySelector('.schedBtn').addEventListener('click', (e) => { e.stopPropagation(); if (sched.has(pg.page)) sched.delete(pg.page); else { sched.add(pg.page); sel.add(pg.page); } setUI(); bars(); });
-        updaters.push(setUI); grid.appendChild(t); setUI();
-      });
-      bars();
-      btnAll.addEventListener('click', () => { (pages || []).forEach(p => sel.add(p.page)); updaters.forEach(f => f()); bars(); });
-      btnNone.addEventListener('click', () => { sel.clear(); sched.clear(); updaters.forEach(f => f()); bars(); });
-      const cleanup = () => ov.remove();
-      btnCancel.addEventListener('click', () => { cleanup(); resolve(null); });
-      btnOk.addEventListener('click', () => { if (!sel.size) { alert(F.tr('Selecione ao menos uma folha.')); return; } cleanup(); resolve({ pages: [...sel], sched: [...sched] }); });
-      document.body.appendChild(ov);
-    });
-  };
-
   /** Fluxo PlanSwift: prepara a pasta do projeto (rasteriza+detecta), mostra progresso,
    *  e abre o workspace de takeoff (páginas + marcas editáveis + consolidar). */
   async function openTakeoffWorkspace(projName) {

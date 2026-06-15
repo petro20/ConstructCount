@@ -234,7 +234,6 @@
     if (isDesktop()) { try { var rq = await window.pywebview.api.license_required(); LICENSING = !!(rq && rq.required); } catch (e) {} }
     gate();
   }
-  F.recheckLicense = gate;
   F.licenseStatus = getStatus;                 // p/ a aba Pacote ler o estado atual
   F.openLicenseGate = function () {            // abre o overlay de ativação/troca de chave
     var o = el();
