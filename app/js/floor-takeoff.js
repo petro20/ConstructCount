@@ -52,18 +52,52 @@
 
   function tdNum(v) { return '<td class="num">' + v + '</td>'; }
 
-  // upsert do acabamento (tipo de material / fabricante) editado DIRETO na planilha do Takeoff
+  // upsert do acabamento (tipo / fabricante / PREÇO $/SF) editado DIRETO na planilha do Takeoff
   function upsertFinish(kind, code, field, value) {
-    var fk = (kind === 'ceiling') ? 'ceiling' : 'floor';
+    var fk = (kind === 'ceiling') ? 'ceiling' : (kind === 'base') ? 'base' : 'floor';
     var fins = (F._scopeFinishes || []).slice();
     var rec = null;
-    for (var i = 0; i < fins.length; i++) { var x = fins[i]; if (x.code === code && (x.kind === fk || (fk === 'floor' && (x.kind === 'floor' || x.kind === 'base')))) { rec = x; break; } }
+    for (var i = 0; i < fins.length; i++) { var x = fins[i]; if (x.code === code && x.kind === fk) { rec = x; break; } }
     if (!rec) { rec = { code: code, kind: fk, material: '', manufacturer: '', desc: '' }; fins.push(rec); }
-    rec[field] = value; if (field === 'material') rec.desc = value;
+    if (field === 'price') { rec.price = num(value); if (rec.priceMeta) rec.priceMeta.estimate = false; }
+    else { rec[field] = value; if (field === 'material') rec.desc = value; }
     F._scopeFinishes = fins;
     if (F._setFloorFinishes) F._setFloorFinishes(fins);
     if (F._refreshAreaTagList) F._refreshAreaTagList();
   }
+  // preço $/SF do acabamento (por código) — sobrepõe a taxa global do tipo
+  function finishPrice(kind, code) {
+    if (!code) return 0;
+    var rec = (F._scopeFinishes || []).filter(function (x) { return x.code === code && x.kind === kind; })[0];
+    return (rec && +rec.price > 0) ? +rec.price : 0;
+  }
+
+  // IA busca o $/SF de cada MATERIAL (acabamento) na região e preenche o preço por material
+  F.floorFetchPrices = function (region) {
+    region = (region || (F.framing && F.framing.region) || '').trim();
+    if (!region) return Promise.reject(new Error(tr('Defina a região primeiro.')));
+    var fins = (F._scopeFinishes || []).filter(function (x) { return (x.material || x.desc) && (x.kind === 'floor' || x.kind === 'ceiling' || x.kind === 'base'); });
+    if (!fins.length) return Promise.reject(new Error(tr('Sem acabamentos para precificar (leia o escopo).')));
+    var disc = function (k) { return k === 'ceiling' ? 'ceiling finish' : k === 'base' ? 'wall base' : 'floor finish'; };
+    var mats = fins.map(function (x) { return { key: x.kind + ':' + (x.code || ''), label: (x.material || x.desc) + (x.manufacturer ? (' (' + x.manufacturer + ')') : '') + ' — ' + disc(x.kind) + ', installed', unit: 'SF' }; });
+    var li = (F.licenseInfo ? F.licenseInfo() : { key: '', device: '' });
+    var body = { region: region, materials: mats, license_key: li.key || '', device: li.device || '', device_label: 'app' };
+    return fetch('https://constructcount.com/app/api/region_prices.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j && j.error ? j.error : ('HTTP ' + r.status)); return j; }); })
+      .then(function (j) {
+        var cur = (F._scopeFinishes || []).slice(), byKey = {};
+        cur.forEach(function (x) { byKey[x.kind + ':' + (x.code || '')] = x; });
+        var n = 0;
+        (j.items || []).forEach(function (it) {
+          var rec = byKey[it.key]; if (!rec) return;
+          var v = num(it.price) || ((num(it.price_low) + num(it.price_high)) / 2);
+          if (v > 0) { rec.price = Math.round(v * 100) / 100; rec.priceMeta = { source: it.source || j.source || '', date: it.date || j.date || '', low: num(it.price_low), high: num(it.price_high), estimate: true }; n++; }
+        });
+        F._scopeFinishes = cur; if (F._setFloorFinishes) F._setFloorFinishes(cur);
+        if (F.framing) { F.framing.region = region; if (F._saveFraming) F._saveFraming(); }
+        return { n: n, source: j.source || '', date: j.date || '' };
+      });
+  };
 
   function titleCase(s) { return String(s || '').toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); }); }
 
@@ -91,8 +125,9 @@
           matCell = fin('material', r.material, tr('tipo'));
           manuCell = fin('manufacturer', r.manufacturer, tr('fabricante'));
         }
+        var priceCell = '<td class="num"><input class="ftt-finprice" data-kind="' + (r.finKind || kind) + '" data-code="' + esc(r.code || '') + '" value="' + (r.price ? r.price : '') + '" placeholder="$/SF" inputmode="decimal"></td>';
         rowsHtml += '<tr><td class="ftt-name">' + esc(r.item) + '</td>' + tagCell + matCell + manuCell
-          + tdNum(fmtN(r.qty, 1)) + tdNum(r.unit) + tdNum(money(r.price))
+          + tdNum(fmtN(r.qty, 1)) + tdNum(r.unit) + priceCell
           + '<td class="num ftt-mat">' + money(r.mat) + '</td><td class="num ftt-lab">' + money(r.lab) + '</td><td class="num ftt-tot">' + money(r.cost) + '</td><td class="num ftt-sale">' + money(r.sale) + '</td></tr>';
       });
       rowsHtml += '<tr class="ftt-sheetsub"><td colspan="4">' + tr('Subtotal') + ' ' + esc(s.sheet) + '</td><td class="num"><b>' + fmtN(st.qty, 1) + '</b></td><td class="num">SF</td><td class="num"></td><td class="num ftt-mat">' + money(st.mat) + '</td><td class="num ftt-lab">' + money(st.lab) + '</td><td class="num ftt-tot">' + money(st.cost) + '</td><td class="num ftt-sale">' + money(st.sale) + '</td></tr>';
@@ -105,11 +140,35 @@
     var headers = ['ITEM', tr('Tag'), tr('Material'), tr('Fabricante'), tr('Qtd'), tr('Un'), tr('Preço un.'), 'MATERIAL $', 'M.O. $', tr('Custo') + ' $', tr('Venda') + ' $'];
     var body = withRows.length ? rowsHtml : '<tr><td colspan="11" style="text-align:center;color:#8b887f;padding:18px">' + tr('Meça áreas de {k} (ferramenta ▱ Área) para aparecer aqui.', { k: floor ? tr('Piso') : tr('Forro') }) + '</td></tr>';
     var foot = '<tr><td colspan="4"><b>' + tr('Total geral') + '</b></td><td class="num"><b>' + fmtN(tot.qty, 1) + '</b></td><td class="num">SF</td><td class="num"></td><td class="num ftt-mat"><b>' + money(tot.mat) + '</b></td><td class="num ftt-lab"><b>' + money(tot.lab) + '</b></td><td class="num ftt-tot"><b>' + money(tot.cost) + '</b></td><td class="num ftt-sale"><b>' + money(tot.sale) + '</b></td></tr>';
+    var regVal = (F.framing && F.framing.region) || '';
+    var regionBar = '<span class="ftt-reglb">📍 ' + tr('Região:') + '</span>'
+      + '<input id="flRegion" class="ftt-reginput" value="' + esc(regVal) + '" placeholder="' + tr('cidade, estado ou ZIP') + '">'
+      + '<button id="flReadRegion" class="ftt-regbtn" title="' + tr('Ler do carimbo/endereço da planta') + '">' + tr('Ler da planta') + '</button>'
+      + '<button id="flFetchPrices" class="ftt-regbtn ftt-regbtn-ai" title="' + tr('IA busca o preço por região de cada material (você confirma)') + '">💲 ' + tr('Buscar preços (IA)') + '</button>'
+      + '<span id="flPriceStatus" class="ftt-regstatus"></span>';
     host.innerHTML = '<div class="ftt-region ftt-arates">' + rbar + '</div>'
+      + '<div class="ftt-region">' + regionBar + '</div>'
       + '<div class="ftt-tablewrap"><table class="ftt-table"><thead><tr>' + headers.map(function (h, i) { return '<th' + (i >= 4 ? ' class="num"' : '') + '>' + h + '</th>'; }).join('') + '</tr></thead>'
       + '<tbody>' + body + '</tbody><tfoot>' + foot + '</tfoot></table></div>';
     host.querySelectorAll('[data-rate]').forEach(function (inp) { inp.addEventListener('change', function () { setRate(inp.getAttribute('data-rate'), inp.value); if (rerender) rerender(); }); });
     host.querySelectorAll('.ftt-fin').forEach(function (inp) { inp.addEventListener('change', function () { upsertFinish(inp.getAttribute('data-kind'), inp.getAttribute('data-code'), inp.getAttribute('data-field'), (inp.value || '').trim()); if (rerender) rerender(); }); });
+    host.querySelectorAll('.ftt-finprice').forEach(function (inp) { inp.addEventListener('change', function () { upsertFinish(inp.getAttribute('data-kind'), inp.getAttribute('data-code'), 'price', inp.value); if (rerender) rerender(); }); });
+    // ---- Região + Buscar preços (IA) ----
+    var rgEl = host.querySelector('#flRegion'); if (rgEl) rgEl.addEventListener('change', function () { if (F.framing) { F.framing.region = rgEl.value.trim(); if (F._saveFraming) F._saveFraming(); } });
+    var rrEl = host.querySelector('#flReadRegion'); if (rrEl) rrEl.addEventListener('click', function () {
+      var st = host.querySelector('#flPriceStatus');
+      if (!F._readRegion) { if (st) st.textContent = tr('Leitura da planta só no app desktop.'); return; }
+      if (st) st.textContent = tr('Lendo a região da planta…');
+      F._readRegion().then(function (r) { var reg = (r && r.region) || ''; if (reg && F.framing) { F.framing.region = reg; if (F._saveFraming) F._saveFraming(); } if (rerender) rerender(); }).catch(function () { if (st) st.textContent = tr('Falha ao ler a região.'); });
+    });
+    var fpEl = host.querySelector('#flFetchPrices'); if (fpEl) fpEl.addEventListener('click', function () {
+      var st = host.querySelector('#flPriceStatus');
+      if (F.hasPackage && !F.hasPackage('region')) { if (st) st.innerHTML = '🔒 ' + tr('Pesquisa de preços (IA) é um add-on (US$ 10/mês).') + ' <a href="https://constructcount.com/checkout.php?plan=region" target="_blank" style="color:#b45309;font-weight:700">' + tr('Assinar') + '</a>'; return; }
+      var reg = ((host.querySelector('#flRegion') || {}).value || (F.framing && F.framing.region) || '').trim();
+      if (!reg) { if (st) st.textContent = tr('Defina a região primeiro.'); return; }
+      fpEl.disabled = true; if (st) st.textContent = tr('IA buscando tamanhos e preços da região…');
+      F.floorFetchPrices(reg).then(function (res) { if (st) st.textContent = '✓ ' + tr('{n} preço(s) estimado(s)', { n: (res && res.n) || 0 }) + (res && res.source ? (' · ' + res.source) : ''); if (rerender) rerender(); }).catch(function (e) { fpEl.disabled = false; if (st) st.textContent = tr('Não consegui buscar preços: ') + (e && e.message ? e.message : ''); });
+    });
     host.querySelectorAll('.ftt-tagedit').forEach(function (inp) { inp.addEventListener('change', function () { if (F._wsRetagAreas) F._wsRetagAreas(+inp.getAttribute('data-page'), inp.getAttribute('data-kind'), inp.getAttribute('data-code'), (inp.value || '').trim().toUpperCase()); if (rerender) rerender(); }); });
     host.querySelectorAll('.ftt-basetag').forEach(function (inp) { inp.addEventListener('change', function () { if (F._wsSetBaseTag) F._wsSetBaseTag(+inp.getAttribute('data-page'), inp.getAttribute('data-floorcode'), (inp.value || '').trim().toUpperCase()); if (rerender) rerender(); }); });
   };
@@ -167,15 +226,16 @@
   }
   function priceRows(gs, kind, baseH, level) {
     var floor = kind === 'floor', out = [], lvl = level ? (' - ' + titleCase(level)) : '';
+    var fkind = floor ? 'floor' : 'ceiling';
     gs.forEach(function (g) {
-      var mr = floor ? rate('floorMat', 0) : rate('ceilMat', 0), lr = floor ? rate('floorLab', 0) : rate('ceilLab', 0);
+      var mr = finishPrice(fkind, g.code) || (floor ? rate('floorMat', 0) : rate('ceilMat', 0)), lr = floor ? rate('floorLab', 0) : rate('ceilLab', 0);
       var mat = g.sf * mr * wasteMult(), lab = g.sf * lr, cost = lineCost(mat, lab);
-      out.push({ item: (floor ? tr('Piso') : tr('Forro')) + (g.tag && g.tag !== '—' ? ' ' + g.tag : '') + lvl, tag: g.tag, code: g.code || '', material: g.material || '', manufacturer: g.manufacturer || '', qty: g.sf, unit: 'SF', price: mr, mat: mat, lab: lab, cost: cost, sale: lineSale(cost), base: false });
+      out.push({ item: (floor ? tr('Piso') : tr('Forro')) + (g.tag && g.tag !== '—' ? ' ' + g.tag : '') + lvl, tag: g.tag, code: g.code || '', finKind: fkind, material: g.material || '', manufacturer: g.manufacturer || '', qty: g.sf, unit: 'SF', price: mr, mat: mat, lab: lab, cost: cost, sale: lineSale(cost), base: false });
       if (floor && g.baseLf > 0.01) {
         var bsf = g.baseLf * (baseH / 12);   // área do rodapé em SF (perímetro × altura)
-        var br = rate('baseMat', 0), bmat = bsf * br * wasteMult(), blab = bsf * rate('baseLab', 0), bc = lineCost(bmat, blab);
         var bcode = g.baseTag || '';
-        out.push({ item: tr('Rodapé (base)') + ' · ' + g.baseLf.toFixed(0) + ' LF' + (baseH > 0 ? (' · ' + baseH + '"') : ''), tag: bcode, code: bcode, floorCode: g.code || '',
+        var br = finishPrice('base', bcode) || rate('baseMat', 0), bmat = bsf * br * wasteMult(), blab = bsf * rate('baseLab', 0), bc = lineCost(bmat, blab);
+        out.push({ item: tr('Rodapé (base)') + ' · ' + g.baseLf.toFixed(0) + ' LF' + (baseH > 0 ? (' · ' + baseH + '"') : ''), tag: bcode, code: bcode, finKind: 'base', floorCode: g.code || '',
           material: (F._wsFinishDesc ? F._wsFinishDesc('base', bcode) : ''), manufacturer: (F._wsFinishManu ? F._wsFinishManu('base', bcode) : ''),
           qty: bsf, unit: 'SF', price: br, mat: bmat, lab: blab, cost: bc, sale: lineSale(bc), base: true });
       }
