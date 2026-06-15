@@ -1154,6 +1154,7 @@ window.ConstructCount = window.ConstructCount || {};
     'Tipo de material': { en: 'Material type', es: 'Tipo de material' },
     'Fabricante': { en: 'Manufacturer', es: 'Fabricante' },
     'Subtotal': { en: 'Subtotal', es: 'Subtotal' },
+    'Tag': { en: 'Tag', es: 'Tag' },
     'tipo': { en: 'type', es: 'tipo' },
     'fabricante': { en: 'manufacturer', es: 'fabricante' },
     'Nível/pavimento (lido do projeto)': { en: 'Level/floor (read from the project)', es: 'Nivel/piso (leído del proyecto)' },
