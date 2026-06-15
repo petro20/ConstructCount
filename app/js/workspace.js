@@ -1405,23 +1405,15 @@
     return { polys: polys, areaPx: areaPx };
   }
   // junta um grupo de polígonos: se todos forem retângulos → UNIÃO (1 formato); senão concatena
-  // envoltória convexa (Andrew monotone chain) — contorno único que envolve todos os pontos
-  function convexHull(points) {
-    const pts = points.slice().sort((a, b) => (a[0] - b[0]) || (a[1] - b[1]));
-    if (pts.length < 3) return pts.slice();
-    const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-    const lo = []; for (const p of pts) { while (lo.length >= 2 && cross(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
-    const up = []; for (let i = pts.length - 1; i >= 0; i--) { const p = pts[i]; while (up.length >= 2 && cross(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop(); up.push(p); }
-    lo.pop(); up.pop(); return lo.concat(up);
-  }
   function buildAreaGroup(polysList) {
-    // UNIÃO = 1 contorno único (envoltória) envolvendo tudo; SF = SOMA REAL das partes (sfLock: não recalcula
-    // pelo contorno, então o vão branco NÃO entra na conta). Base = perímetro do contorno.
-    const sf = polysList.reduce((s, p) => s + polySf(p), 0);
-    const allPts = []; polysList.forEach(p => p.forEach(pt => allPts.push(pt)));
-    const hull = convexHull(allPts);
-    if (hull.length >= 3) return { path: hull, sf: sf, sfLock: true };
-    return { parts: polysList.slice(), sf: sf };
+    // UNIÃO EXATA dos retângulos: traça o formato REAL (corredor/grid), com os vãos VAZADOS (even-odd).
+    // SF = área coberta real (rectUnion.areaPx) — não conta vão nem duplica sobreposição. sfLock: não
+    // recalcular pela soma dos polígonos (que contaria os buracos como positivos).
+    if (polysList.length && polysList.every(polyIsRect)) {
+      const u = rectUnion(polysList.map(polyToRect));
+      if (u && u.polys.length) return { parts: u.polys, sf: pxToSf(u.areaPx), sfLock: true };
+    }
+    return { parts: polysList.slice(), sf: polysList.reduce((s, p) => s + polySf(p), 0) };   // não-retângulos: soma
   }
   // tipo de área: 'floor' (Piso, verde) | 'ceiling' (Teto/Forro, azul)
   function kindColor(k) { return k === 'ceiling' ? '#38bdf8' : '#22c55e'; }
