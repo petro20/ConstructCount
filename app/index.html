@@ -56,7 +56,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 
-  <link rel="stylesheet" href="css/styles.css?v=136" />
+  <link rel="stylesheet" href="css/styles.css?v=137" />
 </head>
 
 <body class="bg-steel-50 text-steel-900 font-sans min-h-screen">
@@ -1046,7 +1046,7 @@
           <button id="wsLayerAdd" class="w-full text-left px-2 py-1 rounded bg-steel-700 hover:bg-steel-600 text-sm mt-1.5">＋ Camada (trade)</button>
         </div>
         <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="ferramentas"><span>Ferramentas</span><span class="ws-chev">▼</span></div>
-        <div class="p-3 space-y-2">
+        <div data-lock="windows_doors" class="p-3 space-y-2">
           <button id="wsCount" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600" title="Modo contar: clique na planta para adicionar 1 marca">⊕ Contar</button>
           <button id="wsAuto" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600" title="Auto Count: clique numa marca de amostra e ele acha todas as iguais na folha. Ou ARRASTE uma caixa (começando numa marca) pra contar só dentro dela.">⊛ Auto Count</button>
           <button id="wsDelete" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600" title="Apagar: clique numa marca para removê-la de vez">🗑 Apagar (1 a 1)</button>
@@ -1055,7 +1055,7 @@
         </div>
 
         <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="autocount"><span>Auto Count</span><span class="ws-chev">▼</span></div>
-        <div class="p-3 space-y-2">
+        <div data-lock="windows_doors" class="p-3 space-y-2">
           <label class="block text-xs text-steel-300" title="Maior = só idênticos; menor = pega mais parecidos">Sensibilidade
             <div class="flex items-center gap-2 mt-1">
               <input id="wsThresh" type="range" min="50" max="95" step="1" value="80" class="flex-1" />
@@ -1068,7 +1068,7 @@
         </div>
 
         <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="janela"><span>Janela selecionada</span><span class="ws-chev">▼</span></div>
-        <div class="p-3 space-y-2">
+        <div data-lock="windows_doors" class="p-3 space-y-2">
           <p id="wsSelCode" class="text-xs text-steel-300">Clique num código na lista à esquerda.</p>
           <label class="block text-xs text-steel-300">Largura
             <div class="flex gap-1 mt-1">
@@ -1093,54 +1093,54 @@
           <div class="rounded-lg border border-amber-700/50 bg-steel-800/60 p-2.5" title="Defina ANTES de levantar: quais ofícios esta estimativa cobre. Parede gera quantidades por escopo; Piso/Forro vêm da ferramenta de Área (SF).">
             <div class="text-[11px] font-semibold uppercase tracking-wide text-amber-300/90 mb-1.5">Escopo da obra</div>
             <div class="flex flex-wrap gap-1.5">
-              <button id="wsScopeFraming" data-pkg="framing" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="framing">🏗️ Framing</button>
-              <button id="wsScopeDrywall" data-pkg="drywall" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="drywall">🧱 Drywall</button>
-              <button id="wsScopeInsul" data-pkg="insulation" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="insulation">🧊 Insulation</button>
-              <button id="wsScopePaint" data-pkg="paint" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="paint">🎨 Paint</button>
-              <button id="wsScopeFloor" data-pkg="floor" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="floor">▱ Piso</button>
-              <button id="wsScopeCeiling" data-pkg="ceiling" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="ceiling">▱ Forro</button>
+              <button id="wsScopeFraming" data-lock="framing" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="framing">🏗️ Framing</button>
+              <button id="wsScopeDrywall" data-lock="drywall" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="drywall">🧱 Drywall</button>
+              <button id="wsScopeInsul" data-lock="insulation" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="insulation">🧊 Insulation</button>
+              <button id="wsScopePaint" data-lock="paint" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="paint">🎨 Paint</button>
+              <button id="wsScopeFloor" data-lock="floor" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="floor">▱ Piso</button>
+              <button id="wsScopeCeiling" data-lock="ceiling" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="ceiling">▱ Forro</button>
             </div>
             <button id="wsReadScope" class="w-full mt-2 text-left px-3 py-2 rounded bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-sm font-semibold" title="A IA lê na FOLHA DE MEDIDAS (marcada com 📐) só o que está LIGADO no escopo: tipos de parede, acabamentos de piso/forro, alturas e schedule de janelas/portas. Marque a folha de medidas antes.">🧠 Ler escopo da folha de medidas</button>
           </div>
           <button id="wsCalib" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Trace uma linha sobre uma medida conhecida do desenho e informe o valor real">📏 Calibrar escala</button>
           <button id="wsMeasure" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Trace uma linha e veja a medida real (precisa calibrar a escala antes). Pode adicionar várias.">📐 Medir (várias)</button>
           <button id="wsLinear" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Linear: traço contínuo de vários pontos na CAMADA ativa (clique p/ mudar de direção, Esc/Enter finaliza, Backspace desfaz). Precisa calibrar a escala. Usado por Framing e outros pacotes.">📐 Linear (contínuo)</button>
-          <div class="flex items-center gap-2 pt-1" title="Tipo da área — Piso (verde) ou Teto/Forro (azul). Cada área nova entra com este tipo. O total por tipo aparece abaixo.">
+          <div data-lock="floor,ceiling" class="flex items-center gap-2 pt-1" title="Tipo da área — Piso (verde) ou Teto/Forro (azul). Cada área nova entra com este tipo. O total por tipo aparece abaixo.">
             <span class="text-xs text-steel-300 shrink-0">Tipo de área:</span>
             <select id="wsAreaKind" class="flex-1 min-w-0 text-steel-900 text-sm rounded px-2 py-1">
               <option value="floor">Piso</option>
               <option value="ceiling">Teto / Forro</option>
             </select>
           </div>
-          <div class="flex items-center gap-2 pt-1" title="Tag do acabamento (ex.: FF-01) — aparece no rótulo da área. Digite ou escolha os lidos da folha de medidas. Com áreas selecionadas, aplica nelas.">
+          <div data-lock="floor,ceiling" class="flex items-center gap-2 pt-1" title="Tag do acabamento (ex.: FF-01) — aparece no rótulo da área. Digite ou escolha os lidos da folha de medidas. Com áreas selecionadas, aplica nelas.">
             <span class="text-xs text-steel-300 shrink-0">Tag:</span>
             <input id="wsAreaTag" list="wsAreaTagList" maxlength="16" placeholder="ex.: FF-01" autocomplete="off" class="flex-1 min-w-0 text-steel-900 text-sm rounded px-2 py-1">
             <datalist id="wsAreaTagList"></datalist>
           </div>
-          <div class="flex items-center gap-2 pt-1" title="Altura do rodapé/base em POLEGADAS. A área da base = perímetro do piso × altura (ex.: 4&quot; de base).">
+          <div data-lock="floor,ceiling" class="flex items-center gap-2 pt-1" title="Altura do rodapé/base em POLEGADAS. A área da base = perímetro do piso × altura (ex.: 4&quot; de base).">
             <span class="text-xs text-steel-300 shrink-0">Altura base (pol):</span>
             <input id="wsAreaBaseH" type="number" min="0" step="0.5" value="4" class="flex-1 min-w-0 text-steel-900 text-sm rounded px-2 py-1">
           </div>
-          <button id="wsArea" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Área: clique nos cantos do cômodo/região; duplo-clique (ou Enter) fecha e mostra a área em SF na hora. SHIFT+clique = área NEGATIVA (vermelha) que DESCONTA do total (colunas, escadas, vãos). Botão DIREITO em cima de um ponto apaga aquele ponto. Backspace desfaz o último ponto; quando não está desenhando, apaga a última área. Precisa calibrar a escala.">▱ Área (rápida)</button>
-          <button id="wsAreaRect" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Retângulo: liga o modo Área e cria a área com 2 CLIQUES na diagonal (um canto, o canto oposto). Mais rápido e os cantos saem retos. Shift+1º clique = negativo.">▭ Retângulo (2 cliques)</button>
-          <button id="wsAreaMerge" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Une várias áreas num ÚNICO piso/forro (um total de SF). Selecione as áreas (clique com o modo Área desligado, Ctrl+clique p/ várias, ou Ctrl+A p/ TODAS) e clique aqui; sem seleção, une TODAS do tipo escolhido nesta folha.">🔗 Unir áreas (1 só)</button>
+          <button id="wsArea" data-lock="floor,ceiling" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Área: clique nos cantos do cômodo/região; duplo-clique (ou Enter) fecha e mostra a área em SF na hora. SHIFT+clique = área NEGATIVA (vermelha) que DESCONTA do total (colunas, escadas, vãos). Botão DIREITO em cima de um ponto apaga aquele ponto. Backspace desfaz o último ponto; quando não está desenhando, apaga a última área. Precisa calibrar a escala.">▱ Área (rápida)</button>
+          <button id="wsAreaRect" data-lock="floor,ceiling" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Retângulo: liga o modo Área e cria a área com 2 CLIQUES na diagonal (um canto, o canto oposto). Mais rápido e os cantos saem retos. Shift+1º clique = negativo.">▭ Retângulo (2 cliques)</button>
+          <button id="wsAreaMerge" data-lock="floor,ceiling" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Une várias áreas num ÚNICO piso/forro (um total de SF). Selecione as áreas (clique com o modo Área desligado, Ctrl+clique p/ várias, ou Ctrl+A p/ TODAS) e clique aqui; sem seleção, une TODAS do tipo escolhido nesta folha.">🔗 Unir áreas (1 só)</button>
           <div class="text-[11px] text-steel-400 px-1">⇧ Shift+clique = negativo (desconta)</div>
           <div id="wsAreaTot" class="text-xs text-steel-300 px-1"></div>
-          <button id="wsDetectWalls" data-pkg="wall" class="w-full text-left px-3 py-2 rounded bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-sm font-semibold" title="IA: detecta as linhas de parede da folha e cria os traços Linear na camada ativa. Você revisa e apaga as erradas (clique + Del).">✨ Detectar paredes (IA)</button>
-          <button id="wsReadWalls" data-pkg="wall" class="w-full text-left px-3 py-2 rounded bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-sm font-semibold" title="IA: lê o detalhe de tipo de parede desta folha (wall type detail) e cria as assemblies — montante, espaçamento, plates, gypsum, isolamento — automaticamente.">🧠 Ler tipos de parede (IA)</button>
-          <div data-pkg="wall" class="flex items-center gap-2 pt-1" title="Tipo de framing ATIVO — a parede que você traçar (Linear/Detectar) entra neste tipo, com a cor dele.">
+          <button id="wsDetectWalls" data-lock="wall" class="w-full text-left px-3 py-2 rounded bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-sm font-semibold" title="IA: detecta as linhas de parede da folha e cria os traços Linear na camada ativa. Você revisa e apaga as erradas (clique + Del).">✨ Detectar paredes (IA)</button>
+          <button id="wsReadWalls" data-lock="wall" class="w-full text-left px-3 py-2 rounded bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-sm font-semibold" title="IA: lê o detalhe de tipo de parede desta folha (wall type detail) e cria as assemblies — montante, espaçamento, plates, gypsum, isolamento — automaticamente.">🧠 Ler tipos de parede (IA)</button>
+          <div data-lock="wall" class="flex items-center gap-2 pt-1" title="Tipo de framing ATIVO — a parede que você traçar (Linear/Detectar) entra neste tipo, com a cor dele.">
             <span class="text-xs text-steel-300 shrink-0">Tipo:</span>
             <span id="wsWallTypeSwatch" class="shrink-0" style="width:16px;height:16px;border-radius:4px;background:#3b82f6;border:1px solid rgba(255,255,255,.25)"></span>
             <select id="wsWallType" class="flex-1 min-w-0 text-steel-900 text-sm rounded px-2 py-1.5"></select>
           </div>
-          <button id="wsApplyType" data-pkg="wall" class="w-full text-left px-3 py-1.5 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="Aplica o tipo selecionado (acima) às PAREDES selecionadas na planta. Selecione as linhas e clique aqui.">↳ Aplicar tipo às linhas selecionadas</button>
-          <div data-pkg="wall" class="flex items-center gap-2 pt-1" title="Piso ATIVO — a parede que você traçar herda a ALTURA deste piso (LF × altura = SF). Pegue a altura na A302.">
+          <button id="wsApplyType" data-lock="wall" class="w-full text-left px-3 py-1.5 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="Aplica o tipo selecionado (acima) às PAREDES selecionadas na planta. Selecione as linhas e clique aqui.">↳ Aplicar tipo às linhas selecionadas</button>
+          <div data-lock="wall" class="flex items-center gap-2 pt-1" title="Piso ATIVO — a parede que você traçar herda a ALTURA deste piso (LF × altura = SF). Pegue a altura na A302.">
             <span class="text-xs text-steel-300 shrink-0">Piso:</span>
             <select id="wsFloor" class="flex-1 min-w-0 text-steel-900 text-sm rounded px-2 py-1.5"></select>
             <select id="wsFloorH" title="Altura do piso — medidas lidas pela IA (A302)" class="text-steel-900 text-sm rounded px-1 py-1.5" style="width:88px"></select>
             <button id="wsFloorAdd" class="shrink-0 text-steel-100 px-2 py-1.5 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Adicionar piso">＋</button>
           </div>
-          <button id="wsApplyFloor" data-pkg="wall" class="w-full text-left px-3 py-1.5 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="Aplica a altura do piso ativo às PAREDES selecionadas.">↳ Aplicar piso/altura às linhas selecionadas</button>
+          <button id="wsApplyFloor" data-lock="wall" class="w-full text-left px-3 py-1.5 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="Aplica a altura do piso ativo às PAREDES selecionadas.">↳ Aplicar piso/altura às linhas selecionadas</button>
           <button id="wsDelMeas" class="w-full text-left px-3 py-2 rounded bg-rose-700 hover:bg-rose-600 text-xs" title="Apaga a medida selecionada (clique numa medida; ou tecla Delete)" disabled>🗑 Apagar medida selecionada</button>
           <button id="wsClearMeas" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="Remove todas as medidas desta folha">Limpar todas as medidas</button>
           <p id="wsScaleInfo" class="text-xs text-steel-400">Escala: não calibrada.</p>
@@ -1194,14 +1194,14 @@
       <button id="stOrtho" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Ortho (tecla O): trava a medida em horizontal/vertical">Ortho</button>
       <button id="stLegend" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Mostrar/ocultar a legenda das marcas">🏷️ Legenda</button>
       <button id="wsSummaryBtn" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Resumo da marcação (tabela editável)">📊 Resumo</button>
-      <button id="stFraming" data-pkg="wall" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Takeoff: parts e preço a partir dos traços Linear desta camada">📊 Takeoff</button>
+      <button id="stFraming" data-lock="wall,floor,ceiling,windows_doors" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Takeoff: lista de materiais e preço por disciplina">📊 Takeoff</button>
       <span id="stMode" class="text-steel-400">Record: Point To Point</span>
       <span class="ml-auto text-steel-400 truncate" id="stPath" title="Folha / projeto"></span>
     </div>
   </div>
 
   <script src="js/i18n.js?v=254"></script>
-  <script src="js/license.js?v=208"></script>
+  <script src="js/license.js?v=209"></script>
   <script src="js/calculator.js?v=216"></script>
   <script src="js/svg-engine.js?v=200"></script>
   <script src="js/export.js?v=217"></script>

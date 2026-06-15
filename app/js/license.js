@@ -96,11 +96,19 @@
     e.forEach(function (m) { if (String(m).indexOf('board:') === 0) out.push(String(m).slice(6).toUpperCase()); });
     return out;
   };
+  function ownsAny(csv) { return String(csv || '').split(',').some(function (p) { p = p.trim(); return p && F.hasPackage(p); }); }
   function applyPackageGates() {
+    // data-pkg  → ESCONDE quando sem direito (vitrines/landing, itens que somem)
     var nodes = document.querySelectorAll('[data-pkg]');
     for (var i = 0; i < nodes.length; i++) {
-      var ent = F.hasPackage(nodes[i].getAttribute('data-pkg'));
-      nodes[i].classList.toggle('pkg-locked', !ent);
+      nodes[i].classList.toggle('pkg-locked', !F.hasPackage(nodes[i].getAttribute('data-pkg')));
+    }
+    // data-lock → MOSTRA porém INERTE (sem ação) quando sem ativação (ferramenta de disciplina = vitrine)
+    var lk = document.querySelectorAll('[data-lock]');
+    for (var j = 0; j < lk.length; j++) {
+      var on = ownsAny(lk[j].getAttribute('data-lock'));
+      lk[j].classList.toggle('pkg-inert', !on);
+      lk[j].setAttribute('aria-disabled', on ? 'false' : 'true');
     }
     if (F._renderFramingCard) { try { F._renderFramingCard(); } catch (e) {} }
   }
