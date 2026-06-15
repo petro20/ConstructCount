@@ -332,7 +332,14 @@
     const c = areasNetSf(list.filter(a => a.kind === 'ceiling'), mm);
     let baseLf = 0; list.forEach(a => { if ((a.kind || 'floor') !== 'ceiling' && !a.neg) baseLf += (mm ? F._wsAreaBaseLfAt(a, mm) : areaBaseLf(a)); });
     const baseSf = baseLf * ((S.areaBaseH || 0) / 12);   // base = perímetro do piso × altura → SF
-    return { floor: f + baseSf, ceiling: c, baseSf: baseSf, any: (f + baseSf) !== 0 || c !== 0 };   // Piso = piso + base (SF)
+    // grupos por TAG (com NOME do acabamento lido do projeto) p/ a árvore
+    const grp = (keep, kname) => {
+      const by = {};
+      list.forEach(a => { const k = a.kind || 'floor'; if (!keep(k)) return; const tag = a.tag || '—'; (by[tag] = by[tag] || []).push(a); });
+      return Object.keys(by).map(t => ({ tag: t, material: (F._wsFinishDesc ? F._wsFinishDesc(kname, t) : ''), manufacturer: (F._wsFinishManu ? F._wsFinishManu(kname, t) : ''), sf: areasNetSf(by[t], mm) }))
+        .filter(g => Math.abs(g.sf) > 0.01).sort((a, b) => b.sf - a.sf);
+    };
+    return { floor: f, ceiling: c, baseSf: baseSf, floorGroups: grp(k => k !== 'ceiling', 'floor'), ceilGroups: grp(k => k === 'ceiling', 'ceiling'), any: f !== 0 || c !== 0 || baseSf !== 0 };
   }
 
   // ----- menu de contexto (botão direito) das PÁGINAS -----
@@ -481,19 +488,22 @@
           c.addEventListener('click', () => { if (F.framing) F.framing.activeWT = t.id; if (F._syncWallTypeSelect) F._syncWallTypeSelect(); if (p.page !== S.page) selectPage(p.page, {}); else if (F._wsRedraw) F._wsRedraw(); });
           el.appendChild(c);
         });
-        // ÁREA levantada nesta folha (Piso verde / Teto azul, em SF) — clique abre a folha
-        [['floor', ar.floor, '#22c55e', F.tr('Piso')], ['ceiling', ar.ceiling, '#38bdf8', F.tr('Teto')]].forEach(arr => {
-          if (!arr[1]) return;
+        // ÁREA por ACABAMENTO (nome lido do projeto): Piso/Forro por tag + Base
+        const areaRow = (color, label, sub, sf) => {
           const c = document.createElement('div');
           c.setAttribute('data-pageno', p.page);
           c.className = 'pl-8 pr-2 py-1 flex items-center gap-2 text-sm cursor-pointer hover:bg-steel-700/60';
-          const sw = document.createElement('span'); sw.style.cssText = 'width:12px;height:12px;border-radius:3px;flex:0 0 auto;background:' + arr[2];
-          const nm = document.createElement('span'); nm.className = 'flex-1 truncate text-steel-200'; nm.textContent = arr[3];
-          const q = document.createElement('span'); q.className = 'text-steel-300 tabular-nums text-xs'; q.textContent = arr[1].toFixed(1) + ' SF';
+          const sw = document.createElement('span'); sw.style.cssText = 'width:12px;height:12px;border-radius:3px;flex:0 0 auto;background:' + color;
+          const nm = document.createElement('span'); nm.className = 'flex-1 truncate text-steel-200';
+          nm.textContent = label; if (sub) { const s2 = document.createElement('span'); s2.className = 'text-steel-400'; s2.textContent = ' · ' + sub; nm.appendChild(s2); }
+          const q = document.createElement('span'); q.className = 'text-steel-300 tabular-nums text-xs'; q.textContent = sf.toFixed(1) + ' SF';
           c.appendChild(sw); c.appendChild(nm); c.appendChild(q);
           c.addEventListener('click', () => { if (p.page !== S.page) selectPage(p.page, {}); });
           el.appendChild(c);
-        });
+        };
+        (ar.floorGroups || []).forEach(g => areaRow('#22c55e', F.tr('Piso') + (g.tag && g.tag !== '—' ? ' ' + g.tag : ''), g.material + (g.manufacturer ? ' (' + g.manufacturer + ')' : ''), g.sf));
+        if (ar.baseSf) areaRow('#a3e635', F.tr('Base'), '', ar.baseSf);
+        (ar.ceilGroups || []).forEach(g => areaRow('#38bdf8', F.tr('Teto') + (g.tag && g.tag !== '—' ? ' ' + g.tag : ''), g.material + (g.manufacturer ? ' (' + g.manufacturer + ')' : ''), g.sf));
       }
     });
     const btn = $('#wsDelPages');
