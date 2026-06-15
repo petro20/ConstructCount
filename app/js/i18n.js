@@ -1154,6 +1154,8 @@ window.ConstructCount = window.ConstructCount || {};
     'Tipo de material': { en: 'Material type', es: 'Tipo de material' },
     'Fabricante': { en: 'Manufacturer', es: 'Fabricante' },
     'Subtotal': { en: 'Subtotal', es: 'Subtotal' },
+    'tipo': { en: 'type', es: 'tipo' },
+    'fabricante': { en: 'manufacturer', es: 'fabricante' },
     'Nível/pavimento (lido do projeto)': { en: 'Level/floor (read from the project)', es: 'Nivel/piso (leído del proyecto)' },
     'Duplo-clique p/ ocultar/mostrar este acabamento': { en: 'Double-click to hide/show this finish', es: 'Doble clic para ocultar/mostrar este acabado' },
     'Ativar este acabamento': { en: 'Activate this finish', es: 'Activar este acabado' },

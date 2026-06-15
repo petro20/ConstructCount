@@ -52,6 +52,19 @@
 
   function tdNum(v) { return '<td class="num">' + v + '</td>'; }
 
+  // upsert do acabamento (tipo de material / fabricante) editado DIRETO na planilha do Takeoff
+  function upsertFinish(kind, code, field, value) {
+    var fk = (kind === 'ceiling') ? 'ceiling' : 'floor';
+    var fins = (F._scopeFinishes || []).slice();
+    var rec = null;
+    for (var i = 0; i < fins.length; i++) { var x = fins[i]; if (x.code === code && (x.kind === fk || (fk === 'floor' && (x.kind === 'floor' || x.kind === 'base')))) { rec = x; break; } }
+    if (!rec) { rec = { code: code, kind: fk, material: '', manufacturer: '', desc: '' }; fins.push(rec); }
+    rec[field] = value; if (field === 'material') rec.desc = value;
+    F._scopeFinishes = fins;
+    if (F._setFloorFinishes) F._setFloorFinishes(fins);
+    if (F._refreshAreaTagList) F._refreshAreaTagList();
+  }
+
   function titleCase(s) { return String(s || '').toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); }); }
 
   // renderiza Piso/Forro DENTRO do host (dock) — TODAS as folhas, agrupadas por folha (tema claro)
@@ -67,7 +80,10 @@
         if (r.unit === 'SF') { tot.qty += r.qty; st.qty += r.qty; }
         tot.mat += r.mat; tot.lab += r.lab; tot.cost += r.cost; tot.sale += r.sale;
         st.mat += r.mat; st.lab += r.lab; st.cost += r.cost; st.sale += r.sale;
-        rowsHtml += '<tr><td class="ftt-name">' + esc(r.item) + '</td><td>' + esc(r.material || '—') + '</td><td>' + esc(r.manufacturer || '—') + '</td>'
+        var fin = function (field, val, ph) { return '<td><input class="ftt-fin" data-code="' + esc(r.tag || '—') + '" data-kind="' + kind + '" data-field="' + field + '" value="' + esc(val || '') + '" placeholder="' + ph + '"></td>'; };
+        var matCell = r.base ? ('<td>' + esc(r.material || '—') + '</td>') : fin('material', r.material, tr('tipo'));
+        var manuCell = r.base ? '<td>—</td>' : fin('manufacturer', r.manufacturer, tr('fabricante'));
+        rowsHtml += '<tr><td class="ftt-name">' + esc(r.item) + '</td>' + matCell + manuCell
           + tdNum(fmtN(r.qty, 1)) + tdNum(r.unit) + tdNum(money(r.price))
           + '<td class="num ftt-mat">' + money(r.mat) + '</td><td class="num ftt-lab">' + money(r.lab) + '</td><td class="num ftt-tot">' + money(r.cost) + '</td><td class="num ftt-sale">' + money(r.sale) + '</td></tr>';
       });
@@ -85,6 +101,7 @@
       + '<div class="ftt-tablewrap"><table class="ftt-table"><thead><tr>' + headers.map(function (h, i) { return '<th' + (i >= 3 ? ' class="num"' : '') + '>' + h + '</th>'; }).join('') + '</tr></thead>'
       + '<tbody>' + body + '</tbody><tfoot>' + foot + '</tfoot></table></div>';
     host.querySelectorAll('[data-rate]').forEach(function (inp) { inp.addEventListener('change', function () { setRate(inp.getAttribute('data-rate'), inp.value); if (rerender) rerender(); }); });
+    host.querySelectorAll('.ftt-fin').forEach(function (inp) { inp.addEventListener('change', function () { upsertFinish(inp.getAttribute('data-kind'), inp.getAttribute('data-code'), inp.getAttribute('data-field'), (inp.value || '').trim()); if (rerender) rerender(); }); });
   };
 
   // totais da disciplina (folha atual) p/ o Resumo por pacote
