@@ -30,10 +30,14 @@
     floors: [], activeFloor: null,   // PISOS (cada um com altura) — o traço herda a altura do piso ativo
     scope: { framing: true, drywall: true, insulation: true, paint: true, floor: false, ceiling: false },   // ESCOPO da obra — definido ANTES do levantamento (piso/forro = pacotes próprios, por ÁREA, default off)
     floorRates: { floorMat: 0, floorLab: 0, ceilMat: 0, ceilLab: 0, baseMat: 0, baseLab: 0, waste: 0, tax: 0, markup: 0 },   // preços Piso/Forro/Rodapé ($/SF, $/LF) + imposto/ganho % — por projeto
+    finishes: [],   // acabamentos lidos da folha de medidas (código → tipo + fabricante)
   };
   var FLOOR_RATE_DEF = { floorMat: 0, floorLab: 0, ceilMat: 0, ceilLab: 0, baseMat: 0, baseLab: 0, waste: 0, tax: 0, markup: 0 };
   F._floorRates = function () { return FR.floorRates || (FR.floorRates = Object.assign({}, FLOOR_RATE_DEF)); };
   F._floorRateSet = function (k, v) { F._floorRates()[k] = num(v); persistFraming(); };
+  // acabamentos lidos da folha de medidas (código → tipo de material + fabricante) — persistido por projeto
+  F._floorFinishes = function () { return FR.finishes || (FR.finishes = []); };
+  F._setFloorFinishes = function (arr) { FR.finishes = Array.isArray(arr) ? arr : []; persistFraming(); };
   // escopo: a mesma parede gera quantidades p/ cada ofício LIGADO
   F.framingScope = function () { return FR.scope; };
   // o cliente tem direito a este ofício? (combo libera os 4) — NADA grátis: sem entitlement, trava
@@ -221,11 +225,12 @@
     if (d.scope) FR.scope = Object.assign({ framing: true, drywall: true, insulation: true, paint: true, floor: false, ceiling: false }, d.scope);
     if (d.layerAssembly) FR.layerAssembly = d.layerAssembly;
     if (d.floorRates) FR.floorRates = Object.assign({}, FLOOR_RATE_DEF, d.floorRates);
+    if (Array.isArray(d.finishes)) FR.finishes = d.finishes;
     if (Array.isArray(d.floors)) FR.floors = d.floors;
     FR.activeFloor = d.activeFloor || (FR.floors[0] && FR.floors[0].id) || null;
     FR.activeWT = d.activeWT || (FR.wallTypes[0] && FR.wallTypes[0].id) || null;
   };
-  F._framingSnapshot = function () { return { wallTypes: FR.wallTypes, prices: FR.prices, waste: FR.waste, labor: FR.labor, markup: FR.markup, taxMaterial: FR.taxMaterial, region: FR.region, sizes: FR.sizes, priceMeta: FR.priceMeta, scope: FR.scope, activeWT: FR.activeWT, layerAssembly: FR.layerAssembly, floors: FR.floors, activeFloor: FR.activeFloor, floorRates: FR.floorRates }; };
+  F._framingSnapshot = function () { return { wallTypes: FR.wallTypes, prices: FR.prices, waste: FR.waste, labor: FR.labor, markup: FR.markup, taxMaterial: FR.taxMaterial, region: FR.region, sizes: FR.sizes, priceMeta: FR.priceMeta, scope: FR.scope, activeWT: FR.activeWT, layerAssembly: FR.layerAssembly, floors: FR.floors, activeFloor: FR.activeFloor, floorRates: FR.floorRates, finishes: FR.finishes }; };
 
   // ---- PISOS (cada um com altura) ----
   function floorById(id) { for (var i = 0; i < FR.floors.length; i++) if (FR.floors[i].id === id) return FR.floors[i]; return null; }

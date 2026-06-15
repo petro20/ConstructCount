@@ -58,7 +58,7 @@
     renderPagesList();
     // carrega as ASSEMBLIES de framing salvas do projeto (não reler toda vez)
     (async () => {
-      try { if (S.prov && S.prov.getFraming) { const d = await S.prov.getFraming(); if (d && (d.wallTypes || d.floors || d.floorRates) && F._framingLoad) F._framingLoad(d); } } catch (e) {}
+      try { if (S.prov && S.prov.getFraming) { const d = await S.prov.getFraming(); if (d && (d.wallTypes || d.floors || d.floorRates || d.finishes) && F._framingLoad) F._framingLoad(d); if (F._floorFinishes) { const ff = F._floorFinishes(); if (ff && ff.length) { F._scopeFinishes = ff; if (F._refreshAreaTagList) F._refreshAreaTagList(); } } } } catch (e) {}
       populateWallTypeSelect(); populateFloorSelect(); populateScope(); renderPagesList();
       try { await ensureAllScopeLayers(); } catch (e) {}   // AUTOMÁTICO: 1 camada por ofício do escopo, sem o usuário criar
     })();
@@ -1627,7 +1627,9 @@
   F._wsPage = () => S.page;             // folha atual (p/ o takeoff de piso)
   F._wsAreaBaseLf = (ar) => areaBaseLf(ar);   // perímetro/base em LF de uma área
   F._wsAreaBaseH = () => (S.areaBaseH || 0);  // altura da base (pol)
-  F._wsFinishDesc = (kind, tag) => { const x = (F._scopeFinishes || []).find(y => y.kind === kind && y.code === tag); return x ? x.desc : ''; };
+  function finishRec(kind, tag) { const k2 = (kind === 'ceiling') ? 'ceiling' : null; return (F._scopeFinishes || []).find(y => y.code === tag && (k2 ? y.kind === 'ceiling' : (y.kind === 'floor' || y.kind === 'base'))) || (F._scopeFinishes || []).find(y => y.code === tag); }
+  F._wsFinishDesc = (kind, tag) => { const x = finishRec(kind, tag); return x ? (x.material || x.desc || '') : ''; };
+  F._wsFinishManu = (kind, tag) => { const x = finishRec(kind, tag); return x ? (x.manufacturer || '') : ''; };
   F._wsAllAreas = () => {                // áreas de TODAS as folhas (p/ o takeoff do projeto)
     const out = [];
     (S.pages || []).forEach(pg => {
@@ -2012,7 +2014,7 @@
     if ((on('floor') || on('ceiling')) && S.prov && S.prov.readFinishSchedule) {
       try {
         const r = await S.prov.readFinishSchedule(); const f = (r && r.finishes) || [];
-        F._scopeFinishes = f; refreshAreaTagList();
+        F._scopeFinishes = f; if (F._setFloorFinishes) F._setFloorFinishes(f); refreshAreaTagList();
         if (f.length) {
           const fl = f.filter(x => x.kind === 'floor'), cl = f.filter(x => x.kind === 'ceiling'), bs = f.filter(x => x.kind === 'base');
           if (on('floor') && fl.length) did.push(F.tr('piso ({n})', { n: fl.length }));
@@ -2030,7 +2032,7 @@
     // resumo do que a IA achou de piso/forro
     if (F._scopeFinishes.length && (on('floor') || on('ceiling'))) {
       const lines = F._scopeFinishes.filter(x => ((x.kind === 'floor' || x.kind === 'base') && on('floor')) || (x.kind === 'ceiling' && on('ceiling')))
-        .map(x => (x.kind === 'ceiling' ? '🟦 Forro' : x.kind === 'base' ? '📏 Base' : '🟩 Piso') + '  ' + x.code + ' — ' + x.desc);
+        .map(x => (x.kind === 'ceiling' ? '🟦 Forro' : x.kind === 'base' ? '📏 Base' : '🟩 Piso') + '  ' + x.code + ' — ' + (x.material || x.desc) + (x.manufacturer ? ('  [' + x.manufacturer + ']') : ''));
       if (lines.length) alert(F.tr('Acabamentos lidos da folha de medidas:') + '\n\n' + lines.join('\n'));
     }
   }

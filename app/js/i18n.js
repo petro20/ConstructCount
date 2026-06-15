@@ -1151,6 +1151,8 @@ window.ConstructCount = window.ConstructCount || {};
     'Pacotes atualizados': { en: 'Packages updated', es: 'Paquetes actualizados' },
     'Sobra': { en: 'Waste', es: 'Merma' },
     'ITEM': { en: 'ITEM', es: 'ÍTEM' },
+    'Tipo de material': { en: 'Material type', es: 'Tipo de material' },
+    'Fabricante': { en: 'Manufacturer', es: 'Fabricante' },
     'Meça áreas de Piso/Forro para gerar o relatório.': { en: 'Measure Floor/Ceiling areas to generate the report.', es: 'Mide áreas de Piso/Cielo para generar el informe.' },
     'Orçamento — Piso & Forro': { en: 'Quote — Floor & Ceiling', es: 'Presupuesto — Piso & Cielo' },
     'Resumo do takeoff — Piso & Forro': { en: 'Takeoff summary — Floor & Ceiling', es: 'Resumen del cómputo — Piso & Cielo' },

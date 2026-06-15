@@ -36,7 +36,7 @@
       var k = a.kind || 'floor';
       if (k !== kind || (page != null && a.page !== page)) return;
       var tag = a.tag || '—';
-      var g = by[tag] = by[tag] || { tag: tag, material: (F._wsFinishDesc ? F._wsFinishDesc(k, a.tag || '') : ''), sf: 0, baseLf: 0, _areas: [] };
+      var g = by[tag] = by[tag] || { tag: tag, material: (F._wsFinishDesc ? F._wsFinishDesc(k, a.tag || '') : ''), manufacturer: (F._wsFinishManu ? F._wsFinishManu(k, a.tag || '') : ''), sf: 0, baseLf: 0, _areas: [] };
       g._areas.push(a);
       if (!a.neg && k !== 'ceiling') g.baseLf += (F._wsAreaBaseLf ? F._wsAreaBaseLf(a) : 0);
     });
@@ -62,7 +62,7 @@
       var mr = floor ? rate('floorMat', 0) : rate('ceilMat', 0), lr = floor ? rate('floorLab', 0) : rate('ceilLab', 0);
       var mat = g.sf * mr * wasteMult(), lab = g.sf * lr, cost = lineCost(mat, lab), sale = lineSale(cost);
       tot.mat += mat; tot.lab += lab; tot.cost += cost; tot.sale += sale;
-      rows.push('<tr><td class="ftt-name"><b>' + (floor ? tr('Piso') : tr('Forro')) + '</b> ' + esc(g.tag) + '</td><td>' + esc(g.material || '—') + '</td>'
+      rows.push('<tr><td class="ftt-name"><b>' + (floor ? tr('Piso') : tr('Forro')) + '</b> ' + esc(g.tag) + '</td><td>' + esc(g.material || '—') + (g.manufacturer ? ' · <span style="color:#6c6960">' + esc(g.manufacturer) + '</span>' : '') + '</td>'
         + tdNum(fmtN(g.sf, 1)) + tdNum('SF') + tdNum(money(mr))
         + '<td class="num ftt-mat">' + money(mat) + '</td><td class="num ftt-lab">' + money(lab) + '</td><td class="num ftt-tot">' + money(cost) + '</td><td class="num ftt-sale">' + money(sale) + '</td></tr>');
       if (floor && g.baseLf > 0.01) {
@@ -117,10 +117,10 @@
       gs.forEach(function (g) {
         var mr = floor ? rate('floorMat', 0) : rate('ceilMat', 0), lr = floor ? rate('floorLab', 0) : rate('ceilLab', 0);
         var mat = g.sf * mr * wasteMult(), lab = g.sf * lr, cost = lineCost(mat, lab);
-        out.push({ item: (floor ? tr('Piso') : tr('Forro')) + ' ' + g.tag, tag: g.tag, material: g.material || '', qty: g.sf, unit: 'SF', price: mr, mat: mat, lab: lab, cost: cost, sale: lineSale(cost), base: false });
+        out.push({ item: (floor ? tr('Piso') : tr('Forro')) + ' ' + g.tag, tag: g.tag, material: g.material || '', manufacturer: g.manufacturer || '', qty: g.sf, unit: 'SF', price: mr, mat: mat, lab: lab, cost: cost, sale: lineSale(cost), base: false });
         if (floor && g.baseLf > 0.01) {
           var br = rate('baseMat', 0), bl = rate('baseLab', 0), bmat = g.baseLf * br * wasteMult(), blab = g.baseLf * bl, bc = lineCost(bmat, blab);
-          out.push({ item: tr('Rodapé (base)'), tag: g.tag, material: (baseH > 0 ? (baseH + '"') : ''), qty: g.baseLf, unit: 'LF', price: br, mat: bmat, lab: blab, cost: bc, sale: lineSale(bc), base: true });
+          out.push({ item: tr('Rodapé (base)'), tag: g.tag, material: (baseH > 0 ? (baseH + '"') : ''), manufacturer: '', qty: g.baseLf, unit: 'LF', price: br, mat: bmat, lab: blab, cost: bc, sale: lineSale(bc), base: true });
         }
       });
       return out;
