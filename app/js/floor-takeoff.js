@@ -80,7 +80,7 @@
         if (r.unit === 'SF') { tot.qty += r.qty; st.qty += r.qty; }
         tot.mat += r.mat; tot.lab += r.lab; tot.cost += r.cost; tot.sale += r.sale;
         st.mat += r.mat; st.lab += r.lab; st.cost += r.cost; st.sale += r.sale;
-        var fin = function (field, val, ph) { return '<td><input class="ftt-fin" data-code="' + esc(r.tag || '—') + '" data-kind="' + kind + '" data-field="' + field + '" value="' + esc(val || '') + '" placeholder="' + ph + '"></td>'; };
+        var fin = function (field, val, ph) { return '<td><input class="ftt-fin" data-code="' + esc(r.code || '') + '" data-kind="' + kind + '" data-field="' + field + '" value="' + esc(val || '') + '" placeholder="' + ph + '"></td>'; };
         var matCell = r.base ? ('<td>' + esc(r.material || '—') + '</td>') : fin('material', r.material, tr('tipo'));
         var manuCell = r.base ? '<td>—</td>' : fin('manufacturer', r.manufacturer, tr('fabricante'));
         rowsHtml += '<tr><td class="ftt-name">' + esc(r.item) + '</td>' + matCell + manuCell
@@ -149,7 +149,7 @@
     (areas || []).forEach(function (a) {
       var k = a.kind || 'floor'; if (k !== kind) return;
       var tag = a.tag || '—';
-      var g = by[tag] = by[tag] || { tag: tag, material: (F._wsFinishDesc ? F._wsFinishDesc(k, a.tag || '') : ''), manufacturer: (F._wsFinishManu ? F._wsFinishManu(k, a.tag || '') : ''), sf: 0, baseLf: 0, _a: [] };
+      var g = by[tag] = by[tag] || { tag: tag, code: (a.tag || ''), material: (F._wsFinishDesc ? F._wsFinishDesc(k, a.tag || '') : ''), manufacturer: (F._wsFinishManu ? F._wsFinishManu(k, a.tag || '') : ''), sf: 0, baseLf: 0, _a: [] };
       g._a.push(a);
       if (!a.neg && k !== 'ceiling') g.baseLf += (F._wsAreaBaseLfAt ? F._wsAreaBaseLfAt(a, MM) : 0);
     });
@@ -160,7 +160,7 @@
     gs.forEach(function (g) {
       var mr = floor ? rate('floorMat', 0) : rate('ceilMat', 0), lr = floor ? rate('floorLab', 0) : rate('ceilLab', 0);
       var mat = g.sf * mr * wasteMult(), lab = g.sf * lr, cost = lineCost(mat, lab);
-      out.push({ item: (floor ? tr('Piso') : tr('Forro')) + (g.tag && g.tag !== '—' ? ' ' + g.tag : '') + lvl, tag: g.tag, material: g.material || '', manufacturer: g.manufacturer || '', qty: g.sf, unit: 'SF', price: mr, mat: mat, lab: lab, cost: cost, sale: lineSale(cost), base: false });
+      out.push({ item: (floor ? tr('Piso') : tr('Forro')) + (g.tag && g.tag !== '—' ? ' ' + g.tag : '') + lvl, tag: g.tag, code: g.code || '', material: g.material || '', manufacturer: g.manufacturer || '', qty: g.sf, unit: 'SF', price: mr, mat: mat, lab: lab, cost: cost, sale: lineSale(cost), base: false });
       if (floor && g.baseLf > 0.01) {
         var bsf = g.baseLf * (baseH / 12);   // área do rodapé em SF (perímetro × altura)
         var br = rate('baseMat', 0), bmat = bsf * br * wasteMult(), blab = bsf * rate('baseLab', 0), bc = lineCost(bmat, blab);
