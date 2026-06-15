@@ -1406,11 +1406,9 @@
   }
   // junta um grupo de polígonos: se todos forem retângulos → UNIÃO (1 formato); senão concatena
   function buildAreaGroup(polysList) {
-    if (polysList.length && polysList.every(polyIsRect)) {
-      const u = rectUnion(polysList.map(polyToRect));
-      if (u && u.polys.length) return { parts: u.polys, sf: pxToSf(u.areaPx) };
-    }
-    return { parts: polysList, sf: polysList.reduce((s, p) => s + polySf(p), 0) };
+    // UNIÃO = 1 marcação só com as PARTES REAIS (cada polígono como está); SF = SOMA das partes.
+    // NÃO vira retângulo: o desenho usa fill('evenodd') por parte, então os vãos continuam vazados.
+    return { parts: polysList.slice(), sf: polysList.reduce((s, p) => s + polySf(p), 0) };
   }
   // tipo de área: 'floor' (Piso, verde) | 'ceiling' (Teto/Forro, azul)
   function kindColor(k) { return k === 'ceiling' ? '#38bdf8' : '#22c55e'; }
