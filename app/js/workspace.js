@@ -1432,32 +1432,36 @@
     }
     return inside;
   }
-  // UNIÃO por AMOSTRAGEM (qualquer polígono, mesmo inclinado): célula conta se está num POSITIVO e não num NEGATIVO
-  function sampleUnionSf(posPolys, negPolys) {
+  // dentro de uma ÁREA (even-odd entre as partes → BURACOS vazados, ex.: corredor com boxes)
+  function pointInAreaImg(x, y, ar) {
+    let inside = false;
+    areaPolys(ar).forEach(poly => { if (poly.length >= 3 && pointInPolyImg(x, y, poly)) inside = !inside; });
+    return inside;
+  }
+  // UNIÃO por AMOSTRAGEM sobre ÁREAS: célula conta se está num POSITIVO (even-odd) e não num NEGATIVO
+  function sampleUnionAreasSf(posAreas, negAreas) {
     let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
-    posPolys.forEach(p => p.forEach(pt => { x0 = Math.min(x0, pt[0]); y0 = Math.min(y0, pt[1]); x1 = Math.max(x1, pt[0]); y1 = Math.max(y1, pt[1]); }));
+    posAreas.forEach(a => areaPolys(a).forEach(p => p.forEach(pt => { x0 = Math.min(x0, pt[0]); y0 = Math.min(y0, pt[1]); x1 = Math.max(x1, pt[0]); y1 = Math.max(y1, pt[1]); })));
     if (!(x1 > x0 && y1 > y0)) return 0;
-    const N = 320, step = Math.max(x1 - x0, y1 - y0) / N, cell = step * step;
+    const N = 360, step = Math.max(x1 - x0, y1 - y0) / N, cell = step * step;
     let areaPx = 0;
     for (let y = y0 + step / 2; y < y1; y += step)
       for (let x = x0 + step / 2; x < x1; x += step) {
-        if (!posPolys.some(p => pointInPolyImg(x, y, p))) continue;
-        if (negPolys.some(p => pointInPolyImg(x, y, p))) continue;
+        if (!posAreas.some(a => pointInAreaImg(x, y, a))) continue;
+        if (negAreas.some(a => pointInAreaImg(x, y, a))) continue;
         areaPx += cell;
       }
     return pxToSf(areaPx);
   }
-  // SF líquido de um conjunto de áreas: UNIÃO (sobreposição 1×) menos negativos.
+  // SF líquido de um conjunto de áreas: UNIÃO (sobreposição 1×, buracos vazados) menos negativos.
   function areasNetSf(areas) {
-    const pos = [], neg = []; let allRect = true;
-    (areas || []).forEach(a => areaPolys(a).forEach(poly => {
-      if (poly.length < 3) return;
-      if (!polyIsRect(poly)) allRect = false;
-      (a.neg ? neg : pos).push(poly);
-    }));
+    const pos = (areas || []).filter(a => !a.neg && areaPolys(a).length);
+    const neg = (areas || []).filter(a => a.neg && areaPolys(a).length);
     if (!pos.length) return 0;
-    if (allRect) return unionCellsSf(pos.map(polyToRect), neg.map(polyToRect));   // retângulos alinhados → grade exata
-    return sampleUnionSf(pos, neg);                                                // qualquer polígono → amostragem
+    // caminho rápido: TODAS as áreas são 1 retângulo alinhado → grade exata
+    const oneRect = a => { const ps = areaPolys(a); return ps.length === 1 && polyIsRect(ps[0]); };
+    if ((areas || []).every(oneRect)) return unionCellsSf(pos.map(a => polyToRect(areaPolys(a)[0])), neg.map(a => polyToRect(areaPolys(a)[0])));
+    return sampleUnionAreasSf(pos, neg);   // qualquer caso (inclui mescladas com buracos) → amostragem even-odd
   }
   F._wsAreasNetSf = areasNetSf;
   function buildAreaGroup(polysList) {
