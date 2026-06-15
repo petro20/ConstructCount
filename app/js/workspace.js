@@ -1669,6 +1669,33 @@
     else { if (!hp.ar.sfLock) hp.ar.sf = areaSf(hp.ar); markSaved(F.tr('Ponto removido')); }
     saveAreas(); updateAreaTot(); renderPagesList(); draw();
   }
+  // aresta de área mais próxima do cursor (p/ INSERIR vértice no duplo-clique) — retorna ponto projetado em coords de imagem
+  function nearestAreaEdge(sx, sy) {
+    const tol = 8; let best = null;
+    for (const ar of (S.areas || [])) {
+      if (ar.page !== S.page) continue;
+      for (const poly of areaPolys(ar)) {
+        for (let i = 0; i < poly.length; i++) {
+          const a = poly[i], b = poly[(i + 1) % poly.length];
+          const ax = a[0] * S.scale + S.ox, ay = a[1] * S.scale + S.oy, bx = b[0] * S.scale + S.ox, by = b[1] * S.scale + S.oy;
+          const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy;
+          let t = L2 ? ((sx - ax) * dx + (sy - ay) * dy) / L2 : 0; t = Math.max(0, Math.min(1, t));
+          const cx = ax + t * dx, cy = ay + t * dy, d = Math.hypot(sx - cx, sy - cy);
+          if (d <= tol && (!best || d < best.d)) best = { ar: ar, poly: poly, i: i, pt: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t], d: d };
+        }
+      }
+    }
+    return best;
+  }
+  // insere o vértice retornado por nearestAreaEdge
+  function insertAreaPoint(ed) {
+    pushUndo();
+    ed.poly.splice(ed.i + 1, 0, ed.pt);
+    if (!ed.ar.sfLock) ed.ar.sf = areaSf(ed.ar);
+    if (S.areaSel) { S.areaSel.clear(); S.areaSel.add(ed.ar); }   // seleciona p/ mostrar as alças (arrastar o novo ponto)
+    saveAreas(); updateAreaTot(); renderPagesList(); draw();
+    markSaved(F.tr('Ponto adicionado'));
+  }
   function selSet() { if (!S.selSet) S.selSet = new Set(); return S.selSet; }
   function selMarks() { if (!S.selMarks) S.selMarks = new Set(); return S.selMarks; }
   function clearSel() { selSet().clear(); selMarks().clear(); }
@@ -2566,6 +2593,7 @@
     cv.addEventListener('dblclick', (e) => {
       if (S.areaMode) { e.preventDefault(); finishArea(); return; }   // duplo-clique fecha a Área
       if (S.lineMode) { e.preventDefault(); finishLine(); return; }   // duplo-clique finaliza o Linear
+      { const ed = nearestAreaEdge(e.offsetX, e.offsetY); if (ed) { e.preventDefault(); insertAreaPoint(ed); return; } }   // duplo-clique na ARESTA = adiciona vértice
       if (S.legend && S.legendRect) {                 // duplo-clique na legenda = volta ao canto automático
         const r = S.legendRect;
         if (e.offsetX >= r.x && e.offsetX <= r.x + r.w && e.offsetY >= r.y && e.offsetY <= r.y + r.h) {

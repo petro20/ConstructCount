@@ -1176,6 +1176,7 @@ window.ConstructCount = window.ConstructCount || {};
     'Meça áreas de {k} (ferramenta ▱ Área) para aparecer aqui.': { en: 'Measure {k} areas (▱ Area tool) to show here.', es: 'Mide áreas de {k} (herramienta ▱ Área) para que aparezcan aquí.' },
     'janelas/portas ({n})': { en: 'windows/doors ({n})', es: 'ventanas/puertas ({n})' },
     'Ponto removido': { en: 'Point removed', es: 'Punto eliminado' },
+    'Ponto adicionado': { en: 'Point added', es: 'Punto añadido' },
     'Piso': { en: 'Floor', es: 'Piso' },
     'Teto': { en: 'Ceiling', es: 'Techo' },
     'Teto / Forro': { en: 'Ceiling', es: 'Techo / Cielo' },
