@@ -608,9 +608,49 @@
     renderItems();
     markSaved(F.tr('Resumo: {c} atualizado', { c: code }));
   }
+  // Resumo por PACOTE: 1 quadro (card) por disciplina + total geral
+  function renderSummaryCards() {
+    const wrap = document.querySelector('#wsSummaryCards'); if (!wrap) return;
+    const tr = (s, v) => (F.tr ? F.tr(s, v) : s);
+    const has = F.hasPackage;
+    const fmt = (n) => '$ ' + (Number(n) || 0).toFixed(2);
+    const cards = []; let gCost = 0, gSale = 0, anyMoney = false;
+    if (!has || has('wall')) {
+      const d = F.framingReportData ? F.framingReportData() : null, T = d && d.totals;
+      if (T) { gCost += T.cost; gSale += T.sale; anyMoney = true; }
+      cards.push({ disc: 'wall', ico: '🧱', name: tr('Parede'), metric: T ? (T.lf.toFixed(0) + ' LF · ' + T.sf.toFixed(0) + ' SF') : tr('sem traços'), cost: T ? T.cost : 0, sale: T ? T.sale : 0, money: !!T });
+    }
+    if (!has || has('floor')) {
+      const t = F.areaTakeoffTotals ? F.areaTakeoffTotals('floor') : null;
+      if (t) { gCost += t.cost; gSale += t.sale; if (t.sf > 0) anyMoney = true; }
+      cards.push({ disc: 'floor', ico: '🟩', name: tr('Piso'), metric: (t ? t.sf.toFixed(0) : '0') + ' SF' + (t && t.baseLf ? (' · ' + t.baseLf.toFixed(0) + ' LF ' + tr('base')) : ''), cost: t ? t.cost : 0, sale: t ? t.sale : 0, money: !!(t && t.sf > 0) });
+    }
+    if (!has || has('ceiling')) {
+      const t = F.areaTakeoffTotals ? F.areaTakeoffTotals('ceiling') : null;
+      if (t) { gCost += t.cost; gSale += t.sale; if (t.sf > 0) anyMoney = true; }
+      cards.push({ disc: 'ceiling', ico: '🟦', name: tr('Forro'), metric: (t ? t.sf.toFixed(0) : '0') + ' SF', cost: t ? t.cost : 0, sale: t ? t.sale : 0, money: !!(t && t.sf > 0) });
+    }
+    if (!has || has('windows_doors')) {
+      const counts = {}; (S.marks || []).forEach(m => { if (m.confirmed) { const k = m.label || ''; counts[k] = (counts[k] || 0) + 1; } });
+      const meta = (S.pages || []).find(p => p.page === S.page) || {}; const pmult = +meta.mult || 1;
+      let tot = 0; Object.keys(counts).forEach(k => { const r = (S.sched || {})[k] || {}; const tw = r.type === 'Twin Window' ? 2 : 1; tot += counts[k] * pmult * tw; });
+      cards.push({ disc: 'windows', ico: '🪟', name: tr('Janelas e Portas'), metric: tot + ' ' + tr('marcas'), money: false });
+    }
+    let html = cards.map(c => {
+      const m = c.money
+        ? ('<div class="sum-card-money"><span>' + tr('Custo') + ' ' + fmt(c.cost) + '</span><span class="sum-card-sale">' + tr('Venda') + ' ' + fmt(c.sale) + '</span></div>')
+        : '<div class="sum-card-money sum-card-dim">—</div>';
+      return '<button class="sum-card" data-disc="' + c.disc + '" title="' + tr('Abrir no Takeoff') + '"><div class="sum-card-h">' + c.ico + ' <b>' + c.name + '</b></div><div class="sum-card-metric">' + c.metric + '</div>' + m + '</button>';
+    }).join('');
+    if (anyMoney) html += '<div class="sum-card sum-card-total"><div class="sum-card-h">Σ <b>' + tr('Total geral') + '</b></div><div class="sum-card-metric">' + tr('Custo') + ' ' + fmt(gCost) + '</div><div class="sum-card-money"><span class="sum-card-sale">' + tr('Venda') + ' ' + fmt(gSale) + '</span></div></div>';
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('.sum-card[data-disc]').forEach(b => b.addEventListener('click', () => { const d = b.getAttribute('data-disc'); if (F.openTakeoff) F.openTakeoff(d); }));
+  }
+
   function renderSummary() {
     const panel = document.querySelector('#wsSummary');
     if (!panel || panel.classList.contains('hidden')) return;
+    renderSummaryCards();
     const body = document.querySelector('#wsSummaryBody'); if (!body) return;
     if (!body._wired) {
       body._wired = true;

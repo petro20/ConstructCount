@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -27,7 +27,7 @@
               400: '#d9a02a', 500: '#c4881a', 600: '#a06b12', 700: '#7c5210',
               800: '#573a0d', 900: '#3a2708'
             },
-            /* sobrescreve os acentos antigos → dourado (recolore o app inteiro) */
+            /* sobrescreve os acentos antigos â†’ dourado (recolore o app inteiro) */
             emerald: {
               50: '#fbf4e2', 100: '#f6e7bf', 200: '#eccd84', 300: '#e3b653',
               400: '#d9a02a', 500: '#c4881a', 600: '#a06b12', 700: '#7c5210',
@@ -45,18 +45,18 @@
     }
   </script>
 
-  <!-- jsPDF + autoTable (geração de PDF do orçamento) -->
+  <!-- jsPDF + autoTable (geraÃ§Ã£o de PDF do orÃ§amento) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <!-- SheetJS (geração de Excel .xlsx do pedido ao fornecedor) -->
+  <!-- SheetJS (geraÃ§Ã£o de Excel .xlsx do pedido ao fornecedor) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <!-- pdf-lib (sobreposição das marcas + legenda sobre o PDF da planta) -->
+  <!-- pdf-lib (sobreposiÃ§Ã£o das marcas + legenda sobre o PDF da planta) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
   <!-- pdf.js (renderiza a planta no canvas do pacote Framing) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 
-  <link rel="stylesheet" href="css/styles.css?v=135" />
+  <link rel="stylesheet" href="css/styles.css?v=136" />
 </head>
 
 <body class="bg-steel-50 text-steel-900 font-sans min-h-screen">
@@ -68,7 +68,7 @@
            class="w-12 h-12 object-contain drop-shadow" />
       <div>
         <h1 class="text-2xl font-bold tracking-tight">ConstructCount</h1>
-        <p class="text-steel-100 text-sm">Extração inteligente de esquadrias &middot; Orçamento &amp; Pedido em segundos</p>
+        <p class="text-steel-100 text-sm">ExtraÃ§Ã£o inteligente de esquadrias &middot; OrÃ§amento &amp; Pedido em segundos</p>
       </div>
       <a id="brandBadge" href="https://m2pb.com" target="_blank" rel="noopener noreferrer"
          class="ml-auto text-xs font-semibold tracking-wide px-3 py-1 rounded-full bg-white/10 ring-1 ring-white/20 hover:bg-white/20 transition"
@@ -76,254 +76,254 @@
     </div>
   </header>
 
-  <!-- ===== RIBBON (faixa estilo PlanSwift) — abas + grupos de botões ===== -->
+  <!-- ===== RIBBON (faixa estilo PlanSwift) â€” abas + grupos de botÃµes ===== -->
   <nav id="menubar" class="hidden relative z-30">
     <div class="ribbon max-w-7xl mx-auto">
       <!-- abas -->
       <div class="rb-tabs">
         <button class="rb-brand rb-tab" data-tab="rbAbout" title="O que o ConstructCount faz">ConstructCount</button>
-        <button class="rb-tab active" data-tab="rbHome">Início</button>
+        <button class="rb-tab active" data-tab="rbHome">InÃ­cio</button>
         <button class="rb-tab" data-tab="rbPkg">Pacote</button>
-        <button class="rb-tab" data-tab="rbReports">Relatórios</button>
-        <button class="rb-tab" data-tab="rbCfg">Configurações</button>
+        <button class="rb-tab" data-tab="rbReports">RelatÃ³rios</button>
+        <button class="rb-tab" data-tab="rbCfg">ConfiguraÃ§Ãµes</button>
         <button class="rb-tab" data-tab="rbHelp">Ajuda</button>
         <span id="menuProjName" class="ml-auto self-center text-steel-400 text-xs pr-3"></span>
       </div>
 
-      <!-- painéis -->
+      <!-- painÃ©is -->
       <div class="rb-body">
         <!-- ConstructCount: o que o app faz -->
         <div id="rbAbout" class="rb-panel hidden">
           <div class="cc-wrap">
 
-            <!-- HERÓI -->
+            <!-- HERÃ“I -->
             <section class="cc-hero cc-reveal">
-              <span class="cc-eyebrow">📐 Takeoff de esquadrias por IA</span>
-              <h1 class="cc-title">Da planta ao <span class="grad">orçamento</span><br>em minutos, não horas</h1>
-              <p class="cc-sub">O ConstructCount lê o PDF do projeto, conta e dimensiona janelas e portas automaticamente e entrega os documentos prontos — com a sua marca.</p>
+              <span class="cc-eyebrow">ðŸ“ Takeoff de esquadrias por IA</span>
+              <h1 class="cc-title">Da planta ao <span class="grad">orÃ§amento</span><br>em minutos, nÃ£o horas</h1>
+              <p class="cc-sub">O ConstructCount lÃª o PDF do projeto, conta e dimensiona janelas e portas automaticamente e entrega os documentos prontos â€” com a sua marca.</p>
               <div class="cc-cta">
-                <button id="ccStart" class="cc-btn cc-btn-primary"><span>📂</span><span>Novo projeto (PDF)</span></button>
-                <button id="ccHelp" class="cc-btn cc-btn-ghost"><span>▶</span><span>Como funciona</span></button>
+                <button id="ccStart" class="cc-btn cc-btn-primary"><span>ðŸ“‚</span><span>Novo projeto (PDF)</span></button>
+                <button id="ccHelp" class="cc-btn cc-btn-ghost"><span>â–¶</span><span>Como funciona</span></button>
               </div>
             </section>
 
             <!-- DESTAQUES -->
             <div class="cc-stats">
-              <div class="cc-stat cc-reveal" style="animation-delay:.05s"><div class="ico">⚡</div><div class="big">Minutos</div><div class="lbl">não horas</div></div>
-              <div class="cc-stat cc-reveal" style="animation-delay:.1s"><div class="ico">🎯</div><div class="big">Direto do schedule</div><div class="lbl">sem digitar tabela</div></div>
-              <div class="cc-stat cc-reveal" style="animation-delay:.15s"><div class="ico">🪟</div><div class="big">Twin ×2</div><div class="lbl">geminada conta dobro</div></div>
-              <div class="cc-stat cc-reveal" style="animation-delay:.2s"><div class="ico">🌐</div><div class="big">PT · EN · ES</div><div class="lbl">app e documentos</div></div>
+              <div class="cc-stat cc-reveal" style="animation-delay:.05s"><div class="ico">âš¡</div><div class="big">Minutos</div><div class="lbl">nÃ£o horas</div></div>
+              <div class="cc-stat cc-reveal" style="animation-delay:.1s"><div class="ico">ðŸŽ¯</div><div class="big">Direto do schedule</div><div class="lbl">sem digitar tabela</div></div>
+              <div class="cc-stat cc-reveal" style="animation-delay:.15s"><div class="ico">ðŸªŸ</div><div class="big">Twin Ã—2</div><div class="lbl">geminada conta dobro</div></div>
+              <div class="cc-stat cc-reveal" style="animation-delay:.2s"><div class="ico">ðŸŒ</div><div class="big">PT Â· EN Â· ES</div><div class="lbl">app e documentos</div></div>
             </div>
 
             <!-- RECURSOS -->
             <h2 class="cc-h2">Tudo que ele faz</h2>
-            <p class="cc-lead">Do reconhecimento na planta até o documento final — num fluxo só.</p>
+            <p class="cc-lead">Do reconhecimento na planta atÃ© o documento final â€” num fluxo sÃ³.</p>
             <div class="cc-grid">
-              <div class="cc-card cc-reveal" style="--cc-accent:#6366f1;animation-delay:.04s"><div class="cc-ico" style="background:linear-gradient(135deg,#818cf8,#4338ca)">🤖</div><h3>Leitura por IA</h3><p>Lê o PDF do projeto e extrai janelas e portas automaticamente.</p></div>
-              <div class="cc-card cc-reveal" style="--cc-accent:#d9a02a;animation-delay:.08s"><div class="cc-ico" style="background:linear-gradient(135deg,#f5d27a,#a06b12)">📐</div><h3>Takeoff automático</h3><p>Conta e dimensiona por tipo, usando o schedule do projeto.</p></div>
-              <div class="cc-card cc-reveal" style="--cc-accent:#14b8a6;animation-delay:.12s"><div class="cc-ico" style="background:linear-gradient(135deg,#2dd4bf,#0f766e)">🪟</div><h3>Tipos + Twin</h3><p>Casement, de correr, fixa e Twin (geminada que conta ×2).</p></div>
-              <div class="cc-card cc-reveal" style="--cc-accent:#3b82f6;animation-delay:.16s"><div class="cc-ico" style="background:linear-gradient(135deg,#60a5fa,#1d4ed8)">🏢</div><h3>Pavimentos×</h3><p>Multiplica a contagem pelo número de andares iguais.</p></div>
-              <div class="cc-card cc-reveal" style="--cc-accent:#8b5cf6;animation-delay:.2s"><div class="cc-ico" style="background:linear-gradient(135deg,#a78bfa,#6d28d9)">🔀</div><h3>Split de folhas</h3><p>Duas folhas lado a lado pra comparar (planta × schedule).</p></div>
-              <div class="cc-card cc-reveal" style="--cc-accent:#10b981;animation-delay:.24s"><div class="cc-ico" style="background:linear-gradient(135deg,#34d399,#047857)">📊</div><h3>Resumo editável</h3><p>Corrige o tipo e a medida direto na tabela do rodapé.</p></div>
-              <div class="cc-card cc-reveal" style="--cc-accent:#f43f5e;animation-delay:.28s"><div class="cc-ico" style="background:linear-gradient(135deg,#fb7185,#be123c)">📄</div><h3>Relatórios prontos</h3><p>Orçamento, Pedido (Excel), Proposta e Planta Marcada.</p></div>
-              <div class="cc-card cc-reveal" style="--cc-accent:#fb923c;animation-delay:.32s"><div class="cc-ico" style="background:linear-gradient(135deg,#fdba74,#c2410c)">🗺️</div><h3>Planta marcada</h3><p>PDF com as marcas coloridas + legenda em cada folha.</p></div>
-              <div class="cc-card cc-reveal" style="--cc-accent:#06b6d4;animation-delay:.36s"><div class="cc-ico" style="background:linear-gradient(135deg,#22d3ee,#0e7490)">🌐</div><h3>PT · EN · ES</h3><p>Interface e documentos em três idiomas.</p></div>
+              <div class="cc-card cc-reveal" style="--cc-accent:#6366f1;animation-delay:.04s"><div class="cc-ico" style="background:linear-gradient(135deg,#818cf8,#4338ca)">ðŸ¤–</div><h3>Leitura por IA</h3><p>LÃª o PDF do projeto e extrai janelas e portas automaticamente.</p></div>
+              <div class="cc-card cc-reveal" style="--cc-accent:#d9a02a;animation-delay:.08s"><div class="cc-ico" style="background:linear-gradient(135deg,#f5d27a,#a06b12)">ðŸ“</div><h3>Takeoff automÃ¡tico</h3><p>Conta e dimensiona por tipo, usando o schedule do projeto.</p></div>
+              <div class="cc-card cc-reveal" style="--cc-accent:#14b8a6;animation-delay:.12s"><div class="cc-ico" style="background:linear-gradient(135deg,#2dd4bf,#0f766e)">ðŸªŸ</div><h3>Tipos + Twin</h3><p>Casement, de correr, fixa e Twin (geminada que conta Ã—2).</p></div>
+              <div class="cc-card cc-reveal" style="--cc-accent:#3b82f6;animation-delay:.16s"><div class="cc-ico" style="background:linear-gradient(135deg,#60a5fa,#1d4ed8)">ðŸ¢</div><h3>PavimentosÃ—</h3><p>Multiplica a contagem pelo nÃºmero de andares iguais.</p></div>
+              <div class="cc-card cc-reveal" style="--cc-accent:#8b5cf6;animation-delay:.2s"><div class="cc-ico" style="background:linear-gradient(135deg,#a78bfa,#6d28d9)">ðŸ”€</div><h3>Split de folhas</h3><p>Duas folhas lado a lado pra comparar (planta Ã— schedule).</p></div>
+              <div class="cc-card cc-reveal" style="--cc-accent:#10b981;animation-delay:.24s"><div class="cc-ico" style="background:linear-gradient(135deg,#34d399,#047857)">ðŸ“Š</div><h3>Resumo editÃ¡vel</h3><p>Corrige o tipo e a medida direto na tabela do rodapÃ©.</p></div>
+              <div class="cc-card cc-reveal" style="--cc-accent:#f43f5e;animation-delay:.28s"><div class="cc-ico" style="background:linear-gradient(135deg,#fb7185,#be123c)">ðŸ“„</div><h3>RelatÃ³rios prontos</h3><p>OrÃ§amento, Pedido (Excel), Proposta e Planta Marcada.</p></div>
+              <div class="cc-card cc-reveal" style="--cc-accent:#fb923c;animation-delay:.32s"><div class="cc-ico" style="background:linear-gradient(135deg,#fdba74,#c2410c)">ðŸ—ºï¸</div><h3>Planta marcada</h3><p>PDF com as marcas coloridas + legenda em cada folha.</p></div>
+              <div class="cc-card cc-reveal" style="--cc-accent:#06b6d4;animation-delay:.36s"><div class="cc-ico" style="background:linear-gradient(135deg,#22d3ee,#0e7490)">ðŸŒ</div><h3>PT Â· EN Â· ES</h3><p>Interface e documentos em trÃªs idiomas.</p></div>
             </div>
 
             <!-- FLUXO -->
             <h2 class="cc-h2">Em 3 passos</h2>
-            <p class="cc-lead">Simples assim, do arquivo ao orçamento.</p>
+            <p class="cc-lead">Simples assim, do arquivo ao orÃ§amento.</p>
             <div class="cc-flow">
-              <div class="cc-step cc-reveal" style="animation-delay:.05s"><div class="n">1</div><h4>Abra o PDF</h4><p>Envie a planta. A IA lê as folhas e o schedule de esquadrias.</p></div>
+              <div class="cc-step cc-reveal" style="animation-delay:.05s"><div class="n">1</div><h4>Abra o PDF</h4><p>Envie a planta. A IA lÃª as folhas e o schedule de esquadrias.</p></div>
               <div class="cc-step cc-reveal" style="animation-delay:.1s"><div class="n">2</div><h4>Confira e ajuste</h4><p>Veja as marcas na planta e corrija tipos e medidas no Resumo.</p></div>
-              <div class="cc-step cc-reveal" style="animation-delay:.15s"><div class="n">3</div><h4>Gere os documentos</h4><p>Orçamento, Pedido, Proposta e Planta Marcada — com a sua marca.</p></div>
+              <div class="cc-step cc-reveal" style="animation-delay:.15s"><div class="n">3</div><h4>Gere os documentos</h4><p>OrÃ§amento, Pedido, Proposta e Planta Marcada â€” com a sua marca.</p></div>
             </div>
 
             <!-- CTA FINAL -->
             <section class="cc-final cc-reveal">
-              <h3>Pronto pra levantar a próxima obra?</h3>
+              <h3>Pronto pra levantar a prÃ³xima obra?</h3>
               <p>Abra uma planta e veja o takeoff aparecer na hora.</p>
-              <button id="ccStart2" class="cc-btn cc-btn-primary"><span>📂</span><span>Começar agora</span></button>
+              <button id="ccStart2" class="cc-btn cc-btn-primary"><span>ðŸ“‚</span><span>ComeÃ§ar agora</span></button>
             </section>
 
           </div>
         </div>
-        <!-- Início (inclui o que era a aba Documentos: Cliente, Fornecedor, Plantas) -->
+        <!-- InÃ­cio (inclui o que era a aba Documentos: Cliente, Fornecedor, Plantas) -->
         <div id="rbHome" class="rb-panel">
           <div class="rb-group">
             <div class="rb-row">
-              <button id="miOpen"   class="rb-btn"><span class="ico">📂</span><span>Novo projeto</span></button>
-              <button id="miJobs"   class="rb-btn"><span class="ico">🗂️</span><span>Projetos salvos</span></button>
-              <button id="miImport" class="rb-btn"><span class="ico">📥</span><span>Importar Takeoff</span></button>
-              <button id="miBoard"  class="rb-btn"><span class="ico">📋</span><span>Mural de projetos</span></button>
+              <button id="miOpen"   class="rb-btn"><span class="ico">ðŸ“‚</span><span>Novo projeto</span></button>
+              <button id="miJobs"   class="rb-btn"><span class="ico">ðŸ—‚ï¸</span><span>Projetos salvos</span></button>
+              <button id="miImport" class="rb-btn"><span class="ico">ðŸ“¥</span><span>Importar Takeoff</span></button>
+              <button id="miBoard"  class="rb-btn"><span class="ico">ðŸ“‹</span><span>Mural de projetos</span></button>
             </div>
             <div class="rb-label">Projeto</div>
           </div>
           <div class="rb-group">
             <div class="rb-row">
-              <button id="miReportsHub" class="rb-btn"><span class="ico">📄</span><span>Central de relatórios</span></button>
+              <button id="miReportsHub" class="rb-btn"><span class="ico">ðŸ“„</span><span>Central de relatÃ³rios</span></button>
             </div>
             <div class="rb-label">Documentos</div>
           </div>
           <div class="rb-group">
             <div class="rb-row">
-              <button id="miLicense" class="rb-btn"><span class="ico">🔒</span><span>Licença</span></button>
+              <button id="miLicense" class="rb-btn"><span class="ico">ðŸ”’</span><span>LicenÃ§a</span></button>
             </div>
             <div class="rb-label">Conta</div>
           </div>
         </div>
-        <!-- Pacote (plano / assinatura SaaS) — página cheia -->
+        <!-- Pacote (plano / assinatura SaaS) â€” pÃ¡gina cheia -->
         <div id="rbPkg" class="rb-panel hidden">
           <div class="cc-wrap">
 
-            <!-- HERÓI -->
+            <!-- HERÃ“I -->
             <section class="cc-hero cc-reveal">
-              <span class="cc-eyebrow">📦 Pacotes ConstructCount</span>
-              <h1 class="cc-title">Um app, <span class="grad">vários ofícios</span></h1>
-              <p class="cc-sub">Cada pacote é um motor de levantamento por especialidade. Comece pelo de Janelas e Portas — os próximos já estão a caminho.</p>
+              <span class="cc-eyebrow">ðŸ“¦ Pacotes ConstructCount</span>
+              <h1 class="cc-title">Um app, <span class="grad">vÃ¡rios ofÃ­cios</span></h1>
+              <p class="cc-sub">Cada pacote Ã© um motor de levantamento por especialidade. Comece pelo de Janelas e Portas â€” os prÃ³ximos jÃ¡ estÃ£o a caminho.</p>
               <!-- status da assinatura (preenchido por JS) -->
-              <div id="pkgStatus" class="pkg-status"><span class="dot"></span><span id="pkgStatusText">Verificando assinatura…</span></div>
+              <div id="pkgStatus" class="pkg-status"><span class="dot"></span><span id="pkgStatusText">Verificando assinaturaâ€¦</span></div>
             </section>
 
             <!-- PACOTE ATIVO: JANELAS E PORTAS -->
-            <h2 class="cc-h2">Pacote disponível</h2>
+            <h2 class="cc-h2">Pacote disponÃ­vel</h2>
             <p class="cc-lead">Pronto para usar hoje.</p>
             <div class="pkg-plan cc-reveal">
               <div class="pkg-plan-main">
-                <div class="pkg-tag pkg-tag--live">🟢 Disponível</div>
+                <div class="pkg-tag pkg-tag--live">ðŸŸ¢ DisponÃ­vel</div>
                 <h2 class="pkg-name">Janelas <span class="grad">e Portas</span></h2>
-                <p class="pkg-desc">Levante esquadrias direto da planta — leitura por IA, contagem, medidas e documentos prontos.</p>
+                <p class="pkg-desc">Levante esquadrias direto da planta â€” leitura por IA, contagem, medidas e documentos prontos.</p>
                 <div class="pkg-price">
-                  <span class="cur">US$</span><span id="pkgPrice" class="val">19</span><span class="per">/mês</span>
+                  <span class="cur">US$</span><span id="pkgPrice" class="val">19</span><span class="per">/mÃªs</span>
                 </div>
-                <div id="pkgPriceNote" class="pkg-pricenote">Cobrança mensal em dólar (USD) · cancele quando quiser</div>
+                <div id="pkgPriceNote" class="pkg-pricenote">CobranÃ§a mensal em dÃ³lar (USD) Â· cancele quando quiser</div>
                 <div class="pkg-cta">
-                  <button id="pkgSubscribe" class="cc-btn cc-btn-primary"><span>💳</span><span>Assinar agora</span></button>
-                  <button id="pkgActivate" class="cc-btn cc-btn-dark"><span>🔑</span><span>Já tenho uma chave</span></button>
+                  <button id="pkgSubscribe" class="cc-btn cc-btn-primary"><span>ðŸ’³</span><span>Assinar agora</span></button>
+                  <button id="pkgActivate" class="cc-btn cc-btn-dark"><span>ðŸ”‘</span><span>JÃ¡ tenho uma chave</span></button>
                 </div>
               </div>
               <ul class="pkg-feats">
-                <li>🤖 Leitura por IA do PDF do projeto</li>
-                <li>📐 Takeoff automático pelo schedule</li>
-                <li>🪟 Todos os tipos + Twin (conta ×2)</li>
-                <li>🏢 Pavimentos× e Resumo editável</li>
-                <li>🔀 Split de folhas lado a lado</li>
-                <li>📄 Orçamento, Pedido, Proposta e Planta Marcada</li>
-                <li>🎨 Documentos com a sua marca</li>
-                <li>🌐 PT · EN · ES · m²/ft²</li>
-                <li>🔄 Atualizações e novos recursos</li>
+                <li>ðŸ¤– Leitura por IA do PDF do projeto</li>
+                <li>ðŸ“ Takeoff automÃ¡tico pelo schedule</li>
+                <li>ðŸªŸ Todos os tipos + Twin (conta Ã—2)</li>
+                <li>ðŸ¢ PavimentosÃ— e Resumo editÃ¡vel</li>
+                <li>ðŸ”€ Split de folhas lado a lado</li>
+                <li>ðŸ“„ OrÃ§amento, Pedido, Proposta e Planta Marcada</li>
+                <li>ðŸŽ¨ Documentos com a sua marca</li>
+                <li>ðŸŒ PT Â· EN Â· ES Â· mÂ²/ftÂ²</li>
+                <li>ðŸ”„ AtualizaÃ§Ãµes e novos recursos</li>
               </ul>
             </div>
 
-            <!-- À LA CARTE: ofícios da parede vendidos separados -->
-            <h2 class="cc-h2" style="margin-top:34px">Por ofício <span class="grad">(à la carte)</span></h2>
-            <p class="cc-lead">Compre só o que você usa — ou leve o combo abaixo com desconto.</p>
+            <!-- Ã€ LA CARTE: ofÃ­cios da parede vendidos separados -->
+            <h2 class="cc-h2" style="margin-top:34px">Por ofÃ­cio <span class="grad">(Ã  la carte)</span></h2>
+            <p class="cc-lead">Compre sÃ³ o que vocÃª usa â€” ou leve o combo abaixo com desconto.</p>
             <div class="cc-grid pkg-trades">
-              <div class="pkg-trade cc-reveal" data-trade="framing"><div class="pkg-trade-ico" style="--t:#ef4444">🏗️</div><h3>Framing</h3><p>Montantes, plates, track, vergas e sheathing.</p><div class="pkg-trade-pr">US$ <b data-trade-price="framing">15</b><span>/mês</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="framing"><span>💳</span><span>Assinar</span></button></div>
-              <div class="pkg-trade cc-reveal" data-trade="drywall"><div class="pkg-trade-ico" style="--t:#3b82f6">🧱</div><h3>Drywall</h3><p>Board comum e resistente à água, chapas 4x8.</p><div class="pkg-trade-pr">US$ <b data-trade-price="drywall">15</b><span>/mês</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="drywall"><span>💳</span><span>Assinar</span></button></div>
-              <div class="pkg-trade cc-reveal" data-trade="insulation"><div class="pkg-trade-ico" style="--t:#10b981">🧊</div><h3>Insulation</h3><p>Área de cavidade isolada por SF.</p><div class="pkg-trade-pr">US$ <b data-trade-price="insulation">12</b><span>/mês</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="insulation"><span>💳</span><span>Assinar</span></button></div>
-              <div class="pkg-trade cc-reveal" data-trade="paint"><div class="pkg-trade-ico" style="--t:#f59e0b">🎨</div><h3>Paint</h3><p>Pintura de parede por SF (tape, spackle, paint).</p><div class="pkg-trade-pr">US$ <b data-trade-price="paint">12</b><span>/mês</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="paint"><span>💳</span><span>Assinar</span></button></div>
-              <div class="pkg-trade cc-reveal" data-trade="floor"><div class="pkg-trade-ico" style="--t:#22c55e">▱</div><h3>Piso</h3><p>Área de piso por SF — meça na planta (ferramenta de área) e orce.</p><div class="pkg-trade-pr">US$ <b data-trade-price="floor">12</b><span>/mês</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="floor"><span>💳</span><span>Assinar</span></button></div>
-              <div class="pkg-trade cc-reveal" data-trade="ceiling"><div class="pkg-trade-ico" style="--t:#38bdf8">▱</div><h3>Teto / Forro</h3><p>Área de teto/forro por SF — meça na planta (ferramenta de área) e orce.</p><div class="pkg-trade-pr">US$ <b data-trade-price="ceiling">12</b><span>/mês</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="ceiling"><span>💳</span><span>Assinar</span></button></div>
+              <div class="pkg-trade cc-reveal" data-trade="framing"><div class="pkg-trade-ico" style="--t:#ef4444">ðŸ—ï¸</div><h3>Framing</h3><p>Montantes, plates, track, vergas e sheathing.</p><div class="pkg-trade-pr">US$ <b data-trade-price="framing">15</b><span>/mÃªs</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="framing"><span>ðŸ’³</span><span>Assinar</span></button></div>
+              <div class="pkg-trade cc-reveal" data-trade="drywall"><div class="pkg-trade-ico" style="--t:#3b82f6">ðŸ§±</div><h3>Drywall</h3><p>Board comum e resistente Ã  Ã¡gua, chapas 4x8.</p><div class="pkg-trade-pr">US$ <b data-trade-price="drywall">15</b><span>/mÃªs</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="drywall"><span>ðŸ’³</span><span>Assinar</span></button></div>
+              <div class="pkg-trade cc-reveal" data-trade="insulation"><div class="pkg-trade-ico" style="--t:#10b981">ðŸ§Š</div><h3>Insulation</h3><p>Ãrea de cavidade isolada por SF.</p><div class="pkg-trade-pr">US$ <b data-trade-price="insulation">12</b><span>/mÃªs</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="insulation"><span>ðŸ’³</span><span>Assinar</span></button></div>
+              <div class="pkg-trade cc-reveal" data-trade="paint"><div class="pkg-trade-ico" style="--t:#f59e0b">ðŸŽ¨</div><h3>Paint</h3><p>Pintura de parede por SF (tape, spackle, paint).</p><div class="pkg-trade-pr">US$ <b data-trade-price="paint">12</b><span>/mÃªs</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="paint"><span>ðŸ’³</span><span>Assinar</span></button></div>
+              <div class="pkg-trade cc-reveal" data-trade="floor"><div class="pkg-trade-ico" style="--t:#22c55e">â–±</div><h3>Piso</h3><p>Ãrea de piso por SF â€” meÃ§a na planta (ferramenta de Ã¡rea) e orce.</p><div class="pkg-trade-pr">US$ <b data-trade-price="floor">12</b><span>/mÃªs</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="floor"><span>ðŸ’³</span><span>Assinar</span></button></div>
+              <div class="pkg-trade cc-reveal" data-trade="ceiling"><div class="pkg-trade-ico" style="--t:#38bdf8">â–±</div><h3>Teto / Forro</h3><p>Ãrea de teto/forro por SF â€” meÃ§a na planta (ferramenta de Ã¡rea) e orce.</p><div class="pkg-trade-pr">US$ <b data-trade-price="ceiling">12</b><span>/mÃªs</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="ceiling"><span>ðŸ’³</span><span>Assinar</span></button></div>
             </div>
 
-            <!-- COMBO: Parede completa (os 4 ofícios) — melhor valor -->
+            <!-- COMBO: Parede completa (os 4 ofÃ­cios) â€” melhor valor -->
             <h2 class="cc-h2" style="margin-top:30px">Combo <span class="grad">Parede completa</span></h2>
-            <p class="cc-lead">Os 4 ofícios juntos, com desconto. <b>Melhor valor.</b></p>
+            <p class="cc-lead">Os 4 ofÃ­cios juntos, com desconto. <b>Melhor valor.</b></p>
             <div class="pkg-plan cc-reveal" style="margin-top:6px">
               <div class="pkg-plan-main">
-                <div id="pkgFrTag" class="pkg-tag pkg-tag--beta">🏗️ Pacote estrutural</div>
+                <div id="pkgFrTag" class="pkg-tag pkg-tag--beta">ðŸ—ï¸ Pacote estrutural</div>
                 <h2 class="pkg-name">Parede <span class="grad">completa</span></h2>
-                <p class="pkg-desc">Estimativa de parede por IA, do framing à pintura. Meça na planta (ou deixe a IA detectar), a IA lê os tipos de parede do projeto, e você sai com quantidades, custo e preço de venda — pronto pra mandar o orçamento.</p>
+                <p class="pkg-desc">Estimativa de parede por IA, do framing Ã  pintura. MeÃ§a na planta (ou deixe a IA detectar), a IA lÃª os tipos de parede do projeto, e vocÃª sai com quantidades, custo e preÃ§o de venda â€” pronto pra mandar o orÃ§amento.</p>
                 <div class="pkg-price">
-                  <span class="cur">US$</span><span id="pkgFrPrice" class="val">45</span><span class="per">/mês</span>
+                  <span class="cur">US$</span><span id="pkgFrPrice" class="val">45</span><span class="per">/mÃªs</span>
                 </div>
-                <div style="font-weight:800;color:#157347;font-size:14px;margin-top:2px">🎁 7 dias grátis — sem cartão</div>
-                <div class="pkg-pricenote">Combo dos 4 ofícios · ou compre por ofício à parte · cobrança mensal em USD · cancele quando quiser</div>
+                <div style="font-weight:800;color:#157347;font-size:14px;margin-top:2px">ðŸŽ 7 dias grÃ¡tis â€” sem cartÃ£o</div>
+                <div class="pkg-pricenote">Combo dos 4 ofÃ­cios Â· ou compre por ofÃ­cio Ã  parte Â· cobranÃ§a mensal em USD Â· cancele quando quiser</div>
                 <div class="pkg-cta">
-                  <button id="pkgFrSubscribe" class="cc-btn cc-btn-primary"><span>💳</span><span>Assinar Parede completa</span></button>
-                  <button id="pkgFrTrial" class="cc-btn cc-btn-dark"><span>🎁</span><span>Testar 7 dias grátis</span></button>
-                  <button id="pkgOpenFraming" class="cc-btn cc-btn-primary hidden"><span>🏗️</span><span>Abrir takeoff</span></button>
-                  <button id="pkgFrActivate" class="cc-btn cc-btn-dark"><span>🔑</span><span>Já tenho a chave</span></button>
+                  <button id="pkgFrSubscribe" class="cc-btn cc-btn-primary"><span>ðŸ’³</span><span>Assinar Parede completa</span></button>
+                  <button id="pkgFrTrial" class="cc-btn cc-btn-dark"><span>ðŸŽ</span><span>Testar 7 dias grÃ¡tis</span></button>
+                  <button id="pkgOpenFraming" class="cc-btn cc-btn-primary hidden"><span>ðŸ—ï¸</span><span>Abrir takeoff</span></button>
+                  <button id="pkgFrActivate" class="cc-btn cc-btn-dark"><span>ðŸ”‘</span><span>JÃ¡ tenho a chave</span></button>
                 </div>
               </div>
               <ul class="pkg-feats">
-                <li>🏗️🧱🧊🎨 4 ofícios na mesma parede: Framing · Drywall · Insulation · Paint</li>
-                <li>🧠 IA lê os tipos de parede do projeto (A301) — material, montante, plates, gypsum, isolamento</li>
-                <li>📏 Medição Linear na planta + ✨ detectar paredes (IA) · altura por piso (A302)</li>
-                <li>🧩 Parede de 2 faces: DensGlass externo · drywall comum ou resistente à água (banheiro)</li>
-                <li>🔩 Montantes, guias/track, plates, vergas, sheathing e folhas 4x8</li>
-                <li>💲 Material + mão de obra + sobra % + imposto → Custo → Ganho % → Venda</li>
-                <li>📍 Preço por região (IA busca na web, você confirma) · tudo em USD</li>
-                <li>📄 Relatórios e editores (orçamento, materiais, planta marcada, IA) — <b>add-on à parte</b></li>
+                <li>ðŸ—ï¸ðŸ§±ðŸ§ŠðŸŽ¨ 4 ofÃ­cios na mesma parede: Framing Â· Drywall Â· Insulation Â· Paint</li>
+                <li>ðŸ§  IA lÃª os tipos de parede do projeto (A301) â€” material, montante, plates, gypsum, isolamento</li>
+                <li>ðŸ“ MediÃ§Ã£o Linear na planta + âœ¨ detectar paredes (IA) Â· altura por piso (A302)</li>
+                <li>ðŸ§© Parede de 2 faces: DensGlass externo Â· drywall comum ou resistente Ã  Ã¡gua (banheiro)</li>
+                <li>ðŸ”© Montantes, guias/track, plates, vergas, sheathing e folhas 4x8</li>
+                <li>ðŸ’² Material + mÃ£o de obra + sobra % + imposto â†’ Custo â†’ Ganho % â†’ Venda</li>
+                <li>ðŸ“ PreÃ§o por regiÃ£o (IA busca na web, vocÃª confirma) Â· tudo em USD</li>
+                <li>ðŸ“„ RelatÃ³rios e editores (orÃ§amento, materiais, planta marcada, IA) â€” <b>add-on Ã  parte</b></li>
               </ul>
             </div>
 
-            <!-- ADD-ON: Relatórios (sempre à parte) -->
+            <!-- ADD-ON: RelatÃ³rios (sempre Ã  parte) -->
             <h2 class="cc-h2" style="margin-top:30px">Add-on</h2>
-            <p class="cc-lead">Recurso extra que você liga em qualquer pacote.</p>
+            <p class="cc-lead">Recurso extra que vocÃª liga em qualquer pacote.</p>
             <div class="cc-grid pkg-trades">
-              <div class="pkg-trade cc-reveal" data-trade="reports"><div class="pkg-trade-ico" style="--t:#8b5cf6">📄</div><h3>Relatórios</h3><p>Orçamento, materiais, pedido ao fornecedor, planta marcada + editores (blocos e visual) + texto por IA.</p><div class="pkg-trade-pr">US$ <b data-trade-price="reports">15</b><span>/mês</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="reports"><span>💳</span><span>Assinar</span></button></div>
-              <div class="pkg-trade cc-reveal" data-trade="board"><div class="pkg-trade-ico" style="--t:#22c55e">📋</div><h3>Mural de projetos</h3><p>Dê preço nas obras publicadas: escolha suas regiões e pague 1, 3, 6 ou 12 meses por região. Baixe a planta, levante no app e envie sua proposta.</p><div class="pkg-trade-pr">US$ <b data-trade-price="board">10</b><span>/mês por região</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="board"><span>💳</span><span>Escolher regiões</span></button></div>
-              <div class="pkg-trade cc-reveal" data-trade="region"><div class="pkg-trade-ico" style="--t:#e3b653">🔎</div><h3>Pesquisa de preços (IA)</h3><p>A IA busca na web os preços de material da obra e preenche o takeoff — você confirma tudo. Vale pra qualquer obra.</p><div class="pkg-trade-pr">US$ <b data-trade-price="region">10</b><span>/mês</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="region"><span>💳</span><span>Assinar</span></button></div>
+              <div class="pkg-trade cc-reveal" data-trade="reports"><div class="pkg-trade-ico" style="--t:#8b5cf6">ðŸ“„</div><h3>RelatÃ³rios</h3><p>OrÃ§amento, materiais, pedido ao fornecedor, planta marcada + editores (blocos e visual) + texto por IA.</p><div class="pkg-trade-pr">US$ <b data-trade-price="reports">15</b><span>/mÃªs</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="reports"><span>ðŸ’³</span><span>Assinar</span></button></div>
+              <div class="pkg-trade cc-reveal" data-trade="board"><div class="pkg-trade-ico" style="--t:#22c55e">ðŸ“‹</div><h3>Mural de projetos</h3><p>DÃª preÃ§o nas obras publicadas: escolha suas regiÃµes e pague 1, 3, 6 ou 12 meses por regiÃ£o. Baixe a planta, levante no app e envie sua proposta.</p><div class="pkg-trade-pr">US$ <b data-trade-price="board">10</b><span>/mÃªs por regiÃ£o</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="board"><span>ðŸ’³</span><span>Escolher regiÃµes</span></button></div>
+              <div class="pkg-trade cc-reveal" data-trade="region"><div class="pkg-trade-ico" style="--t:#e3b653">ðŸ”Ž</div><h3>Pesquisa de preÃ§os (IA)</h3><p>A IA busca na web os preÃ§os de material da obra e preenche o takeoff â€” vocÃª confirma tudo. Vale pra qualquer obra.</p><div class="pkg-trade-pr">US$ <b data-trade-price="region">10</b><span>/mÃªs</span></div><button class="cc-btn cc-btn-dark pkg-trade-sub" data-trade="region"><span>ðŸ’³</span><span>Assinar</span></button></div>
             </div>
 
-            <!-- PRÓXIMOS PACOTES (em breve) -->
-            <h2 class="cc-h2" style="margin-top:46px">Próximos pacotes</h2>
-            <p class="cc-lead">Mais ofícios chegando ao ConstructCount.</p>
+            <!-- PRÃ“XIMOS PACOTES (em breve) -->
+            <h2 class="cc-h2" style="margin-top:46px">PrÃ³ximos pacotes</h2>
+            <p class="cc-lead">Mais ofÃ­cios chegando ao ConstructCount.</p>
             <div class="cc-grid">
-              <div class="cc-card pkg-soon cc-reveal" style="--cc-accent:#14b8a6"><span class="pkg-soontag">Em breve</span><div class="cc-ico" style="background:linear-gradient(135deg,#2dd4bf,#0f766e)">🟫</div><h3>Pisos &amp; Revestimentos</h3><p>Área, rodapés e perdas por cômodo.</p></div>
-              <div class="cc-card pkg-soon cc-reveal" style="--cc-accent:#f59e0b"><span class="pkg-soontag">Em breve</span><div class="cc-ico" style="background:linear-gradient(135deg,#fbbf24,#b45309)">💡</div><h3>Elétrica</h3><p>Pontos, circuitos, eletrodutos e quadros.</p></div>
-              <div class="cc-card pkg-soon cc-reveal" style="--cc-accent:#06b6d4"><span class="pkg-soontag">Em breve</span><div class="cc-ico" style="background:linear-gradient(135deg,#22d3ee,#0e7490)">🚰</div><h3>Hidráulica</h3><p>Pontos de água/esgoto, conexões e metragem.</p></div>
-              <div class="cc-card pkg-soon cc-reveal" style="--cc-accent:#a16207"><span class="pkg-soontag">Em breve</span><div class="cc-ico" style="background:linear-gradient(135deg,#d6b36a,#7c5210)">🧮</div><h3>Concreto &amp; Fundação</h3><p>Volume, fôrma e aço por elemento.</p></div>
+              <div class="cc-card pkg-soon cc-reveal" style="--cc-accent:#14b8a6"><span class="pkg-soontag">Em breve</span><div class="cc-ico" style="background:linear-gradient(135deg,#2dd4bf,#0f766e)">ðŸŸ«</div><h3>Pisos &amp; Revestimentos</h3><p>Ãrea, rodapÃ©s e perdas por cÃ´modo.</p></div>
+              <div class="cc-card pkg-soon cc-reveal" style="--cc-accent:#f59e0b"><span class="pkg-soontag">Em breve</span><div class="cc-ico" style="background:linear-gradient(135deg,#fbbf24,#b45309)">ðŸ’¡</div><h3>ElÃ©trica</h3><p>Pontos, circuitos, eletrodutos e quadros.</p></div>
+              <div class="cc-card pkg-soon cc-reveal" style="--cc-accent:#06b6d4"><span class="pkg-soontag">Em breve</span><div class="cc-ico" style="background:linear-gradient(135deg,#22d3ee,#0e7490)">ðŸš°</div><h3>HidrÃ¡ulica</h3><p>Pontos de Ã¡gua/esgoto, conexÃµes e metragem.</p></div>
+              <div class="cc-card pkg-soon cc-reveal" style="--cc-accent:#a16207"><span class="pkg-soontag">Em breve</span><div class="cc-ico" style="background:linear-gradient(135deg,#d6b36a,#7c5210)">ðŸ§®</div><h3>Concreto &amp; FundaÃ§Ã£o</h3><p>Volume, fÃ´rma e aÃ§o por elemento.</p></div>
             </div>
 
             <!-- FAQ -->
             <h2 class="cc-h2" style="margin-top:46px">Sobre a assinatura</h2>
             <div class="space-y-3" style="margin-bottom:10px">
               <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-                <summary class="font-semibold text-steel-800 cursor-pointer">Como ativo minha licença?</summary>
-                <div class="text-steel-500 text-sm mt-2">Clique em <b>Já tenho uma chave</b> e cole a chave enviada pela M2PB. A ativação é na hora.</div>
+                <summary class="font-semibold text-steel-800 cursor-pointer">Como ativo minha licenÃ§a?</summary>
+                <div class="text-steel-500 text-sm mt-2">Clique em <b>JÃ¡ tenho uma chave</b> e cole a chave enviada pela M2PB. A ativaÃ§Ã£o Ã© na hora.</div>
               </details>
               <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
                 <summary class="font-semibold text-steel-800 cursor-pointer">Funciona offline?</summary>
-                <div class="text-steel-500 text-sm mt-2">Sim, com um período de carência. O app revalida a licença quando você reconecta.</div>
+                <div class="text-steel-500 text-sm mt-2">Sim, com um perÃ­odo de carÃªncia. O app revalida a licenÃ§a quando vocÃª reconecta.</div>
               </details>
               <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
                 <summary class="font-semibold text-steel-800 cursor-pointer">Posso cancelar?</summary>
-                <div class="text-steel-500 text-sm mt-2">Sim, a qualquer momento. Você mantém o acesso até o fim do período pago.</div>
+                <div class="text-steel-500 text-sm mt-2">Sim, a qualquer momento. VocÃª mantÃ©m o acesso atÃ© o fim do perÃ­odo pago.</div>
               </details>
             </div>
 
           </div>
         </div>
-        <!-- Configurações (inclui o que era a aba Exibir: Medida + Idioma) -->
-        <!-- Central de relatórios — todos os documentos, separados por pacote -->
+        <!-- ConfiguraÃ§Ãµes (inclui o que era a aba Exibir: Medida + Idioma) -->
+        <!-- Central de relatÃ³rios â€” todos os documentos, separados por pacote -->
         <div id="rbReports" class="rb-panel hidden">
           <div class="max-w-5xl mx-auto px-6 py-10">
             <div class="text-center mb-10">
-              <div class="text-5xl mb-3">📄</div>
-              <h1 class="text-3xl sm:text-4xl font-bold text-steel-800">Central de relatórios</h1>
-              <p class="text-steel-500 mt-3 max-w-2xl mx-auto text-lg">Todos os documentos num lugar só, organizados por pacote.</p>
+              <div class="text-5xl mb-3">ðŸ“„</div>
+              <h1 class="text-3xl sm:text-4xl font-bold text-steel-800">Central de relatÃ³rios</h1>
+              <p class="text-steel-500 mt-3 max-w-2xl mx-auto text-lg">Todos os documentos num lugar sÃ³, organizados por pacote.</p>
             </div>
 
-            <!-- 🪟 Janelas & Portas -->
+            <!-- ðŸªŸ Janelas & Portas -->
             <div data-pkg="windows_doors">
-              <h2 class="text-xl font-bold text-steel-800 mb-1">🪟 Janelas &amp; Portas</h2>
+              <h2 class="text-xl font-bold text-steel-800 mb-1">ðŸªŸ Janelas &amp; Portas</h2>
               <p class="text-steel-500 text-sm mb-4">Gerados do takeoff de esquadrias consolidado.</p>
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
-                <button id="repWinQuote" class="rep-card"><span class="rep-ico">📄</span><span class="rep-t">Orçamento Cliente</span><span class="rep-d">PDF com preços, com a sua marca</span></button>
-                <button id="repWinProposal" class="rep-card"><span class="rep-ico">📝</span><span class="rep-t">Proposta Cliente</span><span class="rep-d">PDF de apresentação</span></button>
-                <button id="repWinSupplier" class="rep-card"><span class="rep-ico">📦</span><span class="rep-t">Pedido Fornecedor</span><span class="rep-d">Excel sem preços</span></button>
-                <button id="repWinSummary" class="rep-card"><span class="rep-ico">📊</span><span class="rep-t">Quadro Resumo</span><span class="rep-d">PDF resumo das marcas</span></button>
-                <button id="repWinMarked" class="rep-card"><span class="rep-ico">🗺️</span><span class="rep-t">Planta Marcada</span><span class="rep-d">PDF da planta com as marcas</span></button>
+                <button id="repWinQuote" class="rep-card"><span class="rep-ico">ðŸ“„</span><span class="rep-t">OrÃ§amento Cliente</span><span class="rep-d">PDF com preÃ§os, com a sua marca</span></button>
+                <button id="repWinProposal" class="rep-card"><span class="rep-ico">ðŸ“</span><span class="rep-t">Proposta Cliente</span><span class="rep-d">PDF de apresentaÃ§Ã£o</span></button>
+                <button id="repWinSupplier" class="rep-card"><span class="rep-ico">ðŸ“¦</span><span class="rep-t">Pedido Fornecedor</span><span class="rep-d">Excel sem preÃ§os</span></button>
+                <button id="repWinSummary" class="rep-card"><span class="rep-ico">ðŸ“Š</span><span class="rep-t">Quadro Resumo</span><span class="rep-d">PDF resumo das marcas</span></button>
+                <button id="repWinMarked" class="rep-card"><span class="rep-ico">ðŸ—ºï¸</span><span class="rep-t">Planta Marcada</span><span class="rep-d">PDF da planta com as marcas</span></button>
               </div>
             </div>
 
-            <!-- 🏗️ Parede completa -->
+            <!-- ðŸ—ï¸ Parede completa -->
             <div data-pkg="wall">
-              <h2 class="text-xl font-bold text-steel-800 mb-1">🏗️ Parede completa</h2>
-              <p class="text-steel-500 text-sm mb-4">Gerados do takeoff de paredes (Linear). Requer o add-on Relatórios.</p>
+              <h2 class="text-xl font-bold text-steel-800 mb-1">ðŸ—ï¸ Parede completa</h2>
+              <p class="text-steel-500 text-sm mb-4">Gerados do takeoff de paredes (Linear). Requer o add-on RelatÃ³rios.</p>
               <div id="repWallList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12"></div>
             </div>
           </div>
@@ -332,14 +332,14 @@
         <div id="rbCfg" class="rb-panel hidden">
           <div class="rb-group">
             <div class="rb-row">
-              <button id="miSettings" class="rb-btn"><span class="ico">⚙️</span><span>Motor local</span></button>
-              <button id="miReportBrand" class="rb-btn"><span class="ico">🎨</span><span>Marca / Relatórios</span></button>
+              <button id="miSettings" class="rb-btn"><span class="ico">âš™ï¸</span><span>Motor local</span></button>
+              <button id="miReportBrand" class="rb-btn"><span class="ico">ðŸŽ¨</span><span>Marca / RelatÃ³rios</span></button>
             </div>
             <div class="rb-label">Geral</div>
           </div>
           <div class="rb-group">
             <div class="rb-row">
-              <button id="miUnit" class="rb-btn"><span class="ico">↔️</span><span>Unidade m²/ft²</span></button>
+              <button id="miUnit" class="rb-btn"><span class="ico">â†”ï¸</span><span>Unidade mÂ²/ftÂ²</span></button>
             </div>
             <div class="rb-label">Medida</div>
           </div>
@@ -348,47 +348,47 @@
             <div class="rb-label">Idioma</div>
           </div>
         </div>
-        <!-- Ajuda (página cheia — guia completo, estilo ConstructCount) -->
+        <!-- Ajuda (pÃ¡gina cheia â€” guia completo, estilo ConstructCount) -->
         <div id="rbHelp" class="rb-panel hidden">
           <div class="max-w-5xl mx-auto px-6 py-10">
-            <!-- herói -->
+            <!-- herÃ³i -->
             <div class="text-center mb-12">
-              <div class="text-5xl mb-3">📐</div>
-              <h1 class="text-3xl sm:text-4xl font-bold text-steel-800">Do PDF ao orçamento em minutos</h1>
-              <p class="text-steel-500 mt-3 max-w-2xl mx-auto text-lg">O ConstructCount lê a planta arquitetônica e levanta esquadrias e paredes (framing, drywall, insulation e pintura) — e entrega os documentos prontos. Veja o fluxo completo abaixo.</p>
+              <div class="text-5xl mb-3">ðŸ“</div>
+              <h1 class="text-3xl sm:text-4xl font-bold text-steel-800">Do PDF ao orÃ§amento em minutos</h1>
+              <p class="text-steel-500 mt-3 max-w-2xl mx-auto text-lg">O ConstructCount lÃª a planta arquitetÃ´nica e levanta esquadrias e paredes (framing, drywall, insulation e pintura) â€” e entrega os documentos prontos. Veja o fluxo completo abaixo.</p>
             </div>
 
             <!-- TRILHA 1: JANELAS & PORTAS -->
-            <h2 class="text-xl font-bold text-steel-800 mb-1">🪟 Trilha 1 — Janelas &amp; Portas</h2>
-            <p class="text-steel-500 text-sm mb-5">O fluxo do pacote de esquadrias: a IA lê o schedule e você confere.</p>
+            <h2 class="text-xl font-bold text-steel-800 mb-1">ðŸªŸ Trilha 1 â€” Janelas &amp; Portas</h2>
+            <p class="text-steel-500 text-sm mb-5">O fluxo do pacote de esquadrias: a IA lÃª o schedule e vocÃª confere.</p>
             <div class="space-y-4 mb-14">
               <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
                 <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">1</div>
                 <div>
                   <div class="font-semibold text-steel-800">Abra o projeto (PDF)</div>
-                  <div class="text-steel-500 text-sm mt-1">Em <b>Início ▸ Novo projeto</b>, envie a planta em PDF. A IA lê as folhas e o <i>schedule</i> de esquadrias automaticamente — sem digitar tabela.</div>
-                  <div class="text-steel-400 text-xs mt-2">💡 PDF com texto → tabela na hora. PDF vetorizado/escaneado → abre o workspace pra você conferir e ajustar.</div>
+                  <div class="text-steel-500 text-sm mt-1">Em <b>InÃ­cio â–¸ Novo projeto</b>, envie a planta em PDF. A IA lÃª as folhas e o <i>schedule</i> de esquadrias automaticamente â€” sem digitar tabela.</div>
+                  <div class="text-steel-400 text-xs mt-2">ðŸ’¡ PDF com texto â†’ tabela na hora. PDF vetorizado/escaneado â†’ abre o workspace pra vocÃª conferir e ajustar.</div>
                 </div>
               </div>
               <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
                 <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">2</div>
                 <div>
                   <div class="font-semibold text-steel-800">Confira o takeoff no workspace</div>
-                  <div class="text-steel-500 text-sm mt-1">Navegue pelas folhas, veja as <b>marcas coloridas</b> sobre o desenho e a <b>legenda fixada</b> na planta. Use o <b>Split</b> pra ver duas folhas lado a lado (ex.: planta × schedule).</div>
+                  <div class="text-steel-500 text-sm mt-1">Navegue pelas folhas, veja as <b>marcas coloridas</b> sobre o desenho e a <b>legenda fixada</b> na planta. Use o <b>Split</b> pra ver duas folhas lado a lado (ex.: planta Ã— schedule).</div>
                 </div>
               </div>
               <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
                 <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">3</div>
                 <div>
                   <div class="font-semibold text-steel-800">Ajuste tipos e medidas</div>
-                  <div class="text-steel-500 text-sm mt-1">Na tabela <b>Resumo</b> (rodapé) você corrige o <b>tipo</b> (casement, correr, fixa, <b>Twin</b>…) e as <b>medidas</b> direto. <b>Twin</b> conta em dobro e <b>Pavimentos×</b> multiplica pelos andares iguais.</div>
+                  <div class="text-steel-500 text-sm mt-1">Na tabela <b>Resumo</b> (rodapÃ©) vocÃª corrige o <b>tipo</b> (casement, correr, fixa, <b>Twin</b>â€¦) e as <b>medidas</b> direto. <b>Twin</b> conta em dobro e <b>PavimentosÃ—</b> multiplica pelos andares iguais.</div>
                 </div>
               </div>
               <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
                 <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">4</div>
                 <div>
                   <div class="font-semibold text-steel-800">Gere os documentos</div>
-                  <div class="text-steel-500 text-sm mt-1">Na aba <b>Início</b>: <b>Orçamento</b> e <b>Proposta</b> para o cliente, <b>Pedido</b> (Excel) para o fornecedor, e a <b>Planta Marcada</b> com legenda — tudo com a sua marca.</div>
+                  <div class="text-steel-500 text-sm mt-1">Na aba <b>InÃ­cio</b>: <b>OrÃ§amento</b> e <b>Proposta</b> para o cliente, <b>Pedido</b> (Excel) para o fornecedor, e a <b>Planta Marcada</b> com legenda â€” tudo com a sua marca.</div>
                 </div>
               </div>
               <div class="flex gap-4 bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
@@ -401,16 +401,16 @@
             </div>
 
             <!-- TRILHA 2: PAREDE COMPLETA -->
-            <h2 class="text-xl font-bold text-steel-800 mb-1">🏗️ Trilha 2 — Parede completa</h2>
-            <p class="text-steel-500 text-sm mb-5">O fluxo do pacote de parede: Framing · Drywall · Insulation · Paint, da planta ao preço de venda.</p>
+            <h2 class="text-xl font-bold text-steel-800 mb-1">ðŸ—ï¸ Trilha 2 â€” Parede completa</h2>
+            <p class="text-steel-500 text-sm mb-5">O fluxo do pacote de parede: Framing Â· Drywall Â· Insulation Â· Paint, da planta ao preÃ§o de venda.</p>
             <div class="bg-white border border-steel-200 rounded-xl p-6 shadow-sm mb-14">
               <ol class="space-y-3 text-sm text-steel-600">
-                <li><b class="text-steel-800">1. Escopo da obra</b> — em FERRAMENTAS, ligue os ofícios que esta estimativa cobre (🏗️ Framing · 🧱 Drywall · 🧊 Insulation · 🎨 Paint). A mesma parede gera quantidades para cada escopo ligado.</li>
-                <li><b class="text-steel-800">2. Tipos de parede por IA</b> — abra a folha de partições (ex.: A301) e clique em <b>🧠 Ler tipos de parede (IA)</b>: ela cria os tipos com montante, espaçamento, plates, gypsum e isolamento. Itens com ⚠️ pedem a sua conferência — a IA pergunta, não chuta.</li>
-                <li><b class="text-steel-800">3. Pisos e alturas</b> — defina o <b>Piso:</b> ativo e a altura (lida da A302). Cada parede traçada guarda a altura do seu piso (LF × altura = SF).</li>
-                <li><b class="text-steel-800">4. Trace as paredes</b> — calibre a escala (📏), escolha o <b>Tipo:</b> e use <b>📐 Linear</b> (ou ✨ Detectar paredes por IA). O rótulo mostra o tipo e a medida, ex.: (2) 36'-2".</li>
-                <li><b class="text-steel-800">5. Takeoff e preços</b> — clique em <b>🏗️ Framing</b> na barra de status: tabela editável com Material + M.O. + sobra % + imposto → Custo → Ganho % → Venda. Defina a <b>Região</b> e use 💲 Buscar preços (IA) — você confirma tudo.</li>
-                <li><b class="text-steel-800">6. Relatórios</b> — no botão <b>📄 Relatórios</b> (add-on): orçamento ao cliente, lista de materiais, material por piso, cotação ao fornecedor, análise do proprietário, resumo técnico, planta marcada — e os editores (blocos e visual) com texto por IA.</li>
+                <li><b class="text-steel-800">1. Escopo da obra</b> â€” em FERRAMENTAS, ligue os ofÃ­cios que esta estimativa cobre (ðŸ—ï¸ Framing Â· ðŸ§± Drywall Â· ðŸ§Š Insulation Â· ðŸŽ¨ Paint). A mesma parede gera quantidades para cada escopo ligado.</li>
+                <li><b class="text-steel-800">2. Tipos de parede por IA</b> â€” abra a folha de partiÃ§Ãµes (ex.: A301) e clique em <b>ðŸ§  Ler tipos de parede (IA)</b>: ela cria os tipos com montante, espaÃ§amento, plates, gypsum e isolamento. Itens com âš ï¸ pedem a sua conferÃªncia â€” a IA pergunta, nÃ£o chuta.</li>
+                <li><b class="text-steel-800">3. Pisos e alturas</b> â€” defina o <b>Piso:</b> ativo e a altura (lida da A302). Cada parede traÃ§ada guarda a altura do seu piso (LF Ã— altura = SF).</li>
+                <li><b class="text-steel-800">4. Trace as paredes</b> â€” calibre a escala (ðŸ“), escolha o <b>Tipo:</b> e use <b>ðŸ“ Linear</b> (ou âœ¨ Detectar paredes por IA). O rÃ³tulo mostra o tipo e a medida, ex.: (2) 36'-2".</li>
+                <li><b class="text-steel-800">5. Takeoff e preÃ§os</b> â€” clique em <b>ðŸ—ï¸ Framing</b> na barra de status: tabela editÃ¡vel com Material + M.O. + sobra % + imposto â†’ Custo â†’ Ganho % â†’ Venda. Defina a <b>RegiÃ£o</b> e use ðŸ’² Buscar preÃ§os (IA) â€” vocÃª confirma tudo.</li>
+                <li><b class="text-steel-800">6. RelatÃ³rios</b> â€” no botÃ£o <b>ðŸ“„ RelatÃ³rios</b> (add-on): orÃ§amento ao cliente, lista de materiais, material por piso, cotaÃ§Ã£o ao fornecedor, anÃ¡lise do proprietÃ¡rio, resumo tÃ©cnico, planta marcada â€” e os editores (blocos e visual) com texto por IA.</li>
               </ol>
             </div>
 
@@ -418,26 +418,26 @@
             <h2 class="text-xl font-bold text-steel-800 mb-5">Dois tipos de PDF</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-14">
               <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-                <div class="text-2xl mb-2">📝</div>
+                <div class="text-2xl mb-2">ðŸ“</div>
                 <div class="font-semibold text-steel-800">PDF com texto (vetorial)</div>
-                <div class="text-steel-500 text-sm mt-1">O motor lê o texto embutido e monta a tabela de esquadrias direto, com tipos e medidas do schedule.</div>
+                <div class="text-steel-500 text-sm mt-1">O motor lÃª o texto embutido e monta a tabela de esquadrias direto, com tipos e medidas do schedule.</div>
               </div>
               <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-                <div class="text-2xl mb-2">🖼️</div>
+                <div class="text-2xl mb-2">ðŸ–¼ï¸</div>
                 <div class="font-semibold text-steel-800">PDF escaneado (imagem)</div>
-                <div class="text-steel-500 text-sm mt-1">Quando o schedule é imagem, o OCR ajuda, mas convém conferir. Você completa tipo e medida no Resumo — rápido e seguro.</div>
+                <div class="text-steel-500 text-sm mt-1">Quando o schedule Ã© imagem, o OCR ajuda, mas convÃ©m conferir. VocÃª completa tipo e medida no Resumo â€” rÃ¡pido e seguro.</div>
               </div>
             </div>
 
             <!-- ATALHOS DO WORKSPACE -->
             <h2 class="text-xl font-bold text-steel-800 mb-5">No workspace</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-14">
-              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🏷️</div><div class="font-semibold text-steel-800">Legenda</div><div class="text-steel-500 text-sm mt-1">Liga/desliga a legenda fixada no desenho (acompanha zoom e movimento).</div></div>
-              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">📊</div><div class="font-semibold text-steel-800">Resumo</div><div class="text-steel-500 text-sm mt-1">Tabela editável com a contagem geral — corrija tipo e medida sem sair da folha.</div></div>
-              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🔀</div><div class="font-semibold text-steel-800">Split</div><div class="text-steel-500 text-sm mt-1">Duas folhas ao mesmo tempo, no menu PÁGINAS — compare planta e schedule.</div></div>
-              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">📐</div><div class="font-semibold text-steel-800">Ortho / Snap</div><div class="text-steel-500 text-sm mt-1">Medições retas e encaixe nos pontos, para marcações precisas.</div></div>
-              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🪟</div><div class="font-semibold text-steel-800">Janela selecionada</div><div class="text-steel-500 text-sm mt-1">Painel à direita mostra e edita o tipo e a medida da marca atual.</div></div>
-              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">🌐</div><div class="font-semibold text-steel-800">Idioma e unidade</div><div class="text-steel-500 text-sm mt-1">Alterne PT · EN · ES e m² / ft² na aba Configurações — vale também nos documentos.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">ðŸ·ï¸</div><div class="font-semibold text-steel-800">Legenda</div><div class="text-steel-500 text-sm mt-1">Liga/desliga a legenda fixada no desenho (acompanha zoom e movimento).</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">ðŸ“Š</div><div class="font-semibold text-steel-800">Resumo</div><div class="text-steel-500 text-sm mt-1">Tabela editÃ¡vel com a contagem geral â€” corrija tipo e medida sem sair da folha.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">ðŸ”€</div><div class="font-semibold text-steel-800">Split</div><div class="text-steel-500 text-sm mt-1">Duas folhas ao mesmo tempo, no menu PÃGINAS â€” compare planta e schedule.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">ðŸ“</div><div class="font-semibold text-steel-800">Ortho / Snap</div><div class="text-steel-500 text-sm mt-1">MediÃ§Ãµes retas e encaixe nos pontos, para marcaÃ§Ãµes precisas.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">ðŸªŸ</div><div class="font-semibold text-steel-800">Janela selecionada</div><div class="text-steel-500 text-sm mt-1">Painel Ã  direita mostra e edita o tipo e a medida da marca atual.</div></div>
+              <div class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm"><div class="text-2xl mb-2">ðŸŒ</div><div class="font-semibold text-steel-800">Idioma e unidade</div><div class="text-steel-500 text-sm mt-1">Alterne PT Â· EN Â· ES e mÂ² / ftÂ² na aba ConfiguraÃ§Ãµes â€” vale tambÃ©m nos documentos.</div></div>
             </div>
 
             <!-- FAQ -->
@@ -445,36 +445,36 @@
             <div class="space-y-3 mb-10">
               <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
                 <summary class="font-semibold text-steel-800 cursor-pointer">Preciso converter o PDF antes?</summary>
-                <div class="text-steel-500 text-sm mt-2">Não. Envie o PDF original do projeto — o motor cuida da leitura.</div>
+                <div class="text-steel-500 text-sm mt-2">NÃ£o. Envie o PDF original do projeto â€” o motor cuida da leitura.</div>
               </details>
               <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
                 <summary class="font-semibold text-steel-800 cursor-pointer">E se a IA errar uma medida ou tipo?</summary>
-                <div class="text-steel-500 text-sm mt-2">Você ajusta na tabela <b>Resumo</b> ou no painel da janela selecionada. A contagem e os documentos atualizam na hora.</div>
+                <div class="text-steel-500 text-sm mt-2">VocÃª ajusta na tabela <b>Resumo</b> ou no painel da janela selecionada. A contagem e os documentos atualizam na hora.</div>
               </details>
               <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
                 <summary class="font-semibold text-steel-800 cursor-pointer">Meus projetos ficam salvos onde?</summary>
-                <div class="text-steel-500 text-sm mt-2">No seu computador, na pasta do ConstructCount. Reabra a qualquer momento em <b>Projetos salvos</b> — nada é reprocessado à toa.</div>
+                <div class="text-steel-500 text-sm mt-2">No seu computador, na pasta do ConstructCount. Reabra a qualquer momento em <b>Projetos salvos</b> â€” nada Ã© reprocessado Ã  toa.</div>
               </details>
               <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-                <summary class="font-semibold text-steel-800 cursor-pointer">Já tenho o takeoff pronto. Posso usar?</summary>
-                <div class="text-steel-500 text-sm mt-2">Sim. Use <b>Importar Takeoff (Excel / JSON)</b> e o sistema gera preço e documentos sem reprocessar a planta.</div>
+                <summary class="font-semibold text-steel-800 cursor-pointer">JÃ¡ tenho o takeoff pronto. Posso usar?</summary>
+                <div class="text-steel-500 text-sm mt-2">Sim. Use <b>Importar Takeoff (Excel / JSON)</b> e o sistema gera preÃ§o e documentos sem reprocessar a planta.</div>
               </details>
               <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
                 <summary class="font-semibold text-steel-800 cursor-pointer">O que cada pacote libera?</summary>
-                <div class="text-steel-500 text-sm mt-2">Cada ofício é vendido à parte (Framing, Drywall, Insulation, Paint) e o combo <b>Parede completa</b> libera os 4. O app destrava exatamente o que você comprou — ofícios fora do plano aparecem com 🔒. Janelas &amp; Portas é um pacote próprio.</div>
+                <div class="text-steel-500 text-sm mt-2">Cada ofÃ­cio Ã© vendido Ã  parte (Framing, Drywall, Insulation, Paint) e o combo <b>Parede completa</b> libera os 4. O app destrava exatamente o que vocÃª comprou â€” ofÃ­cios fora do plano aparecem com ðŸ”’. Janelas &amp; Portas Ã© um pacote prÃ³prio.</div>
               </details>
               <details class="bg-white border border-steel-200 rounded-xl p-5 shadow-sm">
-                <summary class="font-semibold text-steel-800 cursor-pointer">Como funciona o add-on Relatórios?</summary>
-                <div class="text-steel-500 text-sm mt-2">Os relatórios e editores do pacote Parede (orçamento, materiais, planta marcada, editor de blocos e visual, texto por IA) são um <b>add-on à parte</b> que você liga em qualquer pacote, na aba <b>Pacote</b>.</div>
+                <summary class="font-semibold text-steel-800 cursor-pointer">Como funciona o add-on RelatÃ³rios?</summary>
+                <div class="text-steel-500 text-sm mt-2">Os relatÃ³rios e editores do pacote Parede (orÃ§amento, materiais, planta marcada, editor de blocos e visual, texto por IA) sÃ£o um <b>add-on Ã  parte</b> que vocÃª liga em qualquer pacote, na aba <b>Pacote</b>.</div>
               </details>
             </div>
 
             <!-- CTA -->
             <div class="text-center bg-white border border-steel-200 rounded-xl p-8 shadow-sm">
-              <div class="font-semibold text-steel-800 text-lg">Pronto pra começar?</div>
+              <div class="font-semibold text-steel-800 text-lg">Pronto pra comeÃ§ar?</div>
               <p class="text-steel-500 text-sm mt-1 mb-4">Abra uma planta e veja o takeoff aparecer.</p>
               <button id="howStart" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white shadow-sm transition" style="background:linear-gradient(135deg,#d9a02a,#a06b12)">
-                <span>📂</span><span>Novo projeto (PDF)</span>
+                <span>ðŸ“‚</span><span>Novo projeto (PDF)</span>
               </button>
             </div>
           </div>
@@ -483,14 +483,14 @@
     </div>
   </nav>
 
-  <!-- Modal: Licença & Direitos (software proprietário M2PB) -->
+  <!-- Modal: LicenÃ§a & Direitos (software proprietÃ¡rio M2PB) -->
   <div id="licenseModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
-      <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">🔒 <span>Licença &amp; Direitos</span></h3>
+      <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">ðŸ”’ <span>LicenÃ§a &amp; Direitos</span></h3>
       <div class="space-y-3 text-sm text-steel-600 leading-relaxed">
-        <p><span>ConstructCount é um software proprietário da M2PB. © 2026 M2PB — Todos os direitos reservados.</span></p>
-        <p><span>A comercialização deste aplicativo — incluindo a venda de assinaturas e licenças de uso — é direito exclusivo da M2PB. Nenhuma outra pessoa física ou jurídica está autorizada a vender, revender, sublicenciar ou distribuir assinaturas ou licenças deste app sem autorização expressa e por escrito da M2PB.</span></p>
-        <p><span>É vedada a cópia, modificação, engenharia reversa ou redistribuição sem permissão. Para adquirir uma assinatura oficial, contate a M2PB.</span></p>
+        <p><span>ConstructCount Ã© um software proprietÃ¡rio da M2PB. Â© 2026 M2PB â€” Todos os direitos reservados.</span></p>
+        <p><span>A comercializaÃ§Ã£o deste aplicativo â€” incluindo a venda de assinaturas e licenÃ§as de uso â€” Ã© direito exclusivo da M2PB. Nenhuma outra pessoa fÃ­sica ou jurÃ­dica estÃ¡ autorizada a vender, revender, sublicenciar ou distribuir assinaturas ou licenÃ§as deste app sem autorizaÃ§Ã£o expressa e por escrito da M2PB.</span></p>
+        <p><span>Ã‰ vedada a cÃ³pia, modificaÃ§Ã£o, engenharia reversa ou redistribuiÃ§Ã£o sem permissÃ£o. Para adquirir uma assinatura oficial, contate a M2PB.</span></p>
       </div>
       <div class="flex items-center justify-between mt-5">
         <a href="https://m2pb.com" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-steel-600 hover:text-steel-800">m2pb.com</a>
@@ -499,35 +499,35 @@
     </div>
   </div>
 
-  <!-- Modal: Configurações do motor -->
+  <!-- Modal: ConfiguraÃ§Ãµes do motor -->
   <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
-      <h3 class="text-lg font-semibold mb-4">Configurações do motor local</h3>
+      <h3 class="text-lg font-semibold mb-4">ConfiguraÃ§Ãµes do motor local</h3>
       <div class="grid grid-cols-2 gap-4 text-sm">
         <label class="col-span-2">Pasta dos projetos (Jobs)
           <input id="cfgRoot" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" />
         </label>
-        <label>DPI (qualidade × velocidade)
+        <label>DPI (qualidade Ã— velocidade)
           <input id="cfgDpi" type="number" min="100" max="400" step="10" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" />
         </label>
-        <label>Tamanho de exibição (px)
+        <label>Tamanho de exibiÃ§Ã£o (px)
           <input id="cfgDispMax" type="number" min="1200" max="6000" step="100" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" />
         </label>
         <label>Escopo das folhas
           <select id="cfgScope" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5">
-            <option value="all">Todas as páginas</option>
-            <option value="marks">Só as folhas com marcas</option>
+            <option value="all">Todas as pÃ¡ginas</option>
+            <option value="marks">SÃ³ as folhas com marcas</option>
           </select>
         </label>
         <div></div>
         <label>Folha do Window Schedule (A700)
-          <input id="cfgSchedWin" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" placeholder="auto ou nº" />
+          <input id="cfgSchedWin" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" placeholder="auto ou nÂº" />
         </label>
         <label>Folha do Storefront (A701)
-          <input id="cfgSchedStore" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" placeholder="auto ou nº" />
+          <input id="cfgSchedStore" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" placeholder="auto ou nÂº" />
         </label>
       </div>
-      <p class="text-xs text-steel-500 mt-3">Mudanças valem para o próximo "Reprocessar" de um projeto.</p>
+      <p class="text-xs text-steel-500 mt-3">MudanÃ§as valem para o prÃ³ximo "Reprocessar" de um projeto.</p>
       <div class="flex justify-end gap-2 mt-5">
         <button id="cfgCancel" class="px-3 py-1.5 rounded border border-steel-300 hover:bg-steel-50">Cancelar</button>
         <button id="cfgSave" class="px-3 py-1.5 rounded bg-steel-600 text-white font-medium hover:bg-steel-700">Salvar</button>
@@ -535,17 +535,17 @@
     </div>
   </div>
 
-  <!-- Modal: Marca / Relatórios (branding dos documentos) -->
+  <!-- Modal: Marca / RelatÃ³rios (branding dos documentos) -->
   <div id="brandModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
-      <h3 class="text-lg font-semibold mb-1">🎨 Marca dos relatórios</h3>
-      <p class="text-xs text-steel-500 mb-4">Aparece no cabeçalho de todos os relatórios (Orçamento, Pedido Fornecedor, Quadro Resumo). Fica salvo neste computador.</p>
+      <h3 class="text-lg font-semibold mb-1">ðŸŽ¨ Marca dos relatÃ³rios</h3>
+      <p class="text-xs text-steel-500 mb-4">Aparece no cabeÃ§alho de todos os relatÃ³rios (OrÃ§amento, Pedido Fornecedor, Quadro Resumo). Fica salvo neste computador.</p>
       <div class="grid grid-cols-2 gap-4 text-sm">
         <label class="col-span-2">Nome da empresa
           <input id="brName" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" placeholder="Sua Empresa Ltda" />
         </label>
-        <label class="col-span-2">Linha de contato (telefone · e-mail · site)
-          <input id="brLine2" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" placeholder="(11) 99999-0000 · contato@empresa.com" />
+        <label class="col-span-2">Linha de contato (telefone Â· e-mail Â· site)
+          <input id="brLine2" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" placeholder="(11) 99999-0000 Â· contato@empresa.com" />
         </label>
         <label>Cor de destaque
           <input id="brAccent" type="color" value="#2c476a" class="mt-1 w-full h-9 rounded border border-steel-200 px-1 py-0.5" />
@@ -554,12 +554,12 @@
           <input id="brLogo" type="file" accept="image/png,image/jpeg" class="mt-1 w-full text-xs" />
         </label>
         <div class="col-span-2 flex items-center gap-3">
-          <span class="text-xs text-steel-500">Prévia:</span>
+          <span class="text-xs text-steel-500">PrÃ©via:</span>
           <img id="brLogoPrev" class="h-10 rounded border border-steel-200 hidden" alt="logo" />
           <button id="brLogoClear" class="text-xs text-rose-600 hover:underline hidden">remover logo</button>
         </div>
-        <label class="col-span-2">Rodapé (opcional)
-          <input id="brFooter" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" placeholder="Validade 15 dias · CNPJ 00.000.000/0001-00" />
+        <label class="col-span-2">RodapÃ© (opcional)
+          <input id="brFooter" class="mt-1 w-full rounded border border-steel-200 px-2 py-1.5" placeholder="Validade 15 dias Â· CNPJ 00.000.000/0001-00" />
         </label>
       </div>
       <div class="flex justify-end gap-2 mt-5">
@@ -573,21 +573,21 @@
   <div id="jobsModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
     <div class="bg-white rounded-xl shadow-xl w-full max-w-5xl h-[80vh] flex flex-col">
       <div class="flex items-center gap-3 px-5 py-3 border-b border-steel-100">
-        <h3 class="text-lg font-semibold">📁 Projetos salvos</h3>
-        <input id="jobsSearch" class="ml-2 flex-1 max-w-xs rounded border border-steel-200 px-3 py-1.5 text-sm" placeholder="Buscar projeto…" />
+        <h3 class="text-lg font-semibold">ðŸ“ Projetos salvos</h3>
+        <input id="jobsSearch" class="ml-2 flex-1 max-w-xs rounded border border-steel-200 px-3 py-1.5 text-sm" placeholder="Buscar projetoâ€¦" />
         <div class="ml-auto flex items-center gap-1">
-          <button id="jobsViewGrid" class="px-2 py-1 rounded text-sm bg-steel-100" title="Ícones">▦</button>
-          <button id="jobsViewList" class="px-2 py-1 rounded text-sm hover:bg-steel-100" title="Lista">☰</button>
-          <button id="jobsRefresh" class="px-2 py-1 rounded text-sm hover:bg-steel-100" title="Atualizar">↻</button>
+          <button id="jobsViewGrid" class="px-2 py-1 rounded text-sm bg-steel-100" title="Ãcones">â–¦</button>
+          <button id="jobsViewList" class="px-2 py-1 rounded text-sm hover:bg-steel-100" title="Lista">â˜°</button>
+          <button id="jobsRefresh" class="px-2 py-1 rounded text-sm hover:bg-steel-100" title="Atualizar">â†»</button>
           <button id="jobsClose" class="px-2 py-1 text-steel-500 hover:text-steel-800 text-xl leading-none">&times;</button>
         </div>
       </div>
-      <!-- proteção do cliente: os trabalhos não se perdem -->
+      <!-- proteÃ§Ã£o do cliente: os trabalhos nÃ£o se perdem -->
       <div class="flex items-center gap-3 px-5 py-2.5 bg-emerald-50 border-b border-emerald-100 text-[13px] text-emerald-900">
-        <span class="text-base">💾</span>
-        <span class="flex-1">Seus projetos ficam salvos <b>no seu computador</b>. Atualizar ou reinstalar o app <b>não apaga</b> nada.</span>
-        <button id="jobsOpenFolder" class="px-2.5 py-1 rounded border border-emerald-300 bg-white hover:bg-emerald-100 text-emerald-800 text-xs whitespace-nowrap">📁 Abrir pasta</button>
-        <button id="jobsBackup" class="px-2.5 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700 text-xs whitespace-nowrap">💾 Fazer backup (.zip)</button>
+        <span class="text-base">ðŸ’¾</span>
+        <span class="flex-1">Seus projetos ficam salvos <b>no seu computador</b>. Atualizar ou reinstalar o app <b>nÃ£o apaga</b> nada.</span>
+        <button id="jobsOpenFolder" class="px-2.5 py-1 rounded border border-emerald-300 bg-white hover:bg-emerald-100 text-emerald-800 text-xs whitespace-nowrap">ðŸ“ Abrir pasta</button>
+        <button id="jobsBackup" class="px-2.5 py-1 rounded bg-emerald-600 text-white hover:bg-emerald-700 text-xs whitespace-nowrap">ðŸ’¾ Fazer backup (.zip)</button>
       </div>
       <div id="jobsBody" class="flex-1 overflow-y-auto p-4 bg-steel-50"></div>
       <div id="jobsStatus" class="px-5 py-2 border-t border-steel-100 text-xs text-steel-500"></div>
@@ -606,7 +606,7 @@
           <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">1</span>
           Upload da Planta (PDF)
         </h2>
-        <p class="text-sm text-steel-500 mb-4">Envie a planta arquitetônica. A IA fará a extração das esquadrias.</p>
+        <p class="text-sm text-steel-500 mb-4">Envie a planta arquitetÃ´nica. A IA farÃ¡ a extraÃ§Ã£o das esquadrias.</p>
 
         <label id="dropzone" for="pdfInput"
           class="block border-2 border-dashed border-steel-300 rounded-lg p-8 text-center cursor-pointer hover:border-steel-500 hover:bg-steel-50 transition">
@@ -621,7 +621,7 @@
         <!-- Modo desktop (pywebview): motor Python local, sem servidor -->
         <button id="btnDesktopPick"
           class="hidden mt-3 w-full rounded-lg bg-steel-600 text-white font-medium py-2.5 hover:bg-steel-700 transition">
-          Selecionar projeto (PDF) — motor local
+          Selecionar projeto (PDF) â€” motor local
         </button>
 
         <!-- Loader -->
@@ -631,9 +631,9 @@
         </div>
         <p id="uploadMsg" class="hidden text-xs mt-3"></p>
 
-        <!-- Importar takeoff já pronto (do agente) -->
+        <!-- Importar takeoff jÃ¡ pronto (do agente) -->
         <div class="mt-4 pt-4 border-t border-steel-100">
-          <p class="text-sm text-steel-500 mb-2">Já tem o takeoff pronto? Importe direto (gera preço e documentos sem reprocessar):</p>
+          <p class="text-sm text-steel-500 mb-2">JÃ¡ tem o takeoff pronto? Importe direto (gera preÃ§o e documentos sem reprocessar):</p>
           <label for="takeoffInput"
             class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-steel-300 text-steel-700 font-medium hover:bg-steel-50 cursor-pointer transition">
             <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
@@ -678,11 +678,11 @@
         <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
           <h2 class="text-lg font-semibold flex items-center gap-2">
             <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">3</span>
-            Itens Extraídos &amp; Editor
+            Itens ExtraÃ­dos &amp; Editor
           </h2>
           <button id="unitToggle"
             class="text-sm px-3 py-1.5 rounded-lg bg-steel-600 text-white font-medium hover:bg-steel-700 transition">
-            Converter para ft²
+            Converter para ftÂ²
           </button>
         </div>
 
@@ -696,7 +696,7 @@
                 <th class="py-2 pr-2 font-semibold">Alt.</th>
                 <th class="py-2 pr-2 font-semibold" title="Medida original como no projeto">Orig.</th>
                 <th class="py-2 pr-2 font-semibold">Qtd</th>
-                <th class="py-2 pr-2 font-semibold">Área un.</th>
+                <th class="py-2 pr-2 font-semibold">Ãrea un.</th>
                 <th class="py-2 pr-2 font-semibold">Total</th>
                 <th class="py-2 font-semibold"></th>
               </tr>
@@ -711,12 +711,12 @@
             <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
             Adicionar item
           </button>
-          <p class="text-xs text-steel-400">Edite ID, Tipo, Largura (mm), Altura (mm) e Qtd &mdash; a área recalcula sozinha.
-            Unidade: <span id="unitLabel" class="font-semibold text-steel-600">m²</span></p>
+          <p class="text-xs text-steel-400">Edite ID, Tipo, Largura (mm), Altura (mm) e Qtd &mdash; a Ã¡rea recalcula sozinha.
+            Unidade: <span id="unitLabel" class="font-semibold text-steel-600">mÂ²</span></p>
         </div>
 
         <div class="mt-3 text-right text-sm font-semibold text-steel-700">
-          Área total do projeto: <span id="grandTotal">0</span> <span class="unit-suffix">m²</span>
+          Ãrea total do projeto: <span id="grandTotal">0</span> <span class="unit-suffix">mÂ²</span>
         </div>
       </div>
 
@@ -725,7 +725,7 @@
         <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
           <h2 class="text-lg font-semibold flex items-center gap-2">
             <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">4</span>
-            Módulo de Custos
+            MÃ³dulo de Custos
           </h2>
           <label class="text-sm flex items-center gap-2">
             <span class="text-steel-500">Moeda</span>
@@ -733,15 +733,15 @@
               class="rounded-lg border border-steel-200 px-2 py-1.5 focus:ring-2 focus:ring-steel-400 outline-none">
               <option value="USD">$ USD</option>
               <option value="BRL">R$ BRL</option>
-              <option value="EUR">€ EUR</option>
-              <option value="GBP">£ GBP</option>
+              <option value="EUR">â‚¬ EUR</option>
+              <option value="GBP">Â£ GBP</option>
             </select>
           </label>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <label class="text-sm">
-            <span class="text-steel-600 font-medium">Custo fornecedor (<span id="costPerM2Label">$</span>/m²)</span>
+            <span class="text-steel-600 font-medium">Custo fornecedor (<span id="costPerM2Label">$</span>/mÂ²)</span>
             <input id="costPerM2" type="number" min="0" step="10" value="900"
               class="mt-1 w-full rounded-lg border border-steel-200 px-3 py-2 focus:ring-2 focus:ring-steel-400 focus:border-steel-400 outline-none" />
           </label>
@@ -756,7 +756,7 @@
               class="mt-1 w-full rounded-lg border border-steel-200 px-3 py-2 focus:ring-2 focus:ring-steel-400 focus:border-steel-400 outline-none" />
           </label>
           <label class="text-sm">
-            <span class="text-steel-600 font-medium">Área total (m²)</span>
+            <span class="text-steel-600 font-medium">Ãrea total (mÂ²)</span>
             <input id="costArea" type="text" readonly
               class="mt-1 w-full rounded-lg border border-steel-200 bg-steel-50 px-3 py-2 text-steel-700" />
           </label>
@@ -768,7 +768,7 @@
             <p id="outCost" class="text-lg font-bold text-steel-800">$ 0</p>
           </div>
           <div class="rounded-lg bg-steel-600 text-white p-3">
-            <p class="text-xs text-steel-100">Preço cliente</p>
+            <p class="text-xs text-steel-100">PreÃ§o cliente</p>
             <p id="outPrice" class="text-lg font-bold">$ 0</p>
           </div>
           <div class="rounded-lg bg-emerald-50 ring-1 ring-emerald-200 p-3">
@@ -782,29 +782,29 @@
     <!-- ========== COLUNA DIREITA ========== -->
     <section class="space-y-6">
 
-      <!-- Pré-visualização SVG -->
+      <!-- PrÃ©-visualizaÃ§Ã£o SVG -->
       <div id="previewCard" class="bg-white rounded-xl shadow-sm ring-1 ring-steel-100 p-6 hidden">
         <div class="flex items-center justify-between mb-1 flex-wrap gap-3">
           <h2 class="text-lg font-semibold flex items-center gap-2">
             <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">5</span>
-            Pré-visualização Técnica
+            PrÃ©-visualizaÃ§Ã£o TÃ©cnica
           </h2>
           <select id="previewSelect"
             class="text-sm rounded-lg border border-steel-200 px-2 py-1.5 focus:ring-2 focus:ring-steel-400 outline-none"></select>
         </div>
         <p class="text-sm text-steel-500 mb-3">Desenho gerado automaticamente do item <span id="previewId" class="font-semibold">W01</span>.</p>
-        <!-- mão da esquadria: lado da dobradiça + para onde abre -->
+        <!-- mÃ£o da esquadria: lado da dobradiÃ§a + para onde abre -->
         <div class="flex items-center gap-4 mb-3 text-sm flex-wrap">
-          <label class="flex items-center gap-1">Dobradiça:
+          <label class="flex items-center gap-1">DobradiÃ§a:
             <select id="prevSide" class="rounded-lg border border-steel-200 px-2 py-1 outline-none focus:ring-2 focus:ring-steel-400">
-              <option value="">— a definir</option>
+              <option value="">â€” a definir</option>
               <option value="L">Esquerda</option>
               <option value="R">Direita</option>
             </select>
           </label>
           <label class="flex items-center gap-1">Abre para:
             <select id="prevSwing" class="rounded-lg border border-steel-200 px-2 py-1 outline-none focus:ring-2 focus:ring-steel-400">
-              <option value="">— a definir</option>
+              <option value="">â€” a definir</option>
               <option value="in">Dentro</option>
               <option value="out">Fora</option>
             </select>
@@ -821,7 +821,7 @@
           <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">6</span>
           Quadro Resumo
         </h2>
-        <p class="text-sm text-steel-500 mb-3">Marca colorida e única por tipo (cor + forma) com a quantidade por projeto.</p>
+        <p class="text-sm text-steel-500 mb-3">Marca colorida e Ãºnica por tipo (cor + forma) com a quantidade por projeto.</p>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
@@ -845,30 +845,30 @@
         <p id="summaryMsg" class="text-xs text-emerald-600 mt-2 hidden"></p>
       </div>
 
-      <!-- Conferência Planta × Fachada -->
+      <!-- ConferÃªncia Planta Ã— Fachada -->
       <div id="checkCard" class="bg-white rounded-xl shadow-sm ring-1 ring-steel-100 p-6 hidden">
         <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
           <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">7</span>
-          Conferência (Planta × Fachada)
+          ConferÃªncia (Planta Ã— Fachada)
         </h2>
-        <p class="text-sm text-steel-500 mb-3">Comparação das esquadrias entre a planta baixa e a fachada/elevação. Resolva as divergências antes de enviar ao fabricante.</p>
+        <p class="text-sm text-steel-500 mb-3">ComparaÃ§Ã£o das esquadrias entre a planta baixa e a fachada/elevaÃ§Ã£o. Resolva as divergÃªncias antes de enviar ao fabricante.</p>
         <ul id="checkList" class="text-sm space-y-1 list-disc pl-5"></ul>
       </div>
 
-      <!-- Exportação -->
+      <!-- ExportaÃ§Ã£o -->
       <div id="exportCard" class="bg-white rounded-xl shadow-sm ring-1 ring-steel-100 p-6 hidden">
         <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
           <span class="w-6 h-6 rounded bg-steel-100 text-steel-700 text-sm flex items-center justify-center font-bold">8</span>
-          Exportação
+          ExportaÃ§Ã£o
         </h2>
-        <p class="text-sm text-steel-500 mb-4">Todos os documentos agora ficam na Central de relatórios.</p>
+        <p class="text-sm text-steel-500 mb-4">Todos os documentos agora ficam na Central de relatÃ³rios.</p>
         <button id="btnReportsHub"
           class="w-full rounded-lg border border-steel-200 p-5 text-left hover:border-steel-500 hover:shadow-md transition">
           <div class="flex items-center gap-2 mb-1">
-            <span class="text-2xl">📄</span>
-            <span class="font-semibold">Abrir a Central de relatórios</span>
+            <span class="text-2xl">ðŸ“„</span>
+            <span class="font-semibold">Abrir a Central de relatÃ³rios</span>
           </div>
-          <p class="text-xs text-steel-500">Orçamento, Proposta, Pedido, Quadro Resumo e Planta Marcada — organizados por pacote.</p>
+          <p class="text-xs text-steel-500">OrÃ§amento, Proposta, Pedido, Quadro Resumo e Planta Marcada â€” organizados por pacote.</p>
         </button>
       </div>
 
@@ -877,11 +877,11 @@
         <svg viewBox="0 0 24 24" class="w-16 h-16 mx-auto text-steel-200 mb-3" fill="none" stroke="currentColor" stroke-width="1.2">
           <rect x="3" y="3" width="18" height="18" rx="1.5"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/>
         </svg>
-        <p class="text-steel-400">Envie um PDF para começar.<br/>Os resultados e o desenho técnico aparecerão aqui.</p>
-        <!-- atalhos do motor local (aparecem só no app de desktop) -->
+        <p class="text-steel-400">Envie um PDF para comeÃ§ar.<br/>Os resultados e o desenho tÃ©cnico aparecerÃ£o aqui.</p>
+        <!-- atalhos do motor local (aparecem sÃ³ no app de desktop) -->
         <div id="homeShortcuts" class="hidden mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-          <button id="homeOpenPdf" class="px-5 py-3 rounded-lg bg-steel-600 text-white font-medium hover:bg-steel-700">📂 Novo projeto (PDF)</button>
-          <button id="homeOpenJobs" class="px-5 py-3 rounded-lg border border-steel-300 text-steel-700 font-medium hover:bg-steel-50">🗂️ Projetos salvos</button>
+          <button id="homeOpenPdf" class="px-5 py-3 rounded-lg bg-steel-600 text-white font-medium hover:bg-steel-700">ðŸ“‚ Novo projeto (PDF)</button>
+          <button id="homeOpenJobs" class="px-5 py-3 rounded-lg border border-steel-300 text-steel-700 font-medium hover:bg-steel-50">ðŸ—‚ï¸ Projetos salvos</button>
         </div>
       </div>
     </section>
@@ -893,22 +893,22 @@
     <a href="https://m2pb.com" target="_blank" rel="noopener noreferrer"
        class="font-semibold text-steel-500 hover:text-steel-700 transition">M2PB</a>
     &middot;
-    <button id="footLicense" class="hover:text-steel-700 hover:underline underline-offset-2">Licença</button>
+    <button id="footLicense" class="hover:text-steel-700 hover:underline underline-offset-2">LicenÃ§a</button>
   </footer>
 
-  <!-- Módulos JS (ordem importa: dependências primeiro) -->
-  <!-- Tela de anotação CV-assistida (planta + marcadores) -->
+  <!-- MÃ³dulos JS (ordem importa: dependÃªncias primeiro) -->
+  <!-- Tela de anotaÃ§Ã£o CV-assistida (planta + marcadores) -->
   <div id="annotator" class="hidden fixed inset-0 z-50 bg-black/85 flex flex-col">
     <div class="bg-steel-800 text-white px-4 py-2 flex items-center gap-3 text-sm flex-wrap">
-      <span class="font-semibold">Revisar planta — confirme/adicione as marcas</span>
+      <span class="font-semibold">Revisar planta â€” confirme/adicione as marcas</span>
       <span id="annPage" class="text-steel-200"></span>
       <button id="annAdd" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500">+ Adicionar marca</button>
-      <label class="flex items-center gap-1">Rótulo:
+      <label class="flex items-center gap-1">RÃ³tulo:
         <input id="annLabel" class="text-steel-900 px-2 py-0.5 rounded w-24" placeholder="ex.: F1" />
       </label>
-      <button id="annZoomOut" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500">−</button>
+      <button id="annZoomOut" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500">âˆ’</button>
       <button id="annZoomIn" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500">+</button>
-      <label class="flex items-center gap-1" title="Quantos pavimentos esta planta representa (ex.: 3º ao 9º = 7). Multiplica as contagens.">Pavimentos×
+      <label class="flex items-center gap-1" title="Quantos pavimentos esta planta representa (ex.: 3Âº ao 9Âº = 7). Multiplica as contagens.">PavimentosÃ—
         <input id="annMult" type="number" min="1" step="1" value="1" class="text-steel-900 px-2 py-0.5 rounded w-16" />
       </label>
       <span id="annCounts" class="ml-auto text-steel-100"></span>
@@ -916,47 +916,49 @@
       <button id="annCancel" class="px-2 py-1 rounded bg-rose-600 hover:bg-rose-500">Cancelar</button>
     </div>
     <canvas id="annCanvas" class="flex-1 w-full bg-steel-900" style="cursor:grab"></canvas>
-    <p class="bg-steel-800 text-steel-300 text-xs px-4 py-1">Clique numa marca p/ confirmar/rejeitar · "Adicionar marca" + clique p/ incluir · duplo-clique p/ editar rótulo · roda do mouse = zoom · arraste = mover</p>
+    <p class="bg-steel-800 text-steel-300 text-xs px-4 py-1">Clique numa marca p/ confirmar/rejeitar Â· "Adicionar marca" + clique p/ incluir Â· duplo-clique p/ editar rÃ³tulo Â· roda do mouse = zoom Â· arraste = mover</p>
   </div>
 
-  <!-- ===== TELA do pacote FRAMING (Metal & Wood) — preenchida por js/framing.js ===== -->
+  <!-- ===== TELA do pacote FRAMING (Metal & Wood) â€” preenchida por js/framing.js ===== -->
   <div id="framingScreen" class="hidden fixed inset-0 z-50 bg-steel-50 flex flex-col"></div>
 
-  <!-- ===== WORKSPACE de takeoff (estilo PlanSwift) — pasta do projeto, páginas e marcas editáveis ===== -->
+  <!-- ===== WORKSPACE de takeoff (estilo PlanSwift) â€” pasta do projeto, pÃ¡ginas e marcas editÃ¡veis ===== -->
   <div id="workspace" class="hidden fixed inset-0 z-50 bg-steel-900 flex flex-col">
     <!-- barra de progresso do preparo -->
     <div id="wsPrep" class="hidden absolute inset-0 z-10 bg-steel-900/95 flex flex-col items-center justify-center text-white gap-3">
       <span class="w-8 h-8 border-4 border-steel-600 border-t-white rounded-full animate-spin"></span>
-      <p id="wsPrepMsg" class="font-medium">Preparando projeto…</p>
+      <p id="wsPrepMsg" class="font-medium">Preparando projetoâ€¦</p>
       <div class="w-80 h-2 bg-steel-700 rounded-full overflow-hidden"><div id="wsPrepBar" class="h-full bg-emerald-500 w-0 transition-all"></div></div>
       <p id="wsPrepSub" class="text-steel-300 text-xs"></p>
     </div>
 
-    <!-- topo (enxuto): título + status + consolidar/fechar -->
+    <!-- topo (enxuto): tÃ­tulo + status + consolidar/fechar -->
     <div class="bg-steel-800 text-white px-4 py-2 flex items-center gap-3 text-sm shrink-0">
       <span class="font-semibold" id="wsTitle">Takeoff</span>
       <span id="wsPageTitle" class="text-steel-200"></span>
-      <label class="flex items-center gap-1" title="Seção/grupo onde as novas marcas entram">📁
+      <label class="flex items-center gap-1" title="SeÃ§Ã£o/grupo onde as novas marcas entram">ðŸ“
         <select id="wsSection" class="text-steel-900 rounded px-2 py-0.5 text-sm"></select>
       </label>
-      <button id="wsSecNew" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500" title="Nova seção">＋</button>
-      <button id="wsSecRename" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500" title="Renomear seção">✎</button>
-      <button id="wsSecDel" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500" title="Excluir seção">🗑️</button>
+      <button id="wsSecNew" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500" title="Nova seÃ§Ã£o">ï¼‹</button>
+      <button id="wsSecRename" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500" title="Renomear seÃ§Ã£o">âœŽ</button>
+      <button id="wsSecDel" class="px-2 py-1 rounded bg-steel-600 hover:bg-steel-500" title="Excluir seÃ§Ã£o">ðŸ—‘ï¸</button>
       <span id="wsSaved" class="text-steel-300 text-xs"></span>
       <span class="ml-auto"></span>
       <button id="wsScopeBtn" class="px-2 py-1 rounded bg-steel-700 hover:bg-steel-600 text-xs flex items-center gap-1"
-              title="Modo de reconhecimento do projeto — clique para mudar">🧭 <span>Escopo</span>: <b id="wsScopeLbl">Tudo</b></button>
-      <button id="wsConsolidate" class="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 font-semibold">Consolidar → Tabela</button>
+              title="Modo de reconhecimento do projeto â€” clique para mudar">ðŸ§­ <span>Escopo</span>: <b id="wsScopeLbl">Tudo</b></button>
+      <button id="wsConsolidate" class="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 font-semibold">Consolidar â†’ Tabela</button>
       <button id="wsClose" class="px-2 py-1 rounded bg-rose-600 hover:bg-rose-500">Fechar</button>
     </div>
 
-    <!-- RESUMO da marcação (overlay no rodapé — não toca no canvas) -->
-    <div id="wsSummary" class="hidden absolute bottom-0 left-0 right-0 z-40 border-t-2 border-amber-600/70 text-steel-100 flex flex-col" style="height:230px;background:#16140e">
+    <!-- RESUMO da marcaÃ§Ã£o (overlay no rodapÃ© â€” nÃ£o toca no canvas) -->
+    <div id="wsSummary" class="hidden absolute bottom-0 left-0 right-0 z-40 border-t-2 border-amber-600/70 text-steel-100 flex flex-col" style="height:300px;background:#16140e">
       <div class="flex items-center gap-3 px-3 py-1.5 border-b border-steel-700 text-xs shrink-0">
-        <span class="font-semibold">📊 Resumo da marcação</span>
+        <span class="font-semibold">ðŸ“Š Resumo por pacote</span>
         <span id="wsSummaryFolha" class="text-steel-400"></span>
-        <button id="wsSummaryClose" class="ml-auto text-steel-400 hover:text-white">✕ fechar</button>
+        <button id="wsSummaryClose" class="ml-auto text-steel-400 hover:text-white">âœ• fechar</button>
       </div>
+      <!-- quadros (cards) â€” 1 por pacote -->
+      <div id="wsSummaryCards" class="flex gap-2 px-3 py-2 overflow-x-auto shrink-0 border-b border-steel-700/60"></div>
       <div class="overflow-auto flex-1 min-h-0">
         <table class="w-full text-sm" id="wsSummaryTable">
           <thead class="sticky top-0 text-steel-400 text-xs" style="background:#16140e">
@@ -968,46 +970,46 @@
     </div>
 
     <div class="flex-1 flex min-h-0">
-      <!-- barra de ícones do painel esquerdo (quando recolhido) -->
+      <!-- barra de Ã­cones do painel esquerdo (quando recolhido) -->
       <div id="wsLeftBar" class="hidden w-9 shrink-0 bg-steel-800 text-steel-300 border-r border-steel-700 flex-col items-center py-2 gap-3">
-        <button id="wsLeftExpand" class="hover:text-white" title="Expandir painel">▶</button>
-        <button class="wsLeftIco w-8 h-8 rounded text-lg hover:bg-steel-700 hover:text-white" data-tip="Páginas">📄</button>
-        <button class="wsLeftIco w-8 h-8 rounded text-lg hover:bg-steel-700 hover:text-white" data-tip="Marcas desta folha">🏷️</button>
+        <button id="wsLeftExpand" class="hover:text-white" title="Expandir painel">â–¶</button>
+        <button class="wsLeftIco w-8 h-8 rounded text-lg hover:bg-steel-700 hover:text-white" data-tip="PÃ¡ginas">ðŸ“„</button>
+        <button class="wsLeftIco w-8 h-8 rounded text-lg hover:bg-steel-700 hover:text-white" data-tip="Marcas desta folha">ðŸ·ï¸</button>
       </div>
 
-      <!-- esquerda: páginas + itens -->
+      <!-- esquerda: pÃ¡ginas + itens -->
       <aside id="wsLeft" class="w-60 shrink-0 bg-steel-800 text-steel-100 flex flex-col border-r border-steel-700 min-h-0">
         <div class="px-2 py-1 flex justify-end border-b border-steel-700/50">
-          <button id="wsLeftCollapse" class="text-steel-400 hover:text-white text-xs px-1" title="Recolher painel (vira barra de ícones)">◀ recolher</button>
+          <button id="wsLeftCollapse" class="text-steel-400 hover:text-white text-xs px-1" title="Recolher painel (vira barra de Ã­cones)">â—€ recolher</button>
         </div>
         <div class="px-3 py-2 flex items-center gap-2 border-b border-steel-700 cursor-pointer" data-collapse>
-          <span class="text-xs font-semibold uppercase tracking-wide text-steel-400 flex-1">Páginas</span>
-          <button id="wsDelPages" class="hidden text-xs px-2 py-0.5 rounded bg-rose-700 hover:bg-rose-600" title="Apaga as folhas selecionadas (clique / Ctrl / Shift)">🗑 Apagar (0)</button>
-          <span class="ws-chev text-steel-400">▼</span>
+          <span class="text-xs font-semibold uppercase tracking-wide text-steel-400 flex-1">PÃ¡ginas</span>
+          <button id="wsDelPages" class="hidden text-xs px-2 py-0.5 rounded bg-rose-700 hover:bg-rose-600" title="Apaga as folhas selecionadas (clique / Ctrl / Shift)">ðŸ—‘ Apagar (0)</button>
+          <span class="ws-chev text-steel-400">â–¼</span>
         </div>
-        <!-- toolbar de ações das páginas (estilo PlanSwift) -->
+        <!-- toolbar de aÃ§Ãµes das pÃ¡ginas (estilo PlanSwift) -->
         <div class="flex items-center flex-wrap gap-0.5 px-2 py-1 border-b border-steel-700 bg-steel-900/40 text-base">
-          <button id="pgRecognize" class="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold mr-1" title="Reconhecer marcas: nas folhas SELECIONADAS (se houver seleção) ou em todas">🔎 <span>Reconhecer</span></button>
-          <button id="pgOpenJobs" class="pgTool" data-tip="Projetos salvos">📂</button>
-          <button id="pgNew" class="pgTool" data-tip="Abrir novo projeto (PDF)">➕</button>
-          <button id="pgRefresh" class="pgTool" data-tip="Recarregar folha">↻</button>
-          <button id="pgSort" class="pgTool" data-tip="Ordenar (nº / marcas)">↕️</button>
-          <button id="pgHires" class="pgTool" data-tip="Mais nitidez">🔍</button>
-          <button id="pgAuto" class="pgTool" data-tip="Auto Count">✨</button>
-          <button id="pgFolder" class="pgTool" data-tip="Abrir pasta do projeto">🗂️</button>
-          <button id="pgRestore" class="pgTool" data-tip="Restaurar marcas desta folha (desfaz o último Reconhecer)">↩️</button>
-          <button id="pgLegend" class="pgTool" data-tip="Mostrar/ocultar a legenda das marcas">🏷️</button>
-          <button id="pgSplit" class="pgTool" data-tip="Dividir: ver uma 2ª folha ao lado">⊟</button>
-          <button id="pgDel" class="pgTool" data-tip="Apagar folhas marcadas">🗑️</button>
+          <button id="pgRecognize" class="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold mr-1" title="Reconhecer marcas: nas folhas SELECIONADAS (se houver seleÃ§Ã£o) ou em todas">ðŸ”Ž <span>Reconhecer</span></button>
+          <button id="pgOpenJobs" class="pgTool" data-tip="Projetos salvos">ðŸ“‚</button>
+          <button id="pgNew" class="pgTool" data-tip="Abrir novo projeto (PDF)">âž•</button>
+          <button id="pgRefresh" class="pgTool" data-tip="Recarregar folha">â†»</button>
+          <button id="pgSort" class="pgTool" data-tip="Ordenar (nÂº / marcas)">â†•ï¸</button>
+          <button id="pgHires" class="pgTool" data-tip="Mais nitidez">ðŸ”</button>
+          <button id="pgAuto" class="pgTool" data-tip="Auto Count">âœ¨</button>
+          <button id="pgFolder" class="pgTool" data-tip="Abrir pasta do projeto">ðŸ—‚ï¸</button>
+          <button id="pgRestore" class="pgTool" data-tip="Restaurar marcas desta folha (desfaz o Ãºltimo Reconhecer)">â†©ï¸</button>
+          <button id="pgLegend" class="pgTool" data-tip="Mostrar/ocultar a legenda das marcas">ðŸ·ï¸</button>
+          <button id="pgSplit" class="pgTool" data-tip="Dividir: ver uma 2Âª folha ao lado">âŠŸ</button>
+          <button id="pgDel" class="pgTool" data-tip="Apagar folhas marcadas">ðŸ—‘ï¸</button>
         </div>
-        <div class="px-3 py-0.5 text-[10px] text-steel-500 select-none">Clique = só abre · Ctrl/Shift+clique = selecionar (várias) · selecionadas: 🔎 Reconhecer ou 🗑 Apagar</div>
+        <div class="px-3 py-0.5 text-[10px] text-steel-500 select-none">Clique = sÃ³ abre Â· Ctrl/Shift+clique = selecionar (vÃ¡rias) Â· selecionadas: ðŸ”Ž Reconhecer ou ðŸ—‘ Apagar</div>
         <div id="wsPages" class="overflow-y-auto flex-1 min-h-0 text-sm"></div>
-        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse><span>Marcas desta folha</span><span class="ws-chev">▼</span></div>
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse><span>Marcas desta folha</span><span class="ws-chev">â–¼</span></div>
         <div id="wsItems" class="overflow-y-auto text-sm" style="max-height:38%"></div>
       </aside>
 
-      <!-- centro: canvas COM header de folha (mesmo padrão do painel B) -->
-      <!-- alça de redimensionar o painel esquerdo -->
+      <!-- centro: canvas COM header de folha (mesmo padrÃ£o do painel B) -->
+      <!-- alÃ§a de redimensionar o painel esquerdo -->
       <div id="wsLeftResize" class="ws-resize" title="Arraste para redimensionar o painel"></div>
 
       <div class="flex-1 min-w-0 flex flex-col">
@@ -1019,65 +1021,65 @@
         <canvas id="wsCanvas" class="flex-1 w-full min-h-0 bg-steel-900" style="cursor:grab"></canvas>
       </div>
 
-      <!-- 2º painel (split): folha de referência lado a lado — IRMÃO do canvas (não embrulha) -->
+      <!-- 2Âº painel (split): folha de referÃªncia lado a lado â€” IRMÃƒO do canvas (nÃ£o embrulha) -->
       <div id="wsPaneB" class="hidden flex-1 min-w-0 flex flex-col border-l-2 border-amber-600/60">
         <div class="flex items-center gap-2 px-2 py-1 bg-steel-800 border-b border-steel-700 text-xs text-steel-200 shrink-0">
-          <span>2ª folha:</span>
+          <span>2Âª folha:</span>
           <select id="wsPaneBSheet" class="text-steel-900 rounded px-1 py-0.5"></select>
           <span id="wsPaneBInfo" class="text-steel-400"></span>
-          <button id="wsPaneBClose" class="ml-auto text-steel-400 hover:text-white" title="Fechar 2ª folha">✕</button>
+          <button id="wsPaneBClose" class="ml-auto text-steel-400 hover:text-white" title="Fechar 2Âª folha">âœ•</button>
         </div>
         <canvas id="wsCanvasB" class="flex-1 w-full min-h-0 bg-steel-900" style="cursor:grab"></canvas>
       </div>
 
-      <!-- alça de redimensionar o painel direito -->
+      <!-- alÃ§a de redimensionar o painel direito -->
       <div id="wsRightResize" class="ws-resize" title="Arraste para redimensionar o painel"></div>
 
       <!-- DIREITA: painel de ferramentas (estilo menu) -->
       <aside id="wsRight" class="w-56 shrink-0 bg-steel-800 text-steel-100 border-l border-steel-700 flex flex-col overflow-y-auto">
         <div class="px-2 py-1 flex border-b border-steel-700/50">
-          <button id="wsRightCollapse" class="text-steel-400 hover:text-white text-xs px-1" title="Recolher painel (vira barra de ícones)">recolher ▶</button>
+          <button id="wsRightCollapse" class="text-steel-400 hover:text-white text-xs px-1" title="Recolher painel (vira barra de Ã­cones)">recolher â–¶</button>
         </div>
-        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-b border-steel-700 cursor-pointer flex items-center justify-between" data-collapse title="Cada especialidade (trade) é uma camada sobre a planta. As novas marcas entram na camada ATIVA." data-acc="camadas"><span>Camadas</span><span class="ws-chev">▼</span></div>
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-b border-steel-700 cursor-pointer flex items-center justify-between" data-collapse title="Cada especialidade (trade) Ã© uma camada sobre a planta. As novas marcas entram na camada ATIVA." data-acc="camadas"><span>Camadas</span><span class="ws-chev">â–¼</span></div>
         <div class="p-2">
           <div id="wsLayersList" class="space-y-0.5"></div>
-          <button id="wsLayerAdd" class="w-full text-left px-2 py-1 rounded bg-steel-700 hover:bg-steel-600 text-sm mt-1.5">＋ Camada (trade)</button>
+          <button id="wsLayerAdd" class="w-full text-left px-2 py-1 rounded bg-steel-700 hover:bg-steel-600 text-sm mt-1.5">ï¼‹ Camada (trade)</button>
         </div>
-        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="ferramentas"><span>Ferramentas</span><span class="ws-chev">▼</span></div>
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="ferramentas"><span>Ferramentas</span><span class="ws-chev">â–¼</span></div>
         <div class="p-3 space-y-2">
-          <button id="wsCount" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600" title="Modo contar: clique na planta para adicionar 1 marca">⊕ Contar</button>
-          <button id="wsAuto" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600" title="Auto Count: clique numa marca de amostra e ele acha todas as iguais na folha. Ou ARRASTE uma caixa (começando numa marca) pra contar só dentro dela.">⊛ Auto Count</button>
-          <button id="wsDelete" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600" title="Apagar: clique numa marca para removê-la de vez">🗑 Apagar (1 a 1)</button>
-          <button id="wsDelSel" class="w-full text-left px-3 py-2 rounded bg-rose-700 hover:bg-rose-600 text-sm" title="Apaga TODAS as marcas do código selecionado na lista (clique num código em 'Marcas desta folha')">🗑 Apagar selecionadas</button>
+          <button id="wsCount" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600" title="Modo contar: clique na planta para adicionar 1 marca">âŠ• Contar</button>
+          <button id="wsAuto" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600" title="Auto Count: clique numa marca de amostra e ele acha todas as iguais na folha. Ou ARRASTE uma caixa (comeÃ§ando numa marca) pra contar sÃ³ dentro dela.">âŠ› Auto Count</button>
+          <button id="wsDelete" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600" title="Apagar: clique numa marca para removÃª-la de vez">ðŸ—‘ Apagar (1 a 1)</button>
+          <button id="wsDelSel" class="w-full text-left px-3 py-2 rounded bg-rose-700 hover:bg-rose-600 text-sm" title="Apaga TODAS as marcas do cÃ³digo selecionado na lista (clique num cÃ³digo em 'Marcas desta folha')">ðŸ—‘ Apagar selecionadas</button>
           <button id="wsClearRej" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Remove todas as marcas rejeitadas (cinza) desta folha">Limpar rejeitadas</button>
         </div>
 
-        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="autocount"><span>Auto Count</span><span class="ws-chev">▼</span></div>
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="autocount"><span>Auto Count</span><span class="ws-chev">â–¼</span></div>
         <div class="p-3 space-y-2">
-          <label class="block text-xs text-steel-300" title="Maior = só idênticos; menor = pega mais parecidos">Sensibilidade
+          <label class="block text-xs text-steel-300" title="Maior = sÃ³ idÃªnticos; menor = pega mais parecidos">Sensibilidade
             <div class="flex items-center gap-2 mt-1">
               <input id="wsThresh" type="range" min="50" max="95" step="1" value="80" class="flex-1" />
               <span id="wsThreshVal" class="text-steel-200 w-8 text-right">0.80</span>
             </div>
           </label>
-          <label class="block text-xs text-steel-300">Rótulo
+          <label class="block text-xs text-steel-300">RÃ³tulo
             <input id="wsLabel" class="mt-1 w-full text-steel-900 px-2 py-1 rounded" placeholder="ex.: 211A" />
           </label>
         </div>
 
-        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="janela"><span>Janela selecionada</span><span class="ws-chev">▼</span></div>
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="janela"><span>Janela selecionada</span><span class="ws-chev">â–¼</span></div>
         <div class="p-3 space-y-2">
-          <p id="wsSelCode" class="text-xs text-steel-300">Clique num código na lista à esquerda.</p>
+          <p id="wsSelCode" class="text-xs text-steel-300">Clique num cÃ³digo na lista Ã  esquerda.</p>
           <label class="block text-xs text-steel-300">Largura
             <div class="flex gap-1 mt-1">
               <input id="wsDimW" class="flex-1 text-steel-900 px-2 py-1 rounded text-sm" placeholder="4'-8 1/2&quot;" disabled />
-              <button id="wsDimWmeas" class="px-2 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="usar a última medida do desenho" disabled>↙med</button>
+              <button id="wsDimWmeas" class="px-2 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="usar a Ãºltima medida do desenho" disabled>â†™med</button>
             </div>
           </label>
           <label class="block text-xs text-steel-300">Altura
             <div class="flex gap-1 mt-1">
               <input id="wsDimH" class="flex-1 text-steel-900 px-2 py-1 rounded text-sm" placeholder="5'-0&quot;" disabled />
-              <button id="wsDimHmeas" class="px-2 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="usar a última medida do desenho" disabled>↙med</button>
+              <button id="wsDimHmeas" class="px-2 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="usar a Ãºltima medida do desenho" disabled>â†™med</button>
             </div>
           </label>
           <label class="block text-xs text-steel-300">Tipo (janela / porta)
@@ -1086,120 +1088,120 @@
           <button id="wsDimSave" class="w-full px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-sm font-medium" disabled>Salvar janela (medida + tipo)</button>
         </div>
 
-        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="escala"><span>Escala / Medir (desenho)</span><span class="ws-chev">▼</span></div>
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="escala"><span>Escala / Medir (desenho)</span><span class="ws-chev">â–¼</span></div>
         <div class="p-3 space-y-2">
-          <div class="rounded-lg border border-amber-700/50 bg-steel-800/60 p-2.5" title="Defina ANTES de levantar: quais ofícios esta estimativa cobre. Parede gera quantidades por escopo; Piso/Forro vêm da ferramenta de Área (SF).">
+          <div class="rounded-lg border border-amber-700/50 bg-steel-800/60 p-2.5" title="Defina ANTES de levantar: quais ofÃ­cios esta estimativa cobre. Parede gera quantidades por escopo; Piso/Forro vÃªm da ferramenta de Ãrea (SF).">
             <div class="text-[11px] font-semibold uppercase tracking-wide text-amber-300/90 mb-1.5">Escopo da obra</div>
             <div class="flex flex-wrap gap-1.5">
-              <button id="wsScopeFraming" data-pkg="framing" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="framing">🏗️ Framing</button>
-              <button id="wsScopeDrywall" data-pkg="drywall" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="drywall">🧱 Drywall</button>
-              <button id="wsScopeInsul" data-pkg="insulation" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="insulation">🧊 Insulation</button>
-              <button id="wsScopePaint" data-pkg="paint" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="paint">🎨 Paint</button>
-              <button id="wsScopeFloor" data-pkg="floor" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="floor">▱ Piso</button>
-              <button id="wsScopeCeiling" data-pkg="ceiling" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="ceiling">▱ Forro</button>
+              <button id="wsScopeFraming" data-pkg="framing" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="framing">ðŸ—ï¸ Framing</button>
+              <button id="wsScopeDrywall" data-pkg="drywall" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="drywall">ðŸ§± Drywall</button>
+              <button id="wsScopeInsul" data-pkg="insulation" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="insulation">ðŸ§Š Insulation</button>
+              <button id="wsScopePaint" data-pkg="paint" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="paint">ðŸŽ¨ Paint</button>
+              <button id="wsScopeFloor" data-pkg="floor" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="floor">â–± Piso</button>
+              <button id="wsScopeCeiling" data-pkg="ceiling" class="ws-scope text-xs font-medium px-2.5 py-1 rounded-full border" data-scope="ceiling">â–± Forro</button>
             </div>
-            <button id="wsReadScope" class="w-full mt-2 text-left px-3 py-2 rounded bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-sm font-semibold" title="A IA lê na FOLHA DE MEDIDAS (marcada com 📐) só o que está LIGADO no escopo: tipos de parede, acabamentos de piso/forro, alturas e schedule de janelas/portas. Marque a folha de medidas antes.">🧠 Ler escopo da folha de medidas</button>
+            <button id="wsReadScope" class="w-full mt-2 text-left px-3 py-2 rounded bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-sm font-semibold" title="A IA lÃª na FOLHA DE MEDIDAS (marcada com ðŸ“) sÃ³ o que estÃ¡ LIGADO no escopo: tipos de parede, acabamentos de piso/forro, alturas e schedule de janelas/portas. Marque a folha de medidas antes.">ðŸ§  Ler escopo da folha de medidas</button>
           </div>
-          <button id="wsCalib" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Trace uma linha sobre uma medida conhecida do desenho e informe o valor real">📏 Calibrar escala</button>
-          <button id="wsMeasure" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Trace uma linha e veja a medida real (precisa calibrar a escala antes). Pode adicionar várias.">📐 Medir (várias)</button>
-          <button id="wsLinear" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Linear: traço contínuo de vários pontos na CAMADA ativa (clique p/ mudar de direção, Esc/Enter finaliza, Backspace desfaz). Precisa calibrar a escala. Usado por Framing e outros pacotes.">📐 Linear (contínuo)</button>
-          <div class="flex items-center gap-2 pt-1" title="Tipo da área — Piso (verde) ou Teto/Forro (azul). Cada área nova entra com este tipo. O total por tipo aparece abaixo.">
-            <span class="text-xs text-steel-300 shrink-0">Tipo de área:</span>
+          <button id="wsCalib" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Trace uma linha sobre uma medida conhecida do desenho e informe o valor real">ðŸ“ Calibrar escala</button>
+          <button id="wsMeasure" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Trace uma linha e veja a medida real (precisa calibrar a escala antes). Pode adicionar vÃ¡rias.">ðŸ“ Medir (vÃ¡rias)</button>
+          <button id="wsLinear" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Linear: traÃ§o contÃ­nuo de vÃ¡rios pontos na CAMADA ativa (clique p/ mudar de direÃ§Ã£o, Esc/Enter finaliza, Backspace desfaz). Precisa calibrar a escala. Usado por Framing e outros pacotes.">ðŸ“ Linear (contÃ­nuo)</button>
+          <div class="flex items-center gap-2 pt-1" title="Tipo da Ã¡rea â€” Piso (verde) ou Teto/Forro (azul). Cada Ã¡rea nova entra com este tipo. O total por tipo aparece abaixo.">
+            <span class="text-xs text-steel-300 shrink-0">Tipo de Ã¡rea:</span>
             <select id="wsAreaKind" class="flex-1 min-w-0 text-steel-900 text-sm rounded px-2 py-1">
               <option value="floor">Piso</option>
               <option value="ceiling">Teto / Forro</option>
             </select>
           </div>
-          <div class="flex items-center gap-2 pt-1" title="Tag do acabamento (ex.: FF-01) — aparece no rótulo da área. Digite ou escolha os lidos da folha de medidas. Com áreas selecionadas, aplica nelas.">
+          <div class="flex items-center gap-2 pt-1" title="Tag do acabamento (ex.: FF-01) â€” aparece no rÃ³tulo da Ã¡rea. Digite ou escolha os lidos da folha de medidas. Com Ã¡reas selecionadas, aplica nelas.">
             <span class="text-xs text-steel-300 shrink-0">Tag:</span>
             <input id="wsAreaTag" list="wsAreaTagList" maxlength="16" placeholder="ex.: FF-01" autocomplete="off" class="flex-1 min-w-0 text-steel-900 text-sm rounded px-2 py-1">
             <datalist id="wsAreaTagList"></datalist>
           </div>
-          <div class="flex items-center gap-2 pt-1" title="Altura do rodapé/base em POLEGADAS. A área da base = perímetro do piso × altura (ex.: 4&quot; de base).">
+          <div class="flex items-center gap-2 pt-1" title="Altura do rodapÃ©/base em POLEGADAS. A Ã¡rea da base = perÃ­metro do piso Ã— altura (ex.: 4&quot; de base).">
             <span class="text-xs text-steel-300 shrink-0">Altura base (pol):</span>
             <input id="wsAreaBaseH" type="number" min="0" step="0.5" value="4" class="flex-1 min-w-0 text-steel-900 text-sm rounded px-2 py-1">
           </div>
-          <button id="wsArea" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Área: clique nos cantos do cômodo/região; duplo-clique (ou Enter) fecha e mostra a área em SF na hora. SHIFT+clique = área NEGATIVA (vermelha) que DESCONTA do total (colunas, escadas, vãos). Botão DIREITO em cima de um ponto apaga aquele ponto. Backspace desfaz o último ponto; quando não está desenhando, apaga a última área. Precisa calibrar a escala.">▱ Área (rápida)</button>
-          <button id="wsAreaRect" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Retângulo: liga o modo Área e cria a área com 2 CLIQUES na diagonal (um canto, o canto oposto). Mais rápido e os cantos saem retos. Shift+1º clique = negativo.">▭ Retângulo (2 cliques)</button>
-          <button id="wsAreaMerge" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Une várias áreas num ÚNICO piso/forro (um total de SF). Selecione as áreas (clique com o modo Área desligado, Ctrl+clique p/ várias, ou Ctrl+A p/ TODAS) e clique aqui; sem seleção, une TODAS do tipo escolhido nesta folha.">🔗 Unir áreas (1 só)</button>
-          <button id="wsFloorTakeoff" class="w-full text-left px-3 py-2 rounded bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-sm font-semibold" title="Abre o Takeoff unificado: abas por disciplina (Parede, Piso, Forro, Janelas) com lista de materiais, qtd, preço, custo e venda.">📊 Takeoff</button>
-          <div class="text-[11px] text-steel-400 px-1">⇧ Shift+clique = negativo (desconta)</div>
+          <button id="wsArea" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Ãrea: clique nos cantos do cÃ´modo/regiÃ£o; duplo-clique (ou Enter) fecha e mostra a Ã¡rea em SF na hora. SHIFT+clique = Ã¡rea NEGATIVA (vermelha) que DESCONTA do total (colunas, escadas, vÃ£os). BotÃ£o DIREITO em cima de um ponto apaga aquele ponto. Backspace desfaz o Ãºltimo ponto; quando nÃ£o estÃ¡ desenhando, apaga a Ãºltima Ã¡rea. Precisa calibrar a escala.">â–± Ãrea (rÃ¡pida)</button>
+          <button id="wsAreaRect" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="RetÃ¢ngulo: liga o modo Ãrea e cria a Ã¡rea com 2 CLIQUES na diagonal (um canto, o canto oposto). Mais rÃ¡pido e os cantos saem retos. Shift+1Âº clique = negativo.">â–­ RetÃ¢ngulo (2 cliques)</button>
+          <button id="wsAreaMerge" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Une vÃ¡rias Ã¡reas num ÃšNICO piso/forro (um total de SF). Selecione as Ã¡reas (clique com o modo Ãrea desligado, Ctrl+clique p/ vÃ¡rias, ou Ctrl+A p/ TODAS) e clique aqui; sem seleÃ§Ã£o, une TODAS do tipo escolhido nesta folha.">ðŸ”— Unir Ã¡reas (1 sÃ³)</button>
+          <button id="wsFloorTakeoff" class="w-full text-left px-3 py-2 rounded bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-sm font-semibold" title="Abre o Takeoff unificado: abas por disciplina (Parede, Piso, Forro, Janelas) com lista de materiais, qtd, preÃ§o, custo e venda.">ðŸ“Š Takeoff</button>
+          <div class="text-[11px] text-steel-400 px-1">â‡§ Shift+clique = negativo (desconta)</div>
           <div id="wsAreaTot" class="text-xs text-steel-300 px-1"></div>
-          <button id="wsDetectWalls" data-pkg="wall" class="w-full text-left px-3 py-2 rounded bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-sm font-semibold" title="IA: detecta as linhas de parede da folha e cria os traços Linear na camada ativa. Você revisa e apaga as erradas (clique + Del).">✨ Detectar paredes (IA)</button>
-          <button id="wsReadWalls" data-pkg="wall" class="w-full text-left px-3 py-2 rounded bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-sm font-semibold" title="IA: lê o detalhe de tipo de parede desta folha (wall type detail) e cria as assemblies — montante, espaçamento, plates, gypsum, isolamento — automaticamente.">🧠 Ler tipos de parede (IA)</button>
-          <div data-pkg="wall" class="flex items-center gap-2 pt-1" title="Tipo de framing ATIVO — a parede que você traçar (Linear/Detectar) entra neste tipo, com a cor dele.">
+          <button id="wsDetectWalls" data-pkg="wall" class="w-full text-left px-3 py-2 rounded bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-sm font-semibold" title="IA: detecta as linhas de parede da folha e cria os traÃ§os Linear na camada ativa. VocÃª revisa e apaga as erradas (clique + Del).">âœ¨ Detectar paredes (IA)</button>
+          <button id="wsReadWalls" data-pkg="wall" class="w-full text-left px-3 py-2 rounded bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-sm font-semibold" title="IA: lÃª o detalhe de tipo de parede desta folha (wall type detail) e cria as assemblies â€” montante, espaÃ§amento, plates, gypsum, isolamento â€” automaticamente.">ðŸ§  Ler tipos de parede (IA)</button>
+          <div data-pkg="wall" class="flex items-center gap-2 pt-1" title="Tipo de framing ATIVO â€” a parede que vocÃª traÃ§ar (Linear/Detectar) entra neste tipo, com a cor dele.">
             <span class="text-xs text-steel-300 shrink-0">Tipo:</span>
             <span id="wsWallTypeSwatch" class="shrink-0" style="width:16px;height:16px;border-radius:4px;background:#3b82f6;border:1px solid rgba(255,255,255,.25)"></span>
             <select id="wsWallType" class="flex-1 min-w-0 text-steel-900 text-sm rounded px-2 py-1.5"></select>
           </div>
-          <button id="wsApplyType" data-pkg="wall" class="w-full text-left px-3 py-1.5 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="Aplica o tipo selecionado (acima) às PAREDES selecionadas na planta. Selecione as linhas e clique aqui.">↳ Aplicar tipo às linhas selecionadas</button>
-          <div data-pkg="wall" class="flex items-center gap-2 pt-1" title="Piso ATIVO — a parede que você traçar herda a ALTURA deste piso (LF × altura = SF). Pegue a altura na A302.">
+          <button id="wsApplyType" data-pkg="wall" class="w-full text-left px-3 py-1.5 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="Aplica o tipo selecionado (acima) Ã s PAREDES selecionadas na planta. Selecione as linhas e clique aqui.">â†³ Aplicar tipo Ã s linhas selecionadas</button>
+          <div data-pkg="wall" class="flex items-center gap-2 pt-1" title="Piso ATIVO â€” a parede que vocÃª traÃ§ar herda a ALTURA deste piso (LF Ã— altura = SF). Pegue a altura na A302.">
             <span class="text-xs text-steel-300 shrink-0">Piso:</span>
             <select id="wsFloor" class="flex-1 min-w-0 text-steel-900 text-sm rounded px-2 py-1.5"></select>
-            <select id="wsFloorH" title="Altura do piso — medidas lidas pela IA (A302)" class="text-steel-900 text-sm rounded px-1 py-1.5" style="width:88px"></select>
-            <button id="wsFloorAdd" class="shrink-0 text-steel-100 px-2 py-1.5 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Adicionar piso">＋</button>
+            <select id="wsFloorH" title="Altura do piso â€” medidas lidas pela IA (A302)" class="text-steel-900 text-sm rounded px-1 py-1.5" style="width:88px"></select>
+            <button id="wsFloorAdd" class="shrink-0 text-steel-100 px-2 py-1.5 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Adicionar piso">ï¼‹</button>
           </div>
-          <button id="wsApplyFloor" data-pkg="wall" class="w-full text-left px-3 py-1.5 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="Aplica a altura do piso ativo às PAREDES selecionadas.">↳ Aplicar piso/altura às linhas selecionadas</button>
-          <button id="wsDelMeas" class="w-full text-left px-3 py-2 rounded bg-rose-700 hover:bg-rose-600 text-xs" title="Apaga a medida selecionada (clique numa medida; ou tecla Delete)" disabled>🗑 Apagar medida selecionada</button>
+          <button id="wsApplyFloor" data-pkg="wall" class="w-full text-left px-3 py-1.5 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="Aplica a altura do piso ativo Ã s PAREDES selecionadas.">â†³ Aplicar piso/altura Ã s linhas selecionadas</button>
+          <button id="wsDelMeas" class="w-full text-left px-3 py-2 rounded bg-rose-700 hover:bg-rose-600 text-xs" title="Apaga a medida selecionada (clique numa medida; ou tecla Delete)" disabled>ðŸ—‘ Apagar medida selecionada</button>
           <button id="wsClearMeas" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="Remove todas as medidas desta folha">Limpar todas as medidas</button>
-          <p id="wsScaleInfo" class="text-xs text-steel-400">Escala: não calibrada.</p>
+          <p id="wsScaleInfo" class="text-xs text-steel-400">Escala: nÃ£o calibrada.</p>
         </div>
 
-        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="medidas"><span>Medidas (schedule)</span><span class="ws-chev">▼</span></div>
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="medidas"><span>Medidas (schedule)</span><span class="ws-chev">â–¼</span></div>
         <div class="p-3 space-y-2">
-          <button id="wsSchedPage" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Marca esta folha como fonte de medidas (ex.: A700/A701)">📐 Usar esta folha p/ medidas</button>
-          <button id="wsReadSched" class="w-full text-left px-3 py-2 rounded bg-amber-600 hover:bg-amber-500 text-sm font-medium" title="Lê as dimensões só das folhas marcadas e atualiza as medidas">↻ Reler medidas</button>
+          <button id="wsSchedPage" class="w-full text-left px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Marca esta folha como fonte de medidas (ex.: A700/A701)">ðŸ“ Usar esta folha p/ medidas</button>
+          <button id="wsReadSched" class="w-full text-left px-3 py-2 rounded bg-amber-600 hover:bg-amber-500 text-sm font-medium" title="LÃª as dimensÃµes sÃ³ das folhas marcadas e atualiza as medidas">â†» Reler medidas</button>
           <p id="wsSchedInfo" class="text-xs text-steel-400"></p>
         </div>
 
-        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="folha"><span>Folha</span><span class="ws-chev">▼</span></div>
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="folha"><span>Folha</span><span class="ws-chev">â–¼</span></div>
         <div class="p-3 space-y-2">
-          <label class="block text-xs text-steel-300" title="Quantos pavimentos esta folha representa">Pavimentos×
+          <label class="block text-xs text-steel-300" title="Quantos pavimentos esta folha representa">PavimentosÃ—
             <input id="wsMult" type="number" min="1" step="1" value="1" class="mt-1 w-full text-steel-900 px-2 py-1 rounded" />
           </label>
           <div class="flex items-center gap-2">
-            <button id="wsZoomOut" class="flex-1 px-2 py-2 rounded bg-steel-700 hover:bg-steel-600">−</button>
+            <button id="wsZoomOut" class="flex-1 px-2 py-2 rounded bg-steel-700 hover:bg-steel-600">âˆ’</button>
             <button id="wsZoomIn" class="flex-1 px-2 py-2 rounded bg-steel-700 hover:bg-steel-600">+</button>
             <button id="wsFit" class="flex-1 px-2 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm">Ajustar</button>
           </div>
-          <button id="wsHires" class="w-full px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Re-renderiza esta folha em alta resolução (mais nítido no zoom). Mantém marcas e medidas.">🔍 Mais nitidez (esta folha)</button>
+          <button id="wsHires" class="w-full px-3 py-2 rounded bg-steel-700 hover:bg-steel-600 text-sm" title="Re-renderiza esta folha em alta resoluÃ§Ã£o (mais nÃ­tido no zoom). MantÃ©m marcas e medidas.">ðŸ” Mais nitidez (esta folha)</button>
         </div>
       </aside>
 
       <!-- barra de FERRAMENTAS do painel direito (quando recolhido) -->
       <div id="wsRightBar" class="hidden w-10 shrink-0 bg-steel-800 text-steel-300 border-l border-steel-700 flex-col items-center py-2 gap-1">
-        <button id="wsRightExpand" class="w-8 h-8 rounded hover:bg-steel-700 hover:text-white" title="Expandir painel">◀</button>
+        <button id="wsRightExpand" class="w-8 h-8 rounded hover:bg-steel-700 hover:text-white" title="Expandir painel">â—€</button>
         <div class="border-t border-steel-600 w-6 my-1"></div>
-        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsCount" data-tip="Contar">⊕</button>
-        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsAuto" data-tip="Auto Count">⊛</button>
-        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsDelete" data-tip="Apagar (1 a 1)">🗑️</button>
-        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsCalib" data-tip="Calibrar escala">📏</button>
-        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsMeasure" data-tip="Medir">📐</button>
-        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsArea" data-tip="Área">▱</button>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsCount" data-tip="Contar">âŠ•</button>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsAuto" data-tip="Auto Count">âŠ›</button>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsDelete" data-tip="Apagar (1 a 1)">ðŸ—‘ï¸</button>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsCalib" data-tip="Calibrar escala">ðŸ“</button>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsMeasure" data-tip="Medir">ðŸ“</button>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsArea" data-tip="Ãrea">â–±</button>
         <div class="border-t border-steel-600 w-6 my-1"></div>
-        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsZoomIn" data-tip="Zoom +">＋</button>
-        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsZoomOut" data-tip="Zoom −">－</button>
-        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsFit" data-tip="Ajustar à tela">⤢</button>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsZoomIn" data-tip="Zoom +">ï¼‹</button>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsZoomOut" data-tip="Zoom âˆ’">ï¼</button>
+        <button class="wsBarTool w-8 h-8 rounded hover:bg-steel-700 hover:text-white" data-proxy="wsFit" data-tip="Ajustar Ã  tela">â¤¢</button>
       </div>
     </div>
 
-    <!-- RODAPÉ: barra de status (estilo PlanSwift) -->
+    <!-- RODAPÃ‰: barra de status (estilo PlanSwift) -->
     <div id="wsStatusBar" class="bg-steel-900 border-t border-steel-700 text-steel-200 text-xs px-3 py-1 flex items-center gap-4 shrink-0 select-none">
-      <span id="stScale" title="Escala calibrada desta folha">Escala: —</span>
+      <span id="stScale" title="Escala calibrada desta folha">Escala: â€”</span>
       <span class="text-steel-600">|</span>
-      <span id="stCoord" class="tabular-nums">x: —  y: —</span>
+      <span id="stCoord" class="tabular-nums">x: â€”  y: â€”</span>
       <span class="text-steel-600">|</span>
-      <button id="stSnap" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Snap (tecla S): gruda o clique no ponto notável mais próximo">Snap</button>
+      <button id="stSnap" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Snap (tecla S): gruda o clique no ponto notÃ¡vel mais prÃ³ximo">Snap</button>
       <button id="stOrtho" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Ortho (tecla O): trava a medida em horizontal/vertical">Ortho</button>
-      <button id="stLegend" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Mostrar/ocultar a legenda das marcas">🏷️ Legenda</button>
-      <button id="wsSummaryBtn" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Resumo da marcação (tabela editável)">📊 Resumo</button>
-      <button id="stFraming" data-pkg="wall" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Takeoff: parts e preço a partir dos traços Linear desta camada">📊 Takeoff</button>
+      <button id="stLegend" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Mostrar/ocultar a legenda das marcas">ðŸ·ï¸ Legenda</button>
+      <button id="wsSummaryBtn" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Resumo da marcaÃ§Ã£o (tabela editÃ¡vel)">ðŸ“Š Resumo</button>
+      <button id="stFraming" data-pkg="wall" class="px-2 py-0.5 rounded hover:bg-steel-700" title="Takeoff: parts e preÃ§o a partir dos traÃ§os Linear desta camada">ðŸ“Š Takeoff</button>
       <span id="stMode" class="text-steel-400">Record: Point To Point</span>
       <span class="ml-auto text-steel-400 truncate" id="stPath" title="Folha / projeto"></span>
     </div>
   </div>
 
-  <script src="js/i18n.js?v=253"></script>
+  <script src="js/i18n.js?v=254"></script>
   <script src="js/license.js?v=208"></script>
   <script src="js/calculator.js?v=216"></script>
   <script src="js/svg-engine.js?v=200"></script>
@@ -1209,12 +1211,12 @@
   <script src="js/proposal.js?v=200"></script>
   <script src="js/main.js?v=201"></script>
   <script src="js/annotator.js?v=200"></script>
-  <script src="js/workspace.js?v=292"></script>
+  <script src="js/workspace.js?v=293"></script>
   <script src="js/framing.js?v=42"></script>
   <script src="js/framing-export.js?v=5"></script>
   <script src="js/framing-report-editor.js?v=8"></script>
   <script src="js/framing-report-grapes.js?v=1"></script>
-  <script src="js/floor-takeoff.js?v=3"></script>
+  <script src="js/floor-takeoff.js?v=4"></script>
   <script src="js/desktop.js?v=225"></script>
   <script src="js/menu.js?v=243"></script>
   <script src="js/cards.js?v=200"></script>

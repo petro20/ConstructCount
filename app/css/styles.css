@@ -436,6 +436,17 @@ button:focus-visible {
 .ws-resize:hover, .ws-resize.on { background: rgba(217,160,42,.55); }
 .ws-resize::after { content: ""; position: absolute; top: 50%; left: 50%; width: 3px; height: 34px; margin: -17px 0 0 -1.5px; border-radius: 3px; background: rgba(255,255,255,.18); }
 .ws-resize:hover::after, .ws-resize.on::after { background: rgba(255,255,255,.6); }
+/* Resumo por pacote — quadros (cards) */
+#wsSummaryCards .sum-card { flex: 0 0 auto; min-width: 158px; text-align: left; padding: 8px 11px; border-radius: 10px; border: 1px solid #3a3527; background: #211d14; color: #ece7da; cursor: pointer; transition: border-color .12s, background .12s, transform .08s; }
+#wsSummaryCards .sum-card:hover { border-color: #d9a02a; background: #2a2417; transform: translateY(-1px); }
+#wsSummaryCards .sum-card-h { font-size: 12.5px; color: #f0d98a; margin-bottom: 3px; }
+#wsSummaryCards .sum-card-h b { color: #fff; font-weight: 700; }
+#wsSummaryCards .sum-card-metric { font-size: 12px; color: #b9b4a8; font-variant-numeric: tabular-nums; margin-bottom: 5px; }
+#wsSummaryCards .sum-card-money { display: flex; flex-direction: column; gap: 1px; font-size: 11.5px; color: #c9c3b5; font-variant-numeric: tabular-nums; }
+#wsSummaryCards .sum-card-sale { color: #34d399; font-weight: 700; }
+#wsSummaryCards .sum-card-dim { color: #6b6655; }
+#wsSummaryCards .sum-card-total { background: #14241a; border-color: #1f5e3f; cursor: default; }
+#wsSummaryCards .sum-card-total:hover { transform: none; border-color: #1f5e3f; background: #14241a; }
 #frTakeoff .ftt-reportsbtn { flex: 0 0 auto; margin-left: 10px; font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 8px; border: 1px solid #56524a; background: #34312b; color: #f0d98a; cursor: pointer; white-space: nowrap; }
 #frTakeoff .ftt-reportsbtn:hover { border-color: #d9a02a; background: #3f3a2a; }
 .ftt-repmenu { position: fixed; z-index: 100001; min-width: 250px; background: #1f2937; border: 1px solid #374151; border-radius: 10px; padding: 5px; box-shadow: 0 12px 34px rgba(0,0,0,.5); font: 600 12.5px Inter, system-ui, sans-serif; color: #e5e7eb; }

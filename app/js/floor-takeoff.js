@@ -76,6 +76,20 @@
     host.querySelectorAll('[data-rate]').forEach(function (inp) { inp.addEventListener('change', function () { setRate(inp.getAttribute('data-rate'), inp.value); if (rerender) rerender(); }); });
   };
 
+  // totais da disciplina (folha atual) p/ o Resumo por pacote
+  F.areaTakeoffTotals = function (kind) {
+    var floor = kind === 'floor';
+    var gs = areaGroups(kind);
+    var t = { sf: 0, baseLf: 0, cost: 0, sale: 0, n: gs.length };
+    gs.forEach(function (g) {
+      var mr = floor ? rate('floorMat', 0) : rate('ceilMat', 0), lr = floor ? rate('floorLab', 0) : rate('ceilLab', 0);
+      var mat = g.sf * mr, lab = g.sf * lr, cost = lineCost(mat, lab);
+      t.sf += g.sf; t.cost += cost; t.sale += lineSale(cost);
+      if (floor && g.baseLf > 0.01) { var bc = lineCost(g.baseLf * rate('baseMat', 0), g.baseLf * rate('baseLab', 0)); t.baseLf += g.baseLf; t.cost += bc; t.sale += lineSale(bc); }
+    });
+    return t;
+  };
+
   F.renderWindowsTakeoff = function (host) {
     host.innerHTML = '<div class="ftt-tablewrap" style="display:flex;align-items:center;justify-content:center;padding:24px">'
       + '<div style="text-align:center;color:#6c6960;line-height:1.8;max-width:520px">'
