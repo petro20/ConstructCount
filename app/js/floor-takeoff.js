@@ -52,37 +52,37 @@
 
   function tdNum(v) { return '<td class="num">' + v + '</td>'; }
 
-  // renderiza Piso/Forro DENTRO do host (dock), tema claro (.ftt-table)
+  function titleCase(s) { return String(s || '').toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); }); }
+
+  // renderiza Piso/Forro DENTRO do host (dock) — TODAS as folhas, agrupadas por folha (tema claro)
   F.renderAreaTakeoff = function (host, kind, rerender) {
     var floor = kind === 'floor';
-    var gs = areaGroups(kind);
-    var baseH = F._wsAreaBaseH ? F._wsAreaBaseH() : 0;
-    var rows = [], tot = { mat: 0, lab: 0, cost: 0, sale: 0 };
-    gs.forEach(function (g) {
-      var mr = floor ? rate('floorMat', 0) : rate('ceilMat', 0), lr = floor ? rate('floorLab', 0) : rate('ceilLab', 0);
-      var mat = g.sf * mr * wasteMult(), lab = g.sf * lr, cost = lineCost(mat, lab), sale = lineSale(cost);
-      tot.mat += mat; tot.lab += lab; tot.cost += cost; tot.sale += sale;
-      rows.push('<tr><td class="ftt-name"><b>' + (floor ? tr('Piso') : tr('Forro')) + '</b> ' + esc(g.tag) + '</td><td>' + esc(g.material || '—') + (g.manufacturer ? ' · <span style="color:#6c6960">' + esc(g.manufacturer) + '</span>' : '') + '</td>'
-        + tdNum(fmtN(g.sf, 1)) + tdNum('SF') + tdNum(money(mr))
-        + '<td class="num ftt-mat">' + money(mat) + '</td><td class="num ftt-lab">' + money(lab) + '</td><td class="num ftt-tot">' + money(cost) + '</td><td class="num ftt-sale">' + money(sale) + '</td></tr>');
-      if (floor && g.baseLf > 0.01) {
-        var br = rate('baseMat', 0), bl = rate('baseLab', 0), bmat = g.baseLf * br * wasteMult(), blab = g.baseLf * bl, bc = lineCost(bmat, blab), bs = lineSale(bc), bsf = g.baseLf * (baseH / 12);
-        tot.mat += bmat; tot.lab += blab; tot.cost += bc; tot.sale += bs;
-        rows.push('<tr><td class="ftt-name">' + tr('Rodapé (base)') + (bsf > 0 ? (' · ' + fmtN(bsf, 1) + ' SF') : '') + '</td><td>' + (baseH > 0 ? (baseH + '" ' + tr('alt.')) : '—') + '</td>'
-          + tdNum(fmtN(g.baseLf, 1)) + tdNum('LF') + tdNum(money(br))
-          + '<td class="num ftt-mat">' + money(bmat) + '</td><td class="num ftt-lab">' + money(blab) + '</td><td class="num ftt-tot">' + money(bc) + '</td><td class="num ftt-sale">' + money(bs) + '</td></tr>');
-      }
+    var d = F.floorReportDataAll ? F.floorReportDataAll() : { sheets: [] };
+    var withRows = (d.sheets || []).filter(function (s) { return (floor ? s.floor : s.ceiling).length; });
+    var rowsHtml = '', tot = { mat: 0, lab: 0, cost: 0, sale: 0 };
+    withRows.forEach(function (s) {
+      var rows = floor ? s.floor : s.ceiling;
+      var st = { mat: 0, lab: 0, cost: 0, sale: 0 };
+      rowsHtml += '<tr class="ftt-sheethdr"><td colspan="10">🗂 ' + tr('Folha') + ' ' + esc(s.sheet) + (s.level ? (' · ' + esc(titleCase(s.level))) : '') + '</td></tr>';
+      rows.forEach(function (r) {
+        tot.mat += r.mat; tot.lab += r.lab; tot.cost += r.cost; tot.sale += r.sale;
+        st.mat += r.mat; st.lab += r.lab; st.cost += r.cost; st.sale += r.sale;
+        rowsHtml += '<tr><td class="ftt-name">' + esc(r.item) + '</td><td>' + esc(r.material || '—') + '</td><td>' + esc(r.manufacturer || '—') + '</td>'
+          + tdNum(fmtN(r.qty, 1)) + tdNum(r.unit) + tdNum(money(r.price))
+          + '<td class="num ftt-mat">' + money(r.mat) + '</td><td class="num ftt-lab">' + money(r.lab) + '</td><td class="num ftt-tot">' + money(r.cost) + '</td><td class="num ftt-sale">' + money(r.sale) + '</td></tr>';
+      });
+      rowsHtml += '<tr class="ftt-sheetsub"><td colspan="6">' + tr('Subtotal') + ' ' + esc(s.sheet) + '</td><td class="num ftt-mat">' + money(st.mat) + '</td><td class="num ftt-lab">' + money(st.lab) + '</td><td class="num ftt-tot">' + money(st.cost) + '</td><td class="num ftt-sale">' + money(st.sale) + '</td></tr>';
     });
     var ri = function (k, ph) { return '<input class="ftt-arate" data-rate="' + k + '" value="' + esc(String(rate(k, ''))) + '" placeholder="' + ph + '" inputmode="decimal">'; };
     var rbar = (floor
       ? ('<b>' + tr('Piso') + '</b> $/SF: ' + ri('floorMat', 'mat') + ri('floorLab', 'M.O.') + ' &nbsp; <b>' + tr('Rodapé') + '</b> $/LF: ' + ri('baseMat', 'mat') + ri('baseLab', 'M.O.'))
       : ('<b>' + tr('Forro') + '</b> $/SF: ' + ri('ceilMat', 'mat') + ri('ceilLab', 'M.O.')))
       + ' &nbsp; ' + tr('Sobra') + ' %: ' + ri('waste', '%') + ' &nbsp; ' + tr('Imposto') + ' %: ' + ri('tax', '%') + ' &nbsp; ' + tr('Ganho') + ' %: ' + ri('markup', '%');
-    var headers = ['ITEM', tr('Material'), tr('Qtd'), tr('Un'), tr('Preço un.'), 'MATERIAL $', 'M.O. $', tr('Custo') + ' $', tr('Venda') + ' $'];
-    var body = rows.length ? rows.join('') : '<tr><td colspan="9" style="text-align:center;color:#8b887f;padding:18px">' + tr('Meça áreas de {k} (ferramenta ▱ Área) para aparecer aqui.', { k: floor ? tr('Piso') : tr('Forro') }) + '</td></tr>';
-    var foot = '<tr><td colspan="5"><b>' + tr('Total') + '</b></td><td class="num ftt-mat"><b>' + money(tot.mat) + '</b></td><td class="num ftt-lab"><b>' + money(tot.lab) + '</b></td><td class="num ftt-tot"><b>' + money(tot.cost) + '</b></td><td class="num ftt-sale"><b>' + money(tot.sale) + '</b></td></tr>';
+    var headers = ['ITEM', tr('Material'), tr('Fabricante'), tr('Qtd'), tr('Un'), tr('Preço un.'), 'MATERIAL $', 'M.O. $', tr('Custo') + ' $', tr('Venda') + ' $'];
+    var body = withRows.length ? rowsHtml : '<tr><td colspan="10" style="text-align:center;color:#8b887f;padding:18px">' + tr('Meça áreas de {k} (ferramenta ▱ Área) para aparecer aqui.', { k: floor ? tr('Piso') : tr('Forro') }) + '</td></tr>';
+    var foot = '<tr><td colspan="6"><b>' + tr('Total geral') + '</b></td><td class="num ftt-mat"><b>' + money(tot.mat) + '</b></td><td class="num ftt-lab"><b>' + money(tot.lab) + '</b></td><td class="num ftt-tot"><b>' + money(tot.cost) + '</b></td><td class="num ftt-sale"><b>' + money(tot.sale) + '</b></td></tr>';
     host.innerHTML = '<div class="ftt-region ftt-arates">' + rbar + '</div>'
-      + '<div class="ftt-tablewrap"><table class="ftt-table"><thead><tr>' + headers.map(function (h, i) { return '<th' + (i >= 2 ? ' class="num"' : '') + '>' + h + '</th>'; }).join('') + '</tr></thead>'
+      + '<div class="ftt-tablewrap"><table class="ftt-table"><thead><tr>' + headers.map(function (h, i) { return '<th' + (i >= 3 ? ' class="num"' : '') + '>' + h + '</th>'; }).join('') + '</tr></thead>'
       + '<tbody>' + body + '</tbody><tfoot>' + foot + '</tfoot></table></div>';
     host.querySelectorAll('[data-rate]').forEach(function (inp) { inp.addEventListener('change', function () { setRate(inp.getAttribute('data-rate'), inp.value); if (rerender) rerender(); }); });
   };
