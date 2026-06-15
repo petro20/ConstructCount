@@ -596,9 +596,10 @@ body.fre-printing > *:not(#freModal) { display: none !important; }
 /* gating de pacote: ferramentas de um ofício só aparecem p/ quem comprou o pacote */
 .pkg-locked { display: none !important; }
 /* sem ativação do pacote: item fica VISÍVEL porém INERTE (sem ação) — vitrine/upsell */
-.pkg-inert { opacity: .42 !important; filter: grayscale(.55); pointer-events: none !important; position: relative; }
+/* container/botão recebe o clique (→ upgrade); controles internos ficam inertes */
+.pkg-inert { opacity: .5 !important; filter: grayscale(.5); position: relative; cursor: pointer; }
+.pkg-inert:hover { opacity: .72 !important; }
 .pkg-inert input, .pkg-inert select, .pkg-inert button, .pkg-inert textarea { pointer-events: none !important; }
-button.pkg-inert { position: relative; }
 button.pkg-inert::after { content: "🔒"; position: absolute; top: 50%; right: 8px; transform: translateY(-50%); font-size: 12px; opacity: .9; pointer-events: none; }
 .ws-scope.pkg-inert::after { content: none; }   /* chips pequenos: só cinza, sem ícone */
 

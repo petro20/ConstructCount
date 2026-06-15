@@ -98,6 +98,7 @@
     }
     F._renderReportsHub = renderReportsHub;
     F.openReportsHub = () => { const ws = $('#workspace'); if (ws && !ws.classList.contains('hidden')) ws.classList.add('hidden'); const t = document.querySelector('.rb-tab[data-tab="rbReports"]'); if (t) t.click(); };
+    F.openPackageTab = () => { const ws = $('#workspace'); if (ws && !ws.classList.contains('hidden')) ws.classList.add('hidden'); const t = document.querySelector('.rb-tab[data-tab="rbPkg"]'); if (t) t.click(); };
     { const t = document.querySelector('.rb-tab[data-tab="rbReports"]'); if (t) t.addEventListener('click', renderReportsHub); }
     // ----- Início: importar takeoff -----
     const imp = $('#miImport'); if (imp) imp.addEventListener('click', () => { const el = $('#takeoffInput'); if (el) el.click(); });

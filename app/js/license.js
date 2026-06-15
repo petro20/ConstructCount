@@ -115,6 +115,23 @@
   F.applyPackageGates = applyPackageGates;
   F.setPackages = function (arr) { F.entitlements = Array.isArray(arr) ? arr : null; applyPackageGates(); };
 
+  /* ---- UPGRADE: clicar numa ferramenta travada leva à compra do pacote pertinente ---- */
+  var PLAN_MAP = { wall: 'parede', windows_doors: 'mensal' };   // id do pacote -> plano do checkout (combo=parede, janelas=mensal)
+  function checkoutUrl(plan) { return PORTAL + '/checkout.php?plan=' + encodeURIComponent(PLAN_MAP[plan] || plan); }
+  F.upgradePackage = function (lockCsv) {
+    var ids = String(lockCsv || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+    if (ids.length === 1) { try { window.open(checkoutUrl(ids[0]), '_blank'); } catch (e) {} return; }   // pacote único → checkout direto
+    if (F.openPackageTab) return F.openPackageTab();                                                       // ambíguo (ex.: Piso/Forro) → aba Pacote p/ escolher
+    if (ids[0]) { try { window.open(checkoutUrl(ids[0]), '_blank'); } catch (e) {} }
+  };
+  // intercepta o clique no item INERTE (captura) ANTES do handler da ferramenta → abre upgrade, ferramenta não age
+  document.addEventListener('click', function (e) {
+    var t = e.target, el2 = (t && t.closest) ? t.closest('.pkg-inert') : null;
+    if (!el2) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    F.upgradePackage(el2.getAttribute('data-lock'));
+  }, true);
+
   /* ---- Overlay de bloqueio / ativação ---- */
   function el() {
     var o = document.getElementById('licGate');
