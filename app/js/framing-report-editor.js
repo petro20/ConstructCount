@@ -14,6 +14,16 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
   var TPL_KEY = 'cc_framing_report_tpl';
 
+  // tamanhos de papel (css = nome aceito em @page size; w/h em mm p/ o preview)
+  var PAPERS = [
+    { id: 'a4', label: 'A4', css: 'A4', w: 210, h: 297 },
+    { id: 'letter', label: 'Carta (Letter)', css: 'letter', w: 216, h: 279 },
+    { id: 'legal', label: 'Ofício (Legal)', css: 'legal', w: 216, h: 356 },
+    { id: 'a3', label: 'A3', css: 'A3', w: 297, h: 420 }
+  ];
+  function paperOf(id) { return PAPERS.filter(function (p) { return p.id === id; })[0] || PAPERS[0]; }
+  var MM2PX = 96 / 25.4;
+
   // labels em pt — traduzidos NA RENDERIZAÇÃO (tr aqui congelaria o idioma do load)
   var CATALOG = [
     { type: 'logo', label: 'Logo / marca' },
@@ -204,12 +214,13 @@
   }
 
   // orientação da página (retrato/paisagem) — preview + @page na impressão
-  function applyOrient(doc, modal) {
-    var land = st.tpl.orient === 'landscape';
-    doc.style.width = land ? '1040px' : '760px';
+  function applyPage(doc, modal) {
+    var land = st.tpl.orient === 'landscape', pp = paperOf(st.tpl.paper);
+    var wmm = land ? pp.h : pp.w;                       // largura útil do papel (descontando 12mm de margem nas 2 bordas)
+    doc.style.width = Math.round((wmm - 24) * MM2PX) + 'px';
     var btn = modal.querySelector('#freOrient'); if (btn) btn.innerHTML = '🔄 ' + (land ? tr('Retrato') : tr('Paisagem'));
     var sty = document.getElementById('frePageStyle') || (function () { var s = document.createElement('style'); s.id = 'frePageStyle'; document.head.appendChild(s); return s; })();
-    sty.textContent = '@media print{ @page { size: A4 ' + (land ? 'landscape' : 'portrait') + '; margin: 12mm; } }';
+    sty.textContent = '@media print{ @page { size: ' + pp.css + ' ' + (land ? 'landscape' : 'portrait') + '; margin: 12mm; } }';
   }
 
   F.openFramingReportEditor = function () {
@@ -224,6 +235,7 @@
       + '<div class="fre-bar no-print"><b>✏️ ' + tr('Editor de relatório') + '</b>'
       + '<span class="fre-spacer"></span>'
       + '<button id="freAI" class="fre-btn fre-btn-primary">✨ ' + tr('Texto com IA') + '</button>'
+      + '<select id="frePaper" class="fre-btn" title="' + tr('Tamanho do papel') + '">' + PAPERS.map(function (p) { return '<option value="' + p.id + '">📄 ' + tr(p.label) + '</option>'; }).join('') + '</select>'
       + '<button id="freOrient" class="fre-btn">🔄 ' + tr('Paisagem') + '</button>'
       + '<button id="freSave" class="fre-btn">💾 ' + tr('Salvar modelo') + '</button>'
       + '<button id="freReset" class="fre-btn">↺ ' + tr('Padrão') + '</button>'
@@ -239,8 +251,9 @@
     CATALOG.forEach(function (c) { var b = document.createElement('button'); b.className = 'fre-pal-item'; b.textContent = '+ ' + tr(c.label); b.addEventListener('click', function () { st.tpl.blocks.push({ type: c.type }); renderDoc(doc, d); doc.scrollTop = doc.scrollHeight; }); pal.appendChild(b); });
     renderDoc(doc, d);
     buildToolbar(modal, doc);
-    applyOrient(doc, modal);
-    modal.querySelector('#freOrient').addEventListener('click', function () { st.tpl.orient = (st.tpl.orient === 'landscape') ? 'portrait' : 'landscape'; applyOrient(doc, modal); });
+    var paperSel = modal.querySelector('#frePaper'); if (paperSel) { paperSel.value = paperOf(st.tpl.paper).id; paperSel.addEventListener('change', function () { st.tpl.paper = paperSel.value; applyPage(doc, modal); }); }
+    applyPage(doc, modal);
+    modal.querySelector('#freOrient').addEventListener('click', function () { st.tpl.orient = (st.tpl.orient === 'landscape') ? 'portrait' : 'landscape'; applyPage(doc, modal); });
     { var ai = modal.querySelector('#freAI'); if (ai) ai.addEventListener('click', function () {
       ai.disabled = true; if (F.flashExport) F.flashExport('✨ ' + tr('IA escrevendo o texto da proposta…'));
       F.framingGenerateReportText().then(function (t) {
