@@ -845,6 +845,8 @@ window.ConstructCount = window.ConstructCount || {};
     'Plates/Track': { en: 'Plates/Track', es: 'Plates/Track' },
     'Por piso': { en: 'By floor', es: 'Por piso' },
     'Por tipo de parede': { en: 'By wall type', es: 'Por tipo de pared' },
+    'Por folha': { en: 'By sheet', es: 'Por hoja' },
+    '(sem nível)': { en: '(no level)', es: '(sin nivel)' },
     'Preencha o "Preço unit." — o Total calcula sozinho.': { en: 'Fill the "Unit price" — Total computes automatically.', es: 'Completa el "Precio unit." — el Total se calcula solo.' },
     'Preço (USD)': { en: 'Price (USD)', es: 'Precio (USD)' },
     'Preço do material': { en: 'Material price', es: 'Precio del material' },
