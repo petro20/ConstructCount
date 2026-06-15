@@ -522,6 +522,7 @@
       el.appendChild(row);
       // FILHOS: tipos de parede levantados nesta folha (cor + LF) — clique ativa o tipo
       if (expanded) {
+        const lvlSuffix = p.level ? (' - ' + String(p.level).toLowerCase().replace(/\b\w/g, c => c.toUpperCase())) : '';   // ex.: " - First Floor"
         types.forEach(t => {
           const hidden = t.id && S.hiddenTypes && S.hiddenTypes.has(t.id);
           const c = document.createElement('div');
@@ -532,7 +533,7 @@
           sw.style.cssText = 'width:12px;height:12px;border-radius:3px;flex:0 0 auto;cursor:pointer;' + (hidden ? ('background:transparent;border:2px solid ' + t.color) : ('background:' + t.color));
           sw.addEventListener('click', (ev) => ev.stopPropagation());                      // 1 clique na cor não ativa
           sw.addEventListener('dblclick', (ev) => { ev.stopPropagation(); if (!t.id) return; S.hiddenTypes.has(t.id) ? S.hiddenTypes.delete(t.id) : S.hiddenTypes.add(t.id); draw(); renderPagesList(); });
-          const nm = document.createElement('span'); nm.className = 'flex-1 truncate text-steel-200' + (hidden ? ' line-through' : ''); nm.textContent = t.name;
+          const nm = document.createElement('span'); nm.className = 'flex-1 truncate text-steel-200' + (hidden ? ' line-through' : ''); nm.textContent = t.name + lvlSuffix;
           const q = document.createElement('span'); q.className = 'text-steel-300 tabular-nums text-xs'; q.textContent = t.lf.toFixed(1) + ' LF';
           c.appendChild(sw); c.appendChild(nm); c.appendChild(q);
           c.addEventListener('click', () => { if (F.framing) F.framing.activeWT = t.id; if (F._syncWallTypeSelect) F._syncWallTypeSelect(); if (p.page !== S.page) selectPage(p.page, {}); else if (F._wsRedraw) F._wsRedraw(); });
@@ -555,7 +556,6 @@
           c.addEventListener('click', () => { if (fkey) activateFinish(fkey); if (p.page !== S.page) selectPage(p.page, {}); else if (F._wsRedraw) F._wsRedraw(); });
           el.appendChild(c);
         };
-        const lvlSuffix = p.level ? (' - ' + String(p.level).toLowerCase().replace(/\b\w/g, c => c.toUpperCase())) : '';   // ex.: " - First Floor"
         (ar.floorGroups || []).forEach(g => areaRow('#22c55e', F.tr('Piso') + (g.tag && g.tag !== '—' ? ' ' + g.tag : '') + lvlSuffix, g.material + (g.manufacturer ? ' (' + g.manufacturer + ')' : ''), g.sf, 'floor:' + (g.tag || '—')));
         if (ar.baseSf) areaRow('#a3e635', F.tr('Base') + lvlSuffix, '', ar.baseSf, null);
         (ar.ceilGroups || []).forEach(g => areaRow('#38bdf8', F.tr('Teto') + (g.tag && g.tag !== '—' ? ' ' + g.tag : '') + lvlSuffix, g.material + (g.manufacturer ? ' (' + g.manufacturer + ')' : ''), g.sf, 'ceiling:' + (g.tag || '—')));
