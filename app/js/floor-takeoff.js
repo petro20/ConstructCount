@@ -14,7 +14,7 @@
   var num = function (v) { v = parseFloat(v); return isFinite(v) ? v : 0; };
   var money = function (n) { return F.money ? F.money(n) : ('$ ' + (Number(n) || 0).toFixed(2)); };
   var fmtN = function (n, d) { var loc = ((F.CURRENCIES && F.state && F.CURRENCIES[F.state.currency]) || { locale: 'en-US' }).locale || 'en-US'; return (Number(n) || 0).toLocaleString(loc, { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
-  var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };   // aspas dupla TEM que escapar (vai em value="...")
   var RKEY = 'cc_floor_rates';
 
   // store dos preços: PRIMÁRIO = estado do framing (FR.floorRates, persiste por projeto via Python);
