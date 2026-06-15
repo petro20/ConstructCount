@@ -476,17 +476,20 @@
       nameEl.className = 'flex-1 truncate'; nameEl.innerHTML = name;
       row.appendChild(nameEl);
       row.insertAdjacentHTML('beforeend', sched + badge);
-      // bolinha por FOLHA: oculta/mostra TODAS as cores abaixo (verde=ativo, vermelho=desativado) — duplo-clique alterna
-      if (types.length) {
-        const ids = types.map(t => t.id).filter(Boolean);
-        const allHidden = ids.length > 0 && ids.every(id => S.hiddenTypes.has(id));
+      // bolinha por FOLHA: oculta/mostra TUDO desta folha (tipos de parede + acabamentos piso/forro)
+      const ids = types.map(t => t.id).filter(Boolean);
+      const fKeys = (ar.floorGroups || []).map(g => 'floor:' + (g.tag || '—')).concat((ar.ceilGroups || []).map(g => 'ceiling:' + (g.tag || '—')));
+      if (ids.length || fKeys.length) {
+        if (!S.hiddenFinishes) S.hiddenFinishes = new Set();
+        const allHidden = (!ids.length || ids.every(id => S.hiddenTypes.has(id))) && (!fKeys.length || fKeys.every(k => S.hiddenFinishes.has(k))) && (ids.length || fKeys.length);
         const dot = document.createElement('span');
         dot.title = F.tr('Duplo-clique: ocultar/mostrar todas as cores desta folha');
         dot.style.cssText = 'width:11px;height:11px;border-radius:50%;flex:0 0 auto;cursor:pointer;box-shadow:0 0 0 1px rgba(0,0,0,.25) inset;background:' + (allHidden ? '#ef4444' : '#10b981');
         dot.addEventListener('click', (ev) => ev.stopPropagation());
         dot.addEventListener('dblclick', (ev) => {
           ev.stopPropagation();
-          if (allHidden) ids.forEach(id => S.hiddenTypes.delete(id)); else ids.forEach(id => S.hiddenTypes.add(id));
+          if (allHidden) { ids.forEach(id => S.hiddenTypes.delete(id)); fKeys.forEach(k => S.hiddenFinishes.delete(k)); }
+          else { ids.forEach(id => S.hiddenTypes.add(id)); fKeys.forEach(k => S.hiddenFinishes.add(k)); }
           draw(); renderPagesList(); if (F._renderFramingPanel) F._renderFramingPanel();
         });
         row.appendChild(dot);
