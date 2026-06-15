@@ -17,10 +17,15 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
   var RKEY = 'cc_floor_rates';
 
-  function rates() { try { return JSON.parse(localStorage.getItem(RKEY) || '{}') || {}; } catch (e) { return {}; } }
-  function saveRates(r) { try { localStorage.setItem(RKEY, JSON.stringify(r)); } catch (e) {} }
-  function rate(k, d) { var r = rates(); return r[k] != null ? r[k] : (d || 0); }
-  function setRate(k, v) { var r = rates(); r[k] = num(v); saveRates(r); }
+  // store dos preços: PRIMÁRIO = estado do framing (FR.floorRates, persiste por projeto via Python);
+  // espelho em localStorage p/ o navegador (portal) onde não há provider Python.
+  function lsRates() { try { return JSON.parse(localStorage.getItem(RKEY) || '{}') || {}; } catch (e) { return {}; } }
+  function rates() { return (F._floorRates ? F._floorRates() : null) || lsRates(); }
+  function rate(k, d) { var r = rates(), v = r ? r[k] : null; return (v != null && v !== '' && Number(v) !== 0) ? v : (d != null ? d : 0); }
+  function setRate(k, v) {
+    if (F._floorRateSet) F._floorRateSet(k, v);   // persiste por projeto (framing.json)
+    try { var r = lsRates(); r[k] = num(v); localStorage.setItem(RKEY, JSON.stringify(r)); } catch (e) {}   // espelho navegador
+  }
 
   // agrega as áreas da folha atual por (kind, tag)
   function areaGroups(kind) {

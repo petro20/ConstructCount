@@ -58,7 +58,7 @@
     renderPagesList();
     // carrega as ASSEMBLIES de framing salvas do projeto (não reler toda vez)
     (async () => {
-      try { if (S.prov && S.prov.getFraming) { const d = await S.prov.getFraming(); if (d && (d.wallTypes || d.floors) && F._framingLoad) F._framingLoad(d); } } catch (e) {}
+      try { if (S.prov && S.prov.getFraming) { const d = await S.prov.getFraming(); if (d && (d.wallTypes || d.floors || d.floorRates) && F._framingLoad) F._framingLoad(d); } } catch (e) {}
       populateWallTypeSelect(); populateFloorSelect(); populateScope(); renderPagesList();
       try { await ensureAllScopeLayers(); } catch (e) {}   // AUTOMÁTICO: 1 camada por ofício do escopo, sem o usuário criar
     })();
