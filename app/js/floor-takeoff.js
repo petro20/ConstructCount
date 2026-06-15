@@ -13,6 +13,7 @@
   var tr = function (s, v) { return F.tr ? F.tr(s, v) : s; };
   var num = function (v) { v = parseFloat(v); return isFinite(v) ? v : 0; };
   var money = function (n) { return F.money ? F.money(n) : ('$ ' + (Number(n) || 0).toFixed(2)); };
+  var fmtN = function (n, d) { var loc = ((F.CURRENCIES && F.state && F.CURRENCIES[F.state.currency]) || { locale: 'en-US' }).locale || 'en-US'; return (Number(n) || 0).toLocaleString(loc, { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
   var RKEY = 'cc_floor_rates';
 
@@ -52,13 +53,13 @@
       var mat = g.sf * mr, lab = g.sf * lr, cost = lineCost(mat, lab), sale = lineSale(cost);
       tot.mat += mat; tot.lab += lab; tot.cost += cost; tot.sale += sale;
       rows.push('<tr><td class="ftt-name"><b>' + (floor ? tr('Piso') : tr('Forro')) + '</b> ' + esc(g.tag) + '</td><td>' + esc(g.material || '—') + '</td>'
-        + tdNum(g.sf.toFixed(1)) + tdNum('SF') + tdNum(money(mr))
+        + tdNum(fmtN(g.sf, 1)) + tdNum('SF') + tdNum(money(mr))
         + '<td class="num ftt-mat">' + money(mat) + '</td><td class="num ftt-lab">' + money(lab) + '</td><td class="num ftt-tot">' + money(cost) + '</td><td class="num ftt-sale">' + money(sale) + '</td></tr>');
       if (floor && g.baseLf > 0.01) {
         var br = rate('baseMat', 0), bl = rate('baseLab', 0), bmat = g.baseLf * br, blab = g.baseLf * bl, bc = lineCost(bmat, blab), bs = lineSale(bc), bsf = g.baseLf * (baseH / 12);
         tot.mat += bmat; tot.lab += blab; tot.cost += bc; tot.sale += bs;
-        rows.push('<tr><td class="ftt-name">' + tr('Rodapé (base)') + (bsf > 0 ? (' · ' + bsf.toFixed(1) + ' SF') : '') + '</td><td>' + (baseH > 0 ? (baseH + '" ' + tr('alt.')) : '—') + '</td>'
-          + tdNum(g.baseLf.toFixed(1)) + tdNum('LF') + tdNum(money(br))
+        rows.push('<tr><td class="ftt-name">' + tr('Rodapé (base)') + (bsf > 0 ? (' · ' + fmtN(bsf, 1) + ' SF') : '') + '</td><td>' + (baseH > 0 ? (baseH + '" ' + tr('alt.')) : '—') + '</td>'
+          + tdNum(fmtN(g.baseLf, 1)) + tdNum('LF') + tdNum(money(br))
           + '<td class="num ftt-mat">' + money(bmat) + '</td><td class="num ftt-lab">' + money(blab) + '</td><td class="num ftt-tot">' + money(bc) + '</td><td class="num ftt-sale">' + money(bs) + '</td></tr>');
       }
     });

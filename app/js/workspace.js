@@ -614,27 +614,29 @@
     const tr = (s, v) => (F.tr ? F.tr(s, v) : s);
     const has = F.hasPackage;
     const fmt = (n) => (F.money ? F.money(n) : '$ ' + (Number(n) || 0).toFixed(2));
+    const loc = ((F.CURRENCIES && F.state && F.CURRENCIES[F.state.currency]) || { locale: 'en-US' }).locale || 'en-US';
+    const fmtN = (n, d) => (Number(n) || 0).toLocaleString(loc, { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 });
     const cards = []; let gCost = 0, gSale = 0, anyMoney = false;
     if (!has || has('wall')) {
       const d = F.framingReportData ? F.framingReportData() : null, T = d && d.totals;
       if (T) { gCost += T.cost; gSale += T.sale; anyMoney = true; }
-      cards.push({ disc: 'wall', ico: '🧱', name: tr('Parede'), metric: T ? (T.lf.toFixed(0) + ' LF · ' + T.sf.toFixed(0) + ' SF') : tr('sem traços'), cost: T ? T.cost : 0, sale: T ? T.sale : 0, money: !!T });
+      cards.push({ disc: 'wall', ico: '🧱', name: tr('Parede'), metric: T ? (fmtN(T.lf) + ' LF · ' + fmtN(T.sf) + ' SF') : tr('sem traços'), cost: T ? T.cost : 0, sale: T ? T.sale : 0, money: !!T });
     }
     if (!has || has('floor')) {
       const t = F.areaTakeoffTotals ? F.areaTakeoffTotals('floor') : null;
       if (t) { gCost += t.cost; gSale += t.sale; if (t.sf > 0) anyMoney = true; }
-      cards.push({ disc: 'floor', ico: '🟩', name: tr('Piso'), metric: (t ? t.sf.toFixed(0) : '0') + ' SF' + (t && t.baseLf ? (' · ' + t.baseLf.toFixed(0) + ' LF ' + tr('base')) : ''), cost: t ? t.cost : 0, sale: t ? t.sale : 0, money: !!(t && t.sf > 0) });
+      cards.push({ disc: 'floor', ico: '🟩', name: tr('Piso'), metric: fmtN(t ? t.sf : 0) + ' SF' + (t && t.baseLf ? (' · ' + fmtN(t.baseLf) + ' LF ' + tr('base')) : ''), cost: t ? t.cost : 0, sale: t ? t.sale : 0, money: !!(t && t.sf > 0) });
     }
     if (!has || has('ceiling')) {
       const t = F.areaTakeoffTotals ? F.areaTakeoffTotals('ceiling') : null;
       if (t) { gCost += t.cost; gSale += t.sale; if (t.sf > 0) anyMoney = true; }
-      cards.push({ disc: 'ceiling', ico: '🟦', name: tr('Forro'), metric: (t ? t.sf.toFixed(0) : '0') + ' SF', cost: t ? t.cost : 0, sale: t ? t.sale : 0, money: !!(t && t.sf > 0) });
+      cards.push({ disc: 'ceiling', ico: '🟦', name: tr('Forro'), metric: fmtN(t ? t.sf : 0) + ' SF', cost: t ? t.cost : 0, sale: t ? t.sale : 0, money: !!(t && t.sf > 0) });
     }
     if (!has || has('windows_doors')) {
       const counts = {}; (S.marks || []).forEach(m => { if (m.confirmed) { const k = m.label || ''; counts[k] = (counts[k] || 0) + 1; } });
       const meta = (S.pages || []).find(p => p.page === S.page) || {}; const pmult = +meta.mult || 1;
       let tot = 0; Object.keys(counts).forEach(k => { const r = (S.sched || {})[k] || {}; const tw = r.type === 'Twin Window' ? 2 : 1; tot += counts[k] * pmult * tw; });
-      cards.push({ disc: 'windows', ico: '🪟', name: tr('Janelas e Portas'), metric: tot + ' ' + tr('marcas'), money: false });
+      cards.push({ disc: 'windows', ico: '🪟', name: tr('Janelas e Portas'), metric: fmtN(tot) + ' ' + tr('marcas'), money: false });
     }
     let html = cards.map(c => {
       const m = c.money
