@@ -96,10 +96,10 @@
           fresh.forEach(nf => {
             const ex = byCode[nf.code];
             if (!ex) { cur.push(nf); byCode[nf.code] = nf; changed = true; }
-            else if (!ex.userEdited) {                       // legenda é autoritativa; só não mexe no que o usuário editou
-              if (nf.material && ex.material !== nf.material) { ex.material = nf.material; ex.desc = nf.material; changed = true; }
-              if (nf.manufacturer && ex.manufacturer !== nf.manufacturer) { ex.manufacturer = nf.manufacturer; changed = true; }
-              if (nf.kind && ex.kind !== nf.kind) { ex.kind = nf.kind; changed = true; }
+            else {                                           // legenda é autoritativa; só não sobrescreve valor NÃO-VAZIO que o usuário editou (campo vazio é sempre preenchido)
+              if (nf.material && ex.material !== nf.material && (!ex.userEdited || !ex.material)) { ex.material = nf.material; ex.desc = nf.material; changed = true; }
+              if (nf.manufacturer && ex.manufacturer !== nf.manufacturer && (!ex.userEdited || !ex.manufacturer)) { ex.manufacturer = nf.manufacturer; changed = true; }
+              if (nf.kind && ex.kind !== nf.kind && !ex.userEdited) { ex.kind = nf.kind; changed = true; }
             }
           });
           if (changed) { F._scopeFinishes = cur; if (F._setFloorFinishes) F._setFloorFinishes(cur); if (F._refreshAreaTagList) F._refreshAreaTagList(); renderPagesList(); }
