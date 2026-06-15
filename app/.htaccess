@@ -8,3 +8,8 @@
 <FilesMatch "\.(js|css)$">
   Header set Cache-Control "public, max-age=604800"
 </FilesMatch>
+
+# Imagens/ícones/fontes: cache longo (usam ?v= quando precisam furar o cache).
+<FilesMatch "\.(png|jpg|jpeg|gif|svg|webp|ico|woff2?)$">
+  Header set Cache-Control "public, max-age=2592000"
+</FilesMatch>

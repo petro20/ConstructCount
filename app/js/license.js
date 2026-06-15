@@ -161,7 +161,7 @@
     o.style.cssText = 'position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.96);color:#e5edf6;font:14px Inter,system-ui,Arial;backdrop-filter:blur(2px)';
     o.innerHTML =
       '<div style="max-width:440px;width:90%;background:#0b1220;border:1px solid #1e293b;border-radius:16px;padding:26px 24px;box-shadow:0 18px 60px rgba(0,0,0,.5);text-align:center">'
-      + '<img src="assets/logo.png" alt="ConstructCount" style="height:64px;margin:0 auto 12px;display:block">'
+      + '<img src="assets/logo.png?v=4" alt="ConstructCount" style="height:64px;margin:0 auto 12px;display:block">'
       + '<div id="licTitle" style="font-size:17px;font-weight:700;margin-bottom:4px"></div>'
       + '<div id="licMsg" style="color:#94a3b8;margin-bottom:16px;font-size:13px;line-height:1.5"></div>'
       + '<input id="licKey" placeholder="CC-XXXX-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" '
