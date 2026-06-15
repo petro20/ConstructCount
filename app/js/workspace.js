@@ -1423,7 +1423,30 @@
     }
     return pxToSf(areaPx);
   }
-  // SF líquido de um conjunto de áreas: UNIÃO (sobreposição 1×) menos negativos. Retângulos → grade; senão soma.
+  function pointInPolyImg(x, y, poly) {                 // point-in-polygon em coords de IMAGEM
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / ((yj - yi) || 1e-9) + xi)) inside = !inside;
+    }
+    return inside;
+  }
+  // UNIÃO por AMOSTRAGEM (qualquer polígono, mesmo inclinado): célula conta se está num POSITIVO e não num NEGATIVO
+  function sampleUnionSf(posPolys, negPolys) {
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    posPolys.forEach(p => p.forEach(pt => { x0 = Math.min(x0, pt[0]); y0 = Math.min(y0, pt[1]); x1 = Math.max(x1, pt[0]); y1 = Math.max(y1, pt[1]); }));
+    if (!(x1 > x0 && y1 > y0)) return 0;
+    const N = 320, step = Math.max(x1 - x0, y1 - y0) / N, cell = step * step;
+    let areaPx = 0;
+    for (let y = y0 + step / 2; y < y1; y += step)
+      for (let x = x0 + step / 2; x < x1; x += step) {
+        if (!posPolys.some(p => pointInPolyImg(x, y, p))) continue;
+        if (negPolys.some(p => pointInPolyImg(x, y, p))) continue;
+        areaPx += cell;
+      }
+    return pxToSf(areaPx);
+  }
+  // SF líquido de um conjunto de áreas: UNIÃO (sobreposição 1×) menos negativos.
   function areasNetSf(areas) {
     const pos = [], neg = []; let allRect = true;
     (areas || []).forEach(a => areaPolys(a).forEach(poly => {
@@ -1431,8 +1454,9 @@
       if (!polyIsRect(poly)) allRect = false;
       (a.neg ? neg : pos).push(poly);
     }));
-    if (allRect && pos.length) return unionCellsSf(pos.map(polyToRect), neg.map(polyToRect));
-    return (areas || []).reduce((s, a) => s + (a.sf || 0) * (a.neg ? -1 : 1), 0);   // fallback (não-retângulo): soma
+    if (!pos.length) return 0;
+    if (allRect) return unionCellsSf(pos.map(polyToRect), neg.map(polyToRect));   // retângulos alinhados → grade exata
+    return sampleUnionSf(pos, neg);                                                // qualquer polígono → amostragem
   }
   F._wsAreasNetSf = areasNetSf;
   function buildAreaGroup(polysList) {
