@@ -59,18 +59,19 @@
     var floor = kind === 'floor';
     var d = F.floorReportDataAll ? F.floorReportDataAll() : { sheets: [] };
     var withRows = (d.sheets || []).filter(function (s) { return (floor ? s.floor : s.ceiling).length; });
-    var rowsHtml = '', tot = { mat: 0, lab: 0, cost: 0, sale: 0 };
+    var rowsHtml = '', tot = { qty: 0, mat: 0, lab: 0, cost: 0, sale: 0 };
     withRows.forEach(function (s) {
       var rows = floor ? s.floor : s.ceiling;
-      var st = { mat: 0, lab: 0, cost: 0, sale: 0 };
+      var st = { qty: 0, mat: 0, lab: 0, cost: 0, sale: 0 };
       rows.forEach(function (r) {
+        if (r.unit === 'SF') { tot.qty += r.qty; st.qty += r.qty; }
         tot.mat += r.mat; tot.lab += r.lab; tot.cost += r.cost; tot.sale += r.sale;
         st.mat += r.mat; st.lab += r.lab; st.cost += r.cost; st.sale += r.sale;
         rowsHtml += '<tr><td class="ftt-name">' + esc(r.item) + '</td><td>' + esc(r.material || '—') + '</td><td>' + esc(r.manufacturer || '—') + '</td>'
           + tdNum(fmtN(r.qty, 1)) + tdNum(r.unit) + tdNum(money(r.price))
           + '<td class="num ftt-mat">' + money(r.mat) + '</td><td class="num ftt-lab">' + money(r.lab) + '</td><td class="num ftt-tot">' + money(r.cost) + '</td><td class="num ftt-sale">' + money(r.sale) + '</td></tr>';
       });
-      rowsHtml += '<tr class="ftt-sheetsub"><td colspan="6">' + tr('Subtotal') + ' ' + esc(s.sheet) + '</td><td class="num ftt-mat">' + money(st.mat) + '</td><td class="num ftt-lab">' + money(st.lab) + '</td><td class="num ftt-tot">' + money(st.cost) + '</td><td class="num ftt-sale">' + money(st.sale) + '</td></tr>';
+      rowsHtml += '<tr class="ftt-sheetsub"><td colspan="3">' + tr('Subtotal') + ' ' + esc(s.sheet) + '</td><td class="num"><b>' + fmtN(st.qty, 1) + '</b></td><td class="num">SF</td><td class="num"></td><td class="num ftt-mat">' + money(st.mat) + '</td><td class="num ftt-lab">' + money(st.lab) + '</td><td class="num ftt-tot">' + money(st.cost) + '</td><td class="num ftt-sale">' + money(st.sale) + '</td></tr>';
     });
     var ri = function (k, ph) { return '<input class="ftt-arate" data-rate="' + k + '" value="' + esc(String(rate(k, ''))) + '" placeholder="' + ph + '" inputmode="decimal">'; };
     var rbar = (floor
@@ -79,7 +80,7 @@
       + ' &nbsp; ' + tr('Sobra') + ' %: ' + ri('waste', '%') + ' &nbsp; ' + tr('Imposto') + ' %: ' + ri('tax', '%') + ' &nbsp; ' + tr('Ganho') + ' %: ' + ri('markup', '%');
     var headers = ['ITEM', tr('Material'), tr('Fabricante'), tr('Qtd'), tr('Un'), tr('Preço un.'), 'MATERIAL $', 'M.O. $', tr('Custo') + ' $', tr('Venda') + ' $'];
     var body = withRows.length ? rowsHtml : '<tr><td colspan="10" style="text-align:center;color:#8b887f;padding:18px">' + tr('Meça áreas de {k} (ferramenta ▱ Área) para aparecer aqui.', { k: floor ? tr('Piso') : tr('Forro') }) + '</td></tr>';
-    var foot = '<tr><td colspan="6"><b>' + tr('Total geral') + '</b></td><td class="num ftt-mat"><b>' + money(tot.mat) + '</b></td><td class="num ftt-lab"><b>' + money(tot.lab) + '</b></td><td class="num ftt-tot"><b>' + money(tot.cost) + '</b></td><td class="num ftt-sale"><b>' + money(tot.sale) + '</b></td></tr>';
+    var foot = '<tr><td colspan="3"><b>' + tr('Total geral') + '</b></td><td class="num"><b>' + fmtN(tot.qty, 1) + '</b></td><td class="num">SF</td><td class="num"></td><td class="num ftt-mat"><b>' + money(tot.mat) + '</b></td><td class="num ftt-lab"><b>' + money(tot.lab) + '</b></td><td class="num ftt-tot"><b>' + money(tot.cost) + '</b></td><td class="num ftt-sale"><b>' + money(tot.sale) + '</b></td></tr>';
     host.innerHTML = '<div class="ftt-region ftt-arates">' + rbar + '</div>'
       + '<div class="ftt-tablewrap"><table class="ftt-table"><thead><tr>' + headers.map(function (h, i) { return '<th' + (i >= 3 ? ' class="num"' : '') + '>' + h + '</th>'; }).join('') + '</tr></thead>'
       + '<tbody>' + body + '</tbody><tfoot>' + foot + '</tfoot></table></div>';
