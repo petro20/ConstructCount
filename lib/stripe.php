@@ -25,47 +25,6 @@ function stripe_api(string $method, string $path, array $params = []): array {
   return $j;
 }
 
-/** Garante um customer do Stripe p/ o usuário (cria e grava o id). */
-function stripe_customer_for(array $user): ?string {
-  if (!empty($user['stripe_customer_id'])) return $user['stripe_customer_id'];
-  $c = stripe_api('POST', 'customers', ['email' => $user['email'], 'name' => $user['name'] ?: $user['email'], 'metadata[user_id]' => $user['id']]);
-  if (empty($c['id'])) return null;
-  db()->prepare('UPDATE users SET stripe_customer_id=? WHERE id=?')->execute([$c['id'], (int) $user['id']]);
-  return $c['id'];
-}
-
-/** Cria a sessão de Checkout (assinatura) e devolve a URL p/ redirecionar. */
-function stripe_checkout_url(array $user, string $plan): ?string {
-  cfg_loaded();
-  $prices = defined('STRIPE_PRICES') ? STRIPE_PRICES : [];
-  $price = $prices[$plan] ?? null;
-  if (!$price) return null;
-  $cust = stripe_customer_for($user);
-  if (!$cust) return null;
-  $s = stripe_api('POST', 'checkout/sessions', [
-    'mode' => 'subscription',
-    'customer' => $cust,
-    'line_items[0][price]' => $price,
-    'line_items[0][quantity]' => 1,
-    'allow_promotion_codes' => 'true',
-    'metadata[user_id]' => $user['id'],
-    'metadata[plan]' => $plan,
-    'subscription_data[metadata][user_id]' => $user['id'],
-    'subscription_data[metadata][plan]' => $plan,
-    'success_url' => url('success.php?session_id={CHECKOUT_SESSION_ID}'),
-    'cancel_url'  => url('cancel.php'),
-  ]);
-  return $s['url'] ?? null;
-}
-
-/** Sessão do portal de cobrança do Stripe (cliente gerencia/cancela). */
-function stripe_billing_portal_url(array $user): ?string {
-  $cust = stripe_customer_for($user);
-  if (!$cust) return null;
-  $s = stripe_api('POST', 'billing_portal/sessions', ['customer' => $cust, 'return_url' => url('dashboard.php')]);
-  return $s['url'] ?? null;
-}
-
 /** Verifica a assinatura do webhook do Stripe (Stripe-Signature). */
 function stripe_verify_webhook(string $payload, string $sigHeader): bool {
   cfg_loaded();
