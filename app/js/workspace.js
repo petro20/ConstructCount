@@ -2606,7 +2606,6 @@
     }); }
     { const wda = $('#wsAreaDetectAll'); if (wda) wda.addEventListener('click', () => detectAllRooms()); }
     { const wam = $('#wsAreaMerge'); if (wam) wam.addEventListener('click', () => mergeAreas()); }
-    { const wft = $('#wsFloorTakeoff'); if (wft) wft.addEventListener('click', () => { if (F.openTakeoff) F.openTakeoff(); }); }
     const wdm = $('#wsDelMeas'); if (wdm) wdm.addEventListener('click', deleteSelMeas);
     const wcm = $('#wsClearMeas'); if (wcm) wcm.addEventListener('click', () => {
       if (!S.measures.length) { markSaved(F.tr('Sem medidas')); return; }
