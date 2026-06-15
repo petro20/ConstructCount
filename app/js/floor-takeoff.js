@@ -80,10 +80,17 @@
         if (r.unit === 'SF') { tot.qty += r.qty; st.qty += r.qty; }
         tot.mat += r.mat; tot.lab += r.lab; tot.cost += r.cost; tot.sale += r.sale;
         st.mat += r.mat; st.lab += r.lab; st.cost += r.cost; st.sale += r.sale;
-        var fin = function (field, val, ph) { return '<td><input class="ftt-fin" data-code="' + esc(r.code || '') + '" data-kind="' + kind + '" data-field="' + field + '" value="' + esc(val || '') + '" placeholder="' + ph + '"></td>'; };
-        var matCell = r.base ? ('<td>' + esc(r.material || '—') + '</td>') : fin('material', r.material, tr('tipo'));
-        var manuCell = r.base ? '<td>—</td>' : fin('manufacturer', r.manufacturer, tr('fabricante'));
-        var tagCell = r.base ? '<td>—</td>' : '<td><input class="ftt-tagedit" data-page="' + s.page + '" data-kind="' + kind + '" data-code="' + esc(r.code || '') + '" value="' + esc(r.code || '') + '" placeholder="FF-01"></td>';
+        var fin = function (field, val, ph, fk, fc) { return '<td><input class="ftt-fin" data-code="' + esc(fc != null ? fc : (r.code || '')) + '" data-kind="' + (fk || kind) + '" data-field="' + field + '" value="' + esc(val || '') + '" placeholder="' + ph + '"></td>'; };
+        var tagCell, matCell, manuCell;
+        if (r.base) {
+          tagCell = '<td><input class="ftt-basetag" data-page="' + s.page + '" data-floorcode="' + esc(r.floorCode || '') + '" data-code="' + esc(r.code || '') + '" value="' + esc(r.code || '') + '" placeholder="VB-1"></td>';
+          matCell = fin('material', r.material, tr('tipo'), 'base', r.code || '');
+          manuCell = fin('manufacturer', r.manufacturer, tr('fabricante'), 'base', r.code || '');
+        } else {
+          tagCell = '<td><input class="ftt-tagedit" data-page="' + s.page + '" data-kind="' + kind + '" data-code="' + esc(r.code || '') + '" value="' + esc(r.code || '') + '" placeholder="FF-01"></td>';
+          matCell = fin('material', r.material, tr('tipo'));
+          manuCell = fin('manufacturer', r.manufacturer, tr('fabricante'));
+        }
         rowsHtml += '<tr><td class="ftt-name">' + esc(r.item) + '</td>' + tagCell + matCell + manuCell
           + tdNum(fmtN(r.qty, 1)) + tdNum(r.unit) + tdNum(money(r.price))
           + '<td class="num ftt-mat">' + money(r.mat) + '</td><td class="num ftt-lab">' + money(r.lab) + '</td><td class="num ftt-tot">' + money(r.cost) + '</td><td class="num ftt-sale">' + money(r.sale) + '</td></tr>';
@@ -104,6 +111,7 @@
     host.querySelectorAll('[data-rate]').forEach(function (inp) { inp.addEventListener('change', function () { setRate(inp.getAttribute('data-rate'), inp.value); if (rerender) rerender(); }); });
     host.querySelectorAll('.ftt-fin').forEach(function (inp) { inp.addEventListener('change', function () { upsertFinish(inp.getAttribute('data-kind'), inp.getAttribute('data-code'), inp.getAttribute('data-field'), (inp.value || '').trim()); if (rerender) rerender(); }); });
     host.querySelectorAll('.ftt-tagedit').forEach(function (inp) { inp.addEventListener('change', function () { if (F._wsRetagAreas) F._wsRetagAreas(+inp.getAttribute('data-page'), inp.getAttribute('data-kind'), inp.getAttribute('data-code'), (inp.value || '').trim().toUpperCase()); if (rerender) rerender(); }); });
+    host.querySelectorAll('.ftt-basetag').forEach(function (inp) { inp.addEventListener('change', function () { if (F._wsSetBaseTag) F._wsSetBaseTag(+inp.getAttribute('data-page'), inp.getAttribute('data-floorcode'), (inp.value || '').trim().toUpperCase()); if (rerender) rerender(); }); });
   };
 
   // totais da disciplina (folha atual) p/ o Resumo por pacote
@@ -155,7 +163,7 @@
       g._a.push(a);
       if (!a.neg && k !== 'ceiling') g.baseLf += (F._wsAreaBaseLfAt ? F._wsAreaBaseLfAt(a, MM) : 0);
     });
-    return Object.keys(by).map(function (t) { var g = by[t]; g.sf = F._wsAreasNetSf ? F._wsAreasNetSf(g._a, MM) : g._a.reduce(function (s, a) { return s + (a.sf || 0) * (a.neg ? -1 : 1); }, 0); return g; }).filter(function (g) { return Math.abs(g.sf) > 0.01; });
+    return Object.keys(by).map(function (t) { var g = by[t]; g.sf = F._wsAreasNetSf ? F._wsAreasNetSf(g._a, MM) : g._a.reduce(function (s, a) { return s + (a.sf || 0) * (a.neg ? -1 : 1); }, 0); g.baseTag = (g._a.filter(function (a) { return a.baseTag; })[0] || {}).baseTag || ''; return g; }).filter(function (g) { return Math.abs(g.sf) > 0.01; });
   }
   function priceRows(gs, kind, baseH, level) {
     var floor = kind === 'floor', out = [], lvl = level ? (' - ' + titleCase(level)) : '';
@@ -166,7 +174,10 @@
       if (floor && g.baseLf > 0.01) {
         var bsf = g.baseLf * (baseH / 12);   // área do rodapé em SF (perímetro × altura)
         var br = rate('baseMat', 0), bmat = bsf * br * wasteMult(), blab = bsf * rate('baseLab', 0), bc = lineCost(bmat, blab);
-        out.push({ item: tr('Rodapé (base)') + ' · ' + g.baseLf.toFixed(0) + ' LF', tag: g.tag, material: (baseH > 0 ? (baseH + '" ' + tr('alt.')) : ''), manufacturer: '', qty: bsf, unit: 'SF', price: br, mat: bmat, lab: blab, cost: bc, sale: lineSale(bc), base: true });
+        var bcode = g.baseTag || '';
+        out.push({ item: tr('Rodapé (base)') + ' · ' + g.baseLf.toFixed(0) + ' LF' + (baseH > 0 ? (' · ' + baseH + '"') : ''), tag: bcode, code: bcode, floorCode: g.code || '',
+          material: (F._wsFinishDesc ? F._wsFinishDesc('base', bcode) : ''), manufacturer: (F._wsFinishManu ? F._wsFinishManu('base', bcode) : ''),
+          qty: bsf, unit: 'SF', price: br, mat: bmat, lab: blab, cost: bc, sale: lineSale(bc), base: true });
       }
     });
     return out;

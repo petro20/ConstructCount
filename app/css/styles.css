@@ -440,9 +440,9 @@ button:focus-visible {
 #frTakeoff .ftt-fin:hover { border-color: #e3e1db; background: #fff; }
 #frTakeoff .ftt-fin:focus { outline: none; border-color: #d9a02a; background: #fff; }
 #frTakeoff .ftt-fin::placeholder { color: #b8b3a8; }
-#frTakeoff .ftt-tagedit { width: 72px; border: 1px solid #e3e1db; border-radius: 5px; padding: 2px 5px; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #262420; background: #fff; }
-#frTakeoff .ftt-tagedit:focus { outline: none; border-color: #d9a02a; }
-#frTakeoff .ftt-tagedit::placeholder { color: #c4bfb4; font-weight: 400; }
+#frTakeoff .ftt-tagedit, #frTakeoff .ftt-basetag { width: 72px; border: 1px solid #e3e1db; border-radius: 5px; padding: 2px 5px; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #262420; background: #fff; }
+#frTakeoff .ftt-tagedit:focus, #frTakeoff .ftt-basetag:focus { outline: none; border-color: #d9a02a; }
+#frTakeoff .ftt-tagedit::placeholder, #frTakeoff .ftt-basetag::placeholder { color: #c4bfb4; font-weight: 400; }
 /* alças de redimensionar os painéis laterais */
 .ws-resize { flex: 0 0 5px; align-self: stretch; cursor: col-resize; background: transparent; position: relative; z-index: 6; transition: background .12s; }
 .ws-resize:hover, .ws-resize.on { background: rgba(217,160,42,.55); }

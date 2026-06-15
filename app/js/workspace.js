@@ -1471,6 +1471,19 @@
       if (n) { if (S.areasByPage) S.areasByPage[page] = list; if (S.prov && S.prov.saveAreas) { try { S.prov.saveAreas(page, list); } catch (e) {} } renderPagesList(); }
     }
   };
+  // define o código de BASE (rodapé) das áreas de PISO de um grupo (mesmo floorCode) — base também tem tag (VB-x)
+  F._wsSetBaseTag = (page, floorCode, newBaseCode) => {
+    newBaseCode = (newBaseCode || '').trim().toUpperCase();
+    const match = a => ((a.kind === 'ceiling' ? 'ceiling' : 'floor') === 'floor') && ((a.tag || '') === (floorCode || ''));
+    if (page === S.page) {
+      let n = 0; (S.areas || []).forEach(a => { if (match(a)) { a.baseTag = newBaseCode; n++; } });
+      if (n) { saveAreas(); renderPagesList(); }
+    } else {
+      const list = (S.areasByPage && S.areasByPage[page]) || loadAreas(page);
+      let n = 0; (list || []).forEach(a => { if (match(a)) { a.baseTag = newBaseCode; n++; } });
+      if (n) { if (S.areasByPage) S.areasByPage[page] = list; if (S.prov && S.prov.saveAreas) { try { S.prov.saveAreas(page, list); } catch (e) {} } renderPagesList(); }
+    }
+  };
   // folhas com áreas + escala de cada uma (p/ relatório do projeto inteiro)
   F._wsPagesAreas = () => (S.pages || []).map(p => ({ page: p.page, sheet: p.sheet || ('Folha ' + p.page), level: p.level || '', mmPerPx: (p.page === S.page ? S.mmPerPx : null) || p.mm_per_px || null, areas: (p.page === S.page) ? (S.areas || []) : loadAreas(p.page) })).filter(x => (x.areas || []).length);
   // ---- UNIÃO de retângulos eixo-alinhados → "1 formato só" (bordas comuns somem, sobreposição não conta 2x) ----
