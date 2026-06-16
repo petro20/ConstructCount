@@ -267,7 +267,7 @@ window.ConstructCount = window.ConstructCount || {};
     const cyM = (fy0 + fy1) / 2;
 
     // --- montante/travessa: barra de FRAMING (mesmo perfil da moldura lateral) separando vão | adicional ---
-    const mw = Math.min(13, Math.max(8, inset - 2));                 // espessura do montante ≈ moldura
+    const mw = Math.min(7, Math.max(5, Math.round((inset - 2) / 2))); // espessura do montante/travessa ≈ metade da moldura
     const frameBar = (x, y, bw, bh) =>
       `<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="2" fill="url(#fgGrad)" stroke="#46638a" stroke-width="2"/>`
       + `<rect x="${x + 1.5}" y="${y + 1.5}" width="${Math.max(0, bw - 3)}" height="${Math.max(0, bh - 3)}" rx="1.5" fill="none" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.5"/>`;
