@@ -1032,6 +1032,7 @@ window.ConstructCount = window.ConstructCount || {};
     'Cada pacote é um motor de levantamento por especialidade. Comece pelo de Janelas e Portas — os próximos já estão a caminho.': { en: 'Each package is a takeoff engine for a specialty. Start with Windows & Doors — more are on the way.', es: 'Cada paquete es un motor de cómputo por especialidad. Empieza con Ventanas y Puertas — los próximos ya vienen.' },
     'Verificando assinatura…': { en: 'Checking subscription…', es: 'Verificando suscripción…' },
     'Assinatura ativa': { en: 'Subscription active', es: 'Suscripción activa' },
+    'Assinatura cortesia · sem vencimento': { en: 'Courtesy subscription · no expiry', es: 'Suscripción cortesía · sin vencimiento' },
     'Sem assinatura ativa — assine ou ative sua chave': { en: 'No active subscription — subscribe or activate your key', es: 'Sin suscripción activa — suscríbete o activa tu clave' },
     'Pacote disponível': { en: 'Available package', es: 'Paquete disponible' },
     'Pronto para usar hoje.': { en: 'Ready to use today.', es: 'Listo para usar hoy.' },

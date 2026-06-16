@@ -164,8 +164,12 @@
     const fmt = (d) => { if (!d) return ''; try { const t = (typeof d === 'number') ? new Date(d * 1000) : new Date(d); return t.toLocaleDateString(); } catch (e) { return ''; } };
     if (st.state === 'valid') {
       box.classList.add('is-ok');
-      const exp = fmt(st.expires_at); const plan = st.plan ? (' · ' + st.plan) : '';
-      txt.textContent = F.tr('Assinatura ativa') + plan + (exp ? (' · ' + F.tr('válida até {d}', { d: exp })) : '');
+      if (F.isCourtesy && F.isCourtesy(st)) {
+        txt.textContent = '🎁 ' + F.tr('Assinatura cortesia · sem vencimento');
+      } else {
+        const exp = fmt(st.expires_at); const plan = st.plan ? (' · ' + st.plan) : '';
+        txt.textContent = F.tr('Assinatura ativa') + plan + (exp ? (' · ' + F.tr('válida até {d}', { d: exp })) : '');
+      }
     } else if (st.state === 'grace') {
       box.classList.add('is-warn');
       txt.textContent = F.tr('Modo offline — {d} dia(s) de carência', { d: st.grace_days_left != null ? st.grace_days_left : '?' });

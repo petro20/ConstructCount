@@ -203,11 +203,20 @@
     } else { setEntFromToken(); }
   }
 
+  // CORTESIA: licença sem vencimento (expires_at vazio) ou plano marcado como cortesia/vitalícia
+  // → não vence e não mostra o aviso de expiração.
+  F.isCourtesy = function (st) {
+    if (!st || st.state !== 'valid') return false;
+    if (/cortes|courtesy|vital/i.test(String(st.plan || ''))) return true;
+    if (!st.expires_at && st.days_left == null) return true;
+    return false;
+  };
+
   function banner(st) {
-    // aviso leve quando em carência ou perto de vencer
+    // aviso leve quando em carência ou perto de vencer (cortesia nunca avisa)
     var b = document.getElementById('licBanner');
     var warn = (st.state === 'grace') ? tr('Modo offline — {d} dia(s) de carência. Reconecte para revalidar.', { d: st.grace_days_left != null ? st.grace_days_left : '?' })
-      : (st.days_left != null && st.days_left <= 7) ? tr('Sua assinatura vence em {d} dia(s).', { d: st.days_left }) : '';
+      : (!F.isCourtesy(st) && st.days_left != null && st.days_left <= 7) ? tr('Sua assinatura vence em {d} dia(s).', { d: st.days_left }) : '';
     if (!warn) { if (b) b.remove(); return; }
     if (!b) {
       b = document.createElement('div'); b.id = 'licBanner';
