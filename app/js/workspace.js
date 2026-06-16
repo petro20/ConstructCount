@@ -702,6 +702,34 @@
     renderItems();
     markSaved(F.tr('Resumo: {c} atualizado', { c: code }));
   }
+  // ---- API p/ a aba "Janelas e Portas" do Takeoff (tabela editável + consolidar) ----
+  F._wsWindowsRows = function () {
+    const counts = {};
+    (S.marks || []).forEach(m => { if (m.confirmed) { const k = m.label || ''; counts[k] = (counts[k] || 0) + 1; } });
+    const codes = Object.keys(counts).sort((a, b) => (a || '~').localeCompare(b || '~', undefined, { numeric: true }));
+    const meta = (S.pages || []).find(p => p.page === S.page) || {};
+    const pmult = +meta.mult || 1;
+    let total = 0;
+    const rows = codes.map(k => {
+      const r = (S.sched || {})[k] || {};
+      const units = winUnits(r);
+      const qty = counts[k] * pmult * units;
+      total += qty;
+      return { code: k, type: r.type || '', door: !!r.door, w_raw: r.w_raw || '', h_raw: r.h_raw || '', count: counts[k], units: units, qty: qty };
+    });
+    return { sheet: meta.sheet || (F.tr('folha') + ' ' + S.page), pmult: pmult, rows: rows, total: total };
+  };
+  F._wsTypeOptions = function (sel) { return sumTypeOptions(sel); };
+  F._wsSaveWindow = function (code, patch) { return saveSummary(code, patch); };
+  F._wsConsolidate = async function () {
+    if (!S.prov || !S.prov.consolidate) { markSaved(F.tr('Disponível no app de desktop.')); return null; }
+    try { await flushSave(); } catch (e) {}
+    markSaved(F.tr('Consolidando…'));
+    let res; try { res = await S.prov.consolidate(S.scope); } catch (e) { markSaved(F.tr('Falha ao consolidar')); return null; }
+    const ws = document.querySelector('#workspace'); if (ws) ws.classList.add('hidden');
+    if (S.onConsolidate) S.onConsolidate(res);
+    return res;
+  };
   // Resumo por PACOTE: 1 quadro (card) por disciplina + total geral
   function renderSummaryCards() {
     const wrap = document.querySelector('#wsSummaryCards'); if (!wrap) return;

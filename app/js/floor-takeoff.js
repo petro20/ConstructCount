@@ -203,12 +203,48 @@
     return t;
   };
 
-  F.renderWindowsTakeoff = function (host) {
-    host.innerHTML = '<div class="ftt-tablewrap" style="display:flex;align-items:center;justify-content:center;padding:24px">'
-      + '<div style="text-align:center;color:#6c6960;line-height:1.8;max-width:520px">'
-      + '🪟 ' + tr('Esquadrias (Janelas e Portas) são contadas com a ferramenta 🔢 Contar / Auto Count.') + '<br>'
-      + tr('O consolidado e os documentos saem na Central de Relatórios.') + '<br><br>'
-      + '<button id="fktOpenReports" class="ftt-regbtn ftt-regbtn-ai">📄 ' + tr('Abrir Relatórios') + '</button></div></div>';
+  // Janelas e Portas DENTRO do dock: tabela editável (Marca · Tipo · Larg · Alt · Qtd) da
+  // folha atual; edição salva no schedule; "Consolidar" gera o consolidado do projeto.
+  F.renderWindowsTakeoff = function (host, rerender) {
+    var rr = rerender || function () { F.renderWindowsTakeoff(host); };
+    var data = F._wsWindowsRows ? F._wsWindowsRows() : null;
+    if (!data) {
+      host.innerHTML = '<div class="ftt-tablewrap" style="display:flex;align-items:center;justify-content:center;padding:24px"><div style="text-align:center;color:#6c6960;line-height:1.8;max-width:520px">🪟 ' + tr('Conte janelas/portas na planta (🔢 Contar / Auto Count) para aparecer aqui.') + '<br><br><button id="fktOpenReports" class="ftt-regbtn ftt-regbtn-ai">📄 ' + tr('Abrir Relatórios') + '</button></div></div>';
+      var rb0 = host.querySelector('#fktOpenReports'); if (rb0) rb0.addEventListener('click', function () { if (F.openReportsHub) F.openReportsHub(); });
+      return;
+    }
+    var opts = F._wsTypeOptions || function () { return ''; };
+    var rowsHtml = data.rows.map(function (r) {
+      var ic = r.door ? '🚪' : '🪟';
+      var calc = '' + r.count + (data.pmult > 1 ? '×' + data.pmult + 'pav' : '') + (r.units > 1 ? '×' + r.units + 'un' : '');
+      var qtd = (calc !== '' + r.count) ? (calc + ' = <b>' + r.qty + '</b>') : ('<b>' + r.qty + '</b>');
+      return '<tr><td class="ftt-name">' + ic + ' ' + esc(r.code || '—') + '</td>'
+        + '<td><select class="wtt-type" data-code="' + esc(r.code) + '">' + opts(r.type) + '</select></td>'
+        + '<td><input class="wtt-dim wtt-w" data-code="' + esc(r.code) + '" value="' + esc(r.w_raw) + '" placeholder="' + tr('larg') + '"></td>'
+        + '<td><input class="wtt-dim wtt-h" data-code="' + esc(r.code) + '" value="' + esc(r.h_raw) + '" placeholder="' + tr('alt') + '"></td>'
+        + '<td class="num">' + qtd + '</td></tr>';
+    }).join('');
+    var body = data.rows.length ? rowsHtml : '<tr><td colspan="5" style="text-align:center;color:#8b887f;padding:18px">' + tr('Conte janelas/portas na planta (🔢 Contar / Auto Count) para aparecer aqui.') + '</td></tr>';
+    var headers = [tr('Marca'), tr('Tipo'), tr('Largura'), tr('Altura'), tr('Qtd')];
+    var foot = '<tr><td colspan="4"><b>' + tr('Total desta folha') + '</b></td><td class="num"><b>' + data.total + '</b></td></tr>';
+    var bar = '<span style="color:#6c6960">' + tr('Folha') + ': <b>' + esc(data.sheet) + '</b>' + (data.pmult > 1 ? ' · ' + tr('pavimentos') + '×' + data.pmult : '') + ' · ✏️ ' + tr('editável') + '</span>'
+      + '<span style="flex:1"></span>'
+      + '<button id="wttConsolidate" class="ftt-regbtn ftt-regbtn-ai">✅ ' + tr('Consolidar tabela') + '</button>'
+      + '<button id="fktOpenReports" class="ftt-regbtn">📄 ' + tr('Abrir Relatórios') + '</button>';
+    host.innerHTML = '<div class="ftt-region" style="display:flex;align-items:center;gap:8px">' + bar + '</div>'
+      + '<div class="ftt-tablewrap"><table class="ftt-table"><thead><tr>' + headers.map(function (h, i) { return '<th' + (i >= 4 ? ' class="num"' : '') + '>' + h + '</th>'; }).join('') + '</tr></thead>'
+      + '<tbody>' + body + '</tbody><tfoot>' + foot + '</tfoot></table></div>'
+      + '<div style="color:#8b887f;font-size:12px;padding:6px 4px">' + tr('Edite Tipo e Medidas aqui; depois clique em Consolidar para gerar o consolidado e os documentos.') + '</div>';
+    var save = function (code, patch) { if (F._wsSaveWindow) Promise.resolve(F._wsSaveWindow(code, patch)).then(function () { rr(); }); };
+    host.querySelectorAll('.wtt-type').forEach(function (s) { s.addEventListener('change', function () { save(s.getAttribute('data-code'), { type: s.value }); }); });
+    host.querySelectorAll('.wtt-dim').forEach(function (inp) {
+      inp.addEventListener('change', function () {
+        var code = inp.getAttribute('data-code');
+        var w = host.querySelector('.wtt-w[data-code="' + code + '"]'), h = host.querySelector('.wtt-h[data-code="' + code + '"]');
+        save(code, { w: w ? w.value : '', h: h ? h.value : '' });
+      });
+    });
+    var cb = host.querySelector('#wttConsolidate'); if (cb) cb.addEventListener('click', function () { if (F._wsConsolidate) F._wsConsolidate(); });
     var rb = host.querySelector('#fktOpenReports'); if (rb) rb.addEventListener('click', function () { if (F.openReportsHub) F.openReportsHub(); });
   };
 
