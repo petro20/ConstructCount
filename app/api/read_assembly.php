@@ -31,6 +31,10 @@ $in  = json_decode($raw ?: '', true);
 if (!is_array($in) || empty($in['image_base64'])) fail(400, 'Envie image_base64 (PNG da folha) no corpo JSON.');
 $img = (string) $in['image_base64'];
 if (strlen($img) > 28 * 1024 * 1024) fail(413, 'Imagem muito grande.');
+// detecta o tipo real pelo cabeçalho do base64 (front pode enviar PNG ou JPEG)
+$imgMime = (substr($img, 0, 4) === '/9j/') ? 'image/jpeg'
+         : ((substr($img, 0, 4) === 'iVBO') ? 'image/png'
+         : ((substr($img, 0, 5) === 'UklGR') ? 'image/webp' : 'image/png'));
 
 /* ---------- gate de licença (IA só roda com licença válida) ---------- */
 $licUrl = defined('CONSTRUCTCOUNT_LICENSE_VALIDATE_URL') ? CONSTRUCTCOUNT_LICENSE_VALIDATE_URL
@@ -112,7 +116,7 @@ $body = [
   'messages' => [[
     'role' => 'user',
     'content' => [
-      ['type' => 'image', 'source' => ['type' => 'base64', 'media_type' => 'image/png', 'data' => $img]],
+      ['type' => 'image', 'source' => ['type' => 'base64', 'media_type' => $imgMime, 'data' => $img]],
       ['type' => 'text', 'text' => 'Leia os tipos de parede (wall type details / partition schedule) desta folha.'],
     ],
   ]],
