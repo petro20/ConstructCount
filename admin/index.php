@@ -5,6 +5,7 @@ require __DIR__ . '/../lib/auth.php';
 require __DIR__ . '/../lib/license.php';
 $u = require_login();
 if (!is_admin($u)) { http_response_code(403); exit('Acesso restrito.'); }
+try { db()->exec("ALTER TABLE licenses ADD COLUMN courtesy TINYINT(1) NOT NULL DEFAULT 0"); } catch (Throwable $e) {}   // garante a coluna de CORTESIA (1x)
 
 $msg = '';
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
@@ -21,6 +22,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && csrf_check()) {
     } elseif ($act === 'devices') {
       db()->prepare('DELETE FROM license_devices WHERE license_id=?')->execute([(int) $_POST['id']]);
       $msg = 'Dispositivos liberados.';
+    } elseif ($act === 'courtesy') {
+      db()->prepare('UPDATE licenses SET courtesy = 1 - COALESCE(courtesy,0) WHERE id=?')->execute([(int) $_POST['id']]);
+      $msg = 'Cortesia alternada (sem vencimento on/off).';
     }
   } catch (Throwable $e) { $msg = 'Erro: ' . $e->getMessage(); }
 }
@@ -44,14 +48,15 @@ $cf = csrf_field();
   </form>
 </div>
 <div class="card" style="overflow:auto">
-<table><tr><th>Chave</th><th>Cliente</th><th>Plano</th><th>Status</th><th>Vence</th><th>Disp.</th><th>Stripe</th><th>Ações</th></tr>
+<table><tr><th>Chave</th><th>Cliente</th><th>Plano</th><th>Status</th><th>Vence</th><th>Cortesia</th><th>Disp.</th><th>Stripe</th><th>Ações</th></tr>
 <?php foreach ($rows as $r): ?>
 <tr>
   <td class="key"><?= eh($r['license_key']) ?></td>
   <td><?= eh($r['email']) ?></td>
   <td><?= eh($r['plan']) ?></td>
   <td><b><?= eh($r['status']) ?></b></td>
-  <td><?= eh($r['expires_at']) ?></td>
+  <td><?= !empty($r['courtesy']) ? '<span style="color:#157347">🎁 sem venc.</span>' : eh($r['expires_at']) ?></td>
+  <td><?= !empty($r['courtesy']) ? '🎁 sim' : '—' ?></td>
   <td><?= (int) $r['dev'] ?>/<?= (int) $r['max_devices'] ?></td>
   <td style="font-size:11px"><?= eh($r['stripe_subscription_id']) ?></td>
   <td style="white-space:nowrap">
@@ -59,6 +64,7 @@ $cf = csrf_field();
       <select name="status"><?php foreach (['active','past_due','suspended','revoked'] as $s): ?><option <?= $s === $r['status'] ? 'selected' : '' ?>><?= $s ?></option><?php endforeach; ?></select>
       <button class="btn ghost">ok</button></form>
     <form method="post" style="display:inline" onsubmit="return confirm('Liberar dispositivos?')"><?= $cf ?><input type="hidden" name="act" value="devices"><input type="hidden" name="id" value="<?= (int) $r['id'] ?>"><button class="btn ghost">liberar disp.</button></form>
+    <form method="post" style="display:inline"><?= $cf ?><input type="hidden" name="act" value="courtesy"><input type="hidden" name="id" value="<?= (int) $r['id'] ?>"><button class="btn ghost"><?= !empty($r['courtesy']) ? 'tirar cortesia' : '🎁 cortesia' ?></button></form>
   </td>
 </tr>
 <?php endforeach; ?>

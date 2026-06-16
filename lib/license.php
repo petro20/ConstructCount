@@ -84,6 +84,7 @@ function lic_status_only(string $key): array {
   $st->execute([$key]);
   $l = $st->fetch();
   if (!$l) { $out['reason'] = 'not_found'; return $out; }
+  if (!empty($l['courtesy'])) $l['expires_at'] = null;   // CORTESIA: sem vencimento
   $out['found'] = true; $out['plan'] = $l['plan']; $out['status'] = $l['status'];
   $out['expires_at'] = $l['expires_at']; $out['devices'] = (int) $l['dev']; $out['max_devices'] = (int) $l['max_devices'];
   if ($l['status'] !== 'active') { $out['reason'] = $l['status']; return $out; }
@@ -103,6 +104,7 @@ function lic_validate(string $key, string $deviceRaw, ?string $label = null): ar
   $l = $st->fetch();
   if (!$l) { lic_log(null, $dev, 'validate_fail', 'chave inválida'); $out['reason'] = 'chave inválida'; return $out; }
   $id = (int) $l['id'];
+  if (!empty($l['courtesy'])) $l['expires_at'] = null;   // CORTESIA: sem vencimento (flag preservada pelo webhook do Dite)
   if ($l['status'] !== 'active') { lic_log($id, $dev, 'validate_fail', $l['status']); $out['reason'] = 'licença ' . $l['status']; return $out; }
   if (!empty($l['expires_at']) && strtotime((string) $l['expires_at']) < time()) { lic_log($id, $dev, 'validate_fail', 'expirada'); $out['reason'] = 'assinatura expirada'; $out['expires_at'] = $l['expires_at']; return $out; }
   $sd = db()->prepare('SELECT id FROM license_devices WHERE license_id=? AND device_hash=? LIMIT 1');
