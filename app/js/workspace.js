@@ -692,13 +692,24 @@
     });
     return h;
   }
+  // funde o registro do schedule no cache LIMPANDO o split (base/adicional) que o motor removeu
+  // (senão o campo "+ adicional" reverte ao valor antigo ao mudar/remover a medida)
+  function mergeSchedRec(cur, rec) {
+    const out = Object.assign({}, cur || {}, rec || {});
+    ['w', 'h'].forEach(ax => {
+      if (rec && (ax + '_mm') in rec) {                 // esse eixo foi atualizado nesta gravação
+        ['_base_mm', '_base_raw', '_add_mm', '_add_raw'].forEach(k => { if (!((ax + k) in rec)) delete out[ax + k]; });
+      }
+    });
+    return out;
+  }
   async function saveSummary(code, patch) {
     if (!S.prov || !S.prov.setWindowDim) { markSaved(F.tr('Disponível no app de desktop.')); return; }
     const wmm = patch.w != null ? F.parseToMm(patch.w) : null;
     const hmm = patch.h != null ? F.parseToMm(patch.h) : null;
     const ty = patch.type != null ? (patch.type || null) : null;
     let r; try { r = await S.prov.setWindowDim(code, wmm || null, hmm || null, ty, null); } catch (e) { markSaved(F.tr('Falha ao salvar')); return; }
-    if (r && r.rec) { S.sched = S.sched || {}; S.sched[code] = Object.assign({}, S.sched[code], r.rec); }
+    if (r && r.rec) { S.sched = S.sched || {}; S.sched[code] = mergeSchedRec(S.sched[code], r.rec); }
     renderItems();
     markSaved(F.tr('Resumo: {c} atualizado', { c: code }));
   }
@@ -2956,7 +2967,7 @@
       if (!wmm && !hmm && !wtype) { markSaved(F.tr('Informe medida ou tipo')); return; }
       if (!S.prov.setWindowDim) { alert(F.tr('Disponível no app de desktop.')); return; }
       let r; try { r = await S.prov.setWindowDim(S.highlight, wmm || null, hmm || null, wtype, null, wadd || null, hadd || null); } catch (e) { markSaved(F.tr('Falha ao salvar')); return; }
-      if (r && r.rec) { S.sched = S.sched || {}; S.sched[S.highlight] = Object.assign({}, S.sched[S.highlight], r.rec); }
+      if (r && r.rec) { S.sched = S.sched || {}; S.sched[S.highlight] = mergeSchedRec(S.sched[S.highlight], r.rec); }
       renderItems(); updateSelWindow();
       markSaved(F.tr('Medida salva para {c}', { c: S.highlight }));
     });
