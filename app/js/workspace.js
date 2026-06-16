@@ -2180,13 +2180,20 @@
   // IA de VISÃO na nuvem lê a folha ATUAL (qualquer formato de wall type detail)
   async function cloudReadWalls() {
     if (!S.img || !(S.img.naturalWidth || S.img.width)) return null;
+    const iw = S.img.naturalWidth || S.img.width, ih = S.img.naturalHeight || S.img.height;
+    const sc = Math.min(1, 1800 / Math.max(iw, ih));          // reduz p/ a visão (payload menor; resolução basta)
     const c = document.createElement('canvas');
-    c.width = S.img.naturalWidth || S.img.width; c.height = S.img.naturalHeight || S.img.height;
-    c.getContext('2d').drawImage(S.img, 0, 0);
-    const b64 = c.toDataURL('image/png').split(',')[1];
+    c.width = Math.max(1, Math.round(iw * sc)); c.height = Math.max(1, Math.round(ih * sc));
+    c.getContext('2d').drawImage(S.img, 0, 0, c.width, c.height);
+    let b64;
+    try { b64 = c.toDataURL('image/jpeg', 0.85).split(',')[1]; } catch (e) { return { error: F.tr('Não foi possível ler a imagem da folha.') }; }
     const lic = F.licenseInfo ? F.licenseInfo() : { key: '', device: '' };
-    const resp = await fetch('api/read_assembly.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_base64: b64, license_key: lic.key, device: lic.device }) });
-    return await resp.json();
+    let resp;
+    try { resp = await fetch('api/read_assembly.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_base64: b64, license_key: lic.key, device: lic.device }) }); }
+    catch (e) { return { error: F.tr('Sem conexão com o servidor de IA.') }; }
+    let j = null; try { j = await resp.json(); } catch (e) { j = null; }
+    if (!j) return { error: F.tr('Resposta inválida do servidor de IA (HTTP {s}).', { s: resp.status }) };
+    return j;                                                  // pode trazer {error:"API key não configurada…"} → mostrado claro ao usuário
   }
   async function readWallTypesAI() {
     if (S.busy) return;

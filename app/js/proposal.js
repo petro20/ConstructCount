@@ -265,18 +265,51 @@ window.ConstructCount = window.ConstructCount || {};
     ].forEach((s, k) => doc.text(t(s), 14, py + 7 + k * 6));
     foot();
 
-    /* ---- Contato ---- */
+    /* ---- Encerramento / Contato (premium) ---- */
     doc.addPage();
-    doc.setFillColor(...STEEL); doc.rect(0, 0, W, 60, 'F');
-    doc.setTextColor(255); doc.setFontSize(20); doc.setFont(undefined, 'bold');
-    doc.text(P.company, 14, 30);
-    doc.setFontSize(11); doc.setFont(undefined, 'normal');
-    doc.text(t('Contact Information'), 14, 42);
-    doc.setTextColor(60); doc.setFontSize(11);
-    doc.text(P.address, 14, 80);
-    doc.text(P.contact, 14, 90);
-    if (prj.email) doc.text(t('E-mail') + ': ' + prj.email, 14, 100);
-    if (prj.phone) doc.text(t('Telefone') + ': ' + prj.phone, 14, 110);
+    doc.setFillColor(...STEEL); doc.rect(0, 0, W, 58, 'F');
+    doc.setFillColor(...GOLD); doc.rect(0, 58, W, 1.5, 'F');
+    if (brand.logo) { try { const ar = brand.logoAR || 1, lh = 20, lw = Math.min(56, lh * ar); doc.addImage(brand.logo, /jpe?g/i.test(brand.logo) ? 'JPEG' : 'PNG', 14, 18, lw, lh); } catch (e) {} }
+    else { doc.setTextColor(255); doc.setFontSize(20); doc.setFont(undefined, 'bold'); doc.text(brand.company || P.company, 14, 32); }
+    doc.setTextColor(208, 220, 236); doc.setFontSize(10.5); doc.setFont(undefined, 'normal');
+    doc.text(t('Proposta técnica de esquadrias'), 14, 47);
+
+    const sec = (title, y) => {
+      doc.setDrawColor(...GOLD); doc.setLineWidth(0.5); doc.line(14, y - 5.5, 46, y - 5.5);
+      doc.setTextColor(...STEEL); doc.setFont(undefined, 'bold'); doc.setFontSize(11);
+      doc.text(t(title).toUpperCase(), 14, y);
+    };
+    let cy = 82;
+    // agradecimento
+    doc.setTextColor(...STEEL); doc.setFont(undefined, 'bold'); doc.setFontSize(15);
+    doc.text(t('Obrigado pela oportunidade'), 14, cy); cy += 8;
+    doc.setFont(undefined, 'normal'); doc.setFontSize(10.5); doc.setTextColor(70);
+    const msg = doc.splitTextToSize(t('Agradecemos a confiança em nos receber. Esta proposta foi preparada com atenção a cada detalhe do seu projeto. Ficamos à disposição para esclarecer dúvidas e seguir para a próxima etapa.'), W - 28);
+    doc.text(msg, 14, cy); cy += msg.length * 5.4 + 14;
+
+    // fale conosco
+    sec('Fale conosco', cy); cy += 8;
+    const cinfo = [['Site', P.contact], ['E-mail', prj.email || ''], ['Telefone', prj.phone || ''], ['Endereço', P.address || '']].filter(r => r[1]);
+    cinfo.forEach((r, k) => {
+      const yy = cy + k * 8;
+      doc.setFont(undefined, 'bold'); doc.setFontSize(8.5); doc.setTextColor(...GOLD); doc.text(t(r[0]).toUpperCase(), 14, yy);
+      doc.setFont(undefined, 'normal'); doc.setFontSize(10.5); doc.setTextColor(50); doc.text(String(r[1]), 42, yy);
+    });
+    cy += cinfo.length * 8 + 14;
+
+    // condições comerciais
+    sec('Condições comerciais', cy); cy += 8;
+    doc.setFont(undefined, 'normal'); doc.setFontSize(9.5); doc.setTextColor(70);
+    ['• 50% na aprovação, 50% na entrega/instalação;', '• Validade da proposta: 15 dias;', '• Prazo de produção: a confirmar;', '• Valores em USD.']
+      .forEach((s, k) => doc.text(t(s), 14, cy + k * 6));
+    cy += 4 * 6 + 16;
+
+    // aceite (assinaturas)
+    sec('Aceite da proposta', cy); cy += 24;
+    doc.setDrawColor(120); doc.setLineWidth(0.3); doc.line(16, cy, 96, cy); doc.line(114, cy, 196, cy);
+    doc.setFont(undefined, 'normal'); doc.setFontSize(9); doc.setTextColor(90);
+    doc.text(t('Empresa'), 16, cy + 5); doc.text(t('Cliente'), 114, cy + 5);
+    doc.text(t('Data') + ': ____ / ____ / ______', 114, cy + 13);
     foot();
 
     F._lastProposalPages = doc.internal.getNumberOfPages();   // diagnóstico
