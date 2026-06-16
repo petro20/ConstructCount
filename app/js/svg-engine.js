@@ -238,11 +238,17 @@ window.ConstructCount = window.ConstructCount || {};
     const fx1 = fx0 + fw, fy1 = fy0 + fh;
     const inset = 14;                        // espessura da moldura
 
-    // geometria interna (vidro) passada ao símbolo de abertura
+    // limites do VÃO (a porta/janela ocupa só o vão; o adicional é VIDRO fixo ao lado/abaixo)
+    const splitX = fx0 + fw * (hasWadd ? (wBaseMm / W) : 1);   // largura: vão | adicional
+    const splitY = fy0 + fh * (hasHadd ? (hBaseMm / H) : 1);   // altura: vão | adicional
+    const ix1 = fx1 - inset, iy1 = fy1 - inset;                // canto interno (o VIDRO cobre tudo)
+    const gx1 = hasWadd ? (splitX - 2) : ix1;
+    const gy1 = hasHadd ? (splitY - 2) : iy1;
+    // geometria do VÃO — passada ao símbolo (folha/arco/sash vai SÓ até a medida da porta/janela)
     const g = {
       x0: fx0 + inset, y0: fy0 + inset,
-      x1: fx1 - inset, y1: fy1 - inset,
-      cx: (fx0 + fx1) / 2, cy: (fy0 + fy1) / 2
+      x1: gx1, y1: gy1,
+      cx: (fx0 + inset + gx1) / 2, cy: (fy0 + inset + gy1) / 2
     };
 
     // mão da esquadria (definida pelo usuário conforme o projeto)
@@ -260,16 +266,10 @@ window.ConstructCount = window.ConstructCount || {};
     const hImp = item.heightOrig || _ftIn(H);
     const cyM = (fy0 + fy1) / 2;
 
-    // --- desenho/cotas do ADICIONAL (vão em cima, base/adicional embaixo) ---
-    const inW = fw - inset * 2;
-    const splitY = fy0 + fh * (hasHadd ? (hBaseMm / H) : 1);          // limite janela (vão) | base (adicional)
-    const baseBand = hasHadd ? (() => {
-      const by0 = splitY, by1 = fy1 - inset, bh = Math.max(2, by1 - by0);
-      // o ADICIONAL é VIDRO: painel envidraçado (mesma textura) + travessa (mullion) separando do vão
-      return `<rect x="${g.x0}" y="${by0}" width="${inW}" height="${bh}" fill="url(#glGrad)" stroke="#6f93b8" stroke-width="1.3"/>`
-        + `<line x1="${g.x0 + 8}" y1="${by1 - 6}" x2="${g.x1 - 8}" y2="${by0 + 6}" stroke="#ffffff" stroke-width="1.3" stroke-opacity="0.55"/>`
-        + `<line x1="${fx0 + 3}" y1="${splitY}" x2="${fx1 - 3}" y2="${splitY}" stroke="#46638a" stroke-width="3"/>`;
-    })() : '';
+    // --- montantes/travessas: o adicional é VIDRO; uma barra (mullion) só separa do vão ---
+    const mullions =
+      (hasHadd ? `<line x1="${fx0 + 3}" y1="${splitY}" x2="${fx1 - 3}" y2="${splitY}" stroke="#46638a" stroke-width="3"/>` : '')
+      + (hasWadd ? `<line x1="${splitX}" y1="${fy0 + 3}" x2="${splitX}" y2="${fy1 - 3}" stroke="#46638a" stroke-width="3"/>` : '');
     const dRX = fx1 + 34;                                              // cota de altura do lado DIREITO (vão + adicional)
     const heightBreak = hasHadd ? `
   <line x1="${dRX}" y1="${fy0}" x2="${dRX}" y2="${splitY}" stroke="#157347" stroke-width="1"/>
@@ -279,7 +279,6 @@ window.ConstructCount = window.ConstructCount || {};
   <line x1="${dRX}" y1="${splitY}" x2="${dRX}" y2="${fy1}" stroke="#b5651d" stroke-width="1"/>
   <line x1="${dRX - 5}" y1="${fy1}" x2="${dRX + 5}" y2="${fy1}" stroke="#b5651d" stroke-width="1"/>
   <text x="${dRX + 13}" y="${(splitY + fy1) / 2}" text-anchor="middle" font-size="10.5" fill="#b5651d" transform="rotate(-90 ${dRX + 13} ${(splitY + fy1) / 2})">+ ${item.hAddOrig || _ftIn(hAddMm)} · ${Math.round(hAddMm)} mm</text>` : '';
-    const splitX = fx0 + fw * (hasWadd ? (wBaseMm / W) : 1);
     const widthCota = hasWadd ? `
   <line x1="${fx0}" y1="${fy1 + 26}" x2="${splitX}" y2="${fy1 + 26}" stroke="#157347" stroke-width="1"/>
   <line x1="${fx0}" y1="${fy1 + 20}" x2="${fx0}" y2="${fy1 + 32}" stroke="#157347" stroke-width="1"/>
@@ -326,16 +325,16 @@ window.ConstructCount = window.ConstructCount || {};
   <!-- vidro (com gradiente) -->
   <rect x="${g.x0}" y="${g.y0}" width="${fw - inset * 2}" height="${fh - inset * 2}" rx="2"
         fill="url(#glGrad)" stroke="#6f93b8" stroke-width="1.5"/>
-  <!-- brilho diagonal do vidro -->
-  <polygon points="${g.x0},${g.y1} ${g.x0 + (fw - inset * 2) * 0.42},${g.y1} ${g.x0 + (fw - inset * 2) * 0.78},${g.y0} ${g.x0 + (fw - inset * 2) * 0.36},${g.y0}"
+  <!-- brilho diagonal do vidro (cobre TODO o vidro: vão + adicional) -->
+  <polygon points="${g.x0},${iy1} ${g.x0 + (fw - inset * 2) * 0.42},${iy1} ${g.x0 + (fw - inset * 2) * 0.78},${g.y0} ${g.x0 + (fw - inset * 2) * 0.36},${g.y0}"
            fill="url(#sheenGrad)" opacity="0.7"/>
-  <line x1="${g.x0 + 8}" y1="${g.y1 - 8}" x2="${g.x1 - 8}" y2="${g.y0 + 8}" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.6"/>
+  <line x1="${g.x0 + 8}" y1="${iy1 - 8}" x2="${ix1 - 8}" y2="${g.y0 + 8}" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.6"/>
 
-  <!-- símbolo de abertura (folha/arco/ferragens) -->
+  <!-- símbolo de abertura (folha/arco/ferragens) — confinado ao VÃO -->
   ${symbol}
 
-  <!-- faixa do ADICIONAL do projeto (base, abaixo do vão) -->
-  ${baseBand}
+  <!-- montantes/travessas do adicional (vidro) -->
+  ${mullions}
 
   <!-- COTA HORIZONTAL (largura): vão + adicional quando houver -->
   ${widthCota}
