@@ -112,6 +112,9 @@
       type:       it.type || 'Casement Window',
       widthOrig:  it.width_orig  ?? it.widthOrig  ?? '',   // medida original (imperial/como no projeto)
       heightOrig: it.height_orig ?? it.heightOrig ?? '',
+      // vão + adicional do projeto (p/ desenhar a quebra com cotas)
+      wBaseOrig: it.w_base_raw || '', wAddOrig: it.w_add_raw || '', wBaseMm: +it.w_base_mm || 0, wAddMm: +it.w_add_mm || 0,
+      hBaseOrig: it.h_base_raw || '', hAddOrig: it.h_add_raw || '', hBaseMm: +it.h_base_mm || 0, hAddMm: +it.h_add_mm || 0,
       width:      Math.max(1, parseInt(it.width, 10)  || 1000),  // mm (já convertido pelo backend)
       height:     Math.max(1, parseInt(it.height, 10) || 1000),
       qty:        Math.max(1, parseInt(it.qty, 10)    || 1),

@@ -220,12 +220,17 @@ window.ConstructCount = window.ConstructCount || {};
   F.svgMarkup = function (item) {
     // escala para caber no viewport (lado maior ~320px)
     const W = item.width, H = item.height;
+    // ADICIONAL do projeto (vão + adicional): quebra a altura/largura no desenho
+    const hAddMm = +item.hAddMm || 0, hBaseMm = +item.hBaseMm || 0;
+    const wAddMm = +item.wAddMm || 0, wBaseMm = +item.wBaseMm || 0;
+    const hasHadd = hAddMm > 0 && hBaseMm > 0 && (hBaseMm + hAddMm) <= H + 3;
+    const hasWadd = wAddMm > 0 && wBaseMm > 0 && (wBaseMm + wAddMm) <= W + 3;
     const maxPx = 320;
     const scale = maxPx / Math.max(W, H);
     const fw = W * scale, fh = H * scale;
 
-    // margens para cotas/textos (padL maior p/ caber mm + imperial na cota vertical)
-    const padL = 84, padT = 40, padR = 44, padB = 100;
+    // margens para cotas/textos (mais à direita/abaixo quando há cota de adicional)
+    const padL = 84, padT = 40, padR = hasHadd ? 108 : 44, padB = hasWadd ? 126 : 100;
     const vbW = fw + padL + padR;
     const vbH = fh + padT + padB;
 
@@ -254,6 +259,41 @@ window.ConstructCount = window.ConstructCount || {};
     const wImp = item.widthOrig || _ftIn(W);
     const hImp = item.heightOrig || _ftIn(H);
     const cyM = (fy0 + fy1) / 2;
+
+    // --- desenho/cotas do ADICIONAL (vão em cima, base/adicional embaixo) ---
+    const inW = fw - inset * 2;
+    const splitY = fy0 + fh * (hasHadd ? (hBaseMm / H) : 1);          // limite janela (vão) | base (adicional)
+    const baseBand = hasHadd ? (() => {
+      const by0 = splitY, by1 = fy1 - inset, bh = Math.max(2, by1 - by0);
+      let louv = '';
+      for (let i = 1; i <= 4; i++) { const ly = by0 + bh * i / 5; louv += `<line x1="${g.x0 + 5}" y1="${ly}" x2="${g.x1 - 5}" y2="${ly}" stroke="#5b769b" stroke-width="1" stroke-opacity="0.55"/>`; }
+      return `<rect x="${g.x0}" y="${by0}" width="${inW}" height="${bh}" fill="#cfd9e8" fill-opacity="0.92" stroke="#6f93b8" stroke-width="1.2"/>${louv}`
+        + `<line x1="${fx0 + 3}" y1="${splitY}" x2="${fx1 - 3}" y2="${splitY}" stroke="#46638a" stroke-width="2"/>`;
+    })() : '';
+    const dRX = fx1 + 34;                                              // cota de altura do lado DIREITO (vão + adicional)
+    const heightBreak = hasHadd ? `
+  <line x1="${dRX}" y1="${fy0}" x2="${dRX}" y2="${splitY}" stroke="#157347" stroke-width="1"/>
+  <line x1="${dRX - 5}" y1="${fy0}" x2="${dRX + 5}" y2="${fy0}" stroke="#157347" stroke-width="1"/>
+  <line x1="${dRX - 5}" y1="${splitY}" x2="${dRX + 5}" y2="${splitY}" stroke="#157347" stroke-width="1"/>
+  <text x="${dRX + 13}" y="${(fy0 + splitY) / 2}" text-anchor="middle" font-size="10.5" fill="#157347" transform="rotate(-90 ${dRX + 13} ${(fy0 + splitY) / 2})">${item.hBaseOrig || _ftIn(hBaseMm)} · ${Math.round(hBaseMm)} mm</text>
+  <line x1="${dRX}" y1="${splitY}" x2="${dRX}" y2="${fy1}" stroke="#b5651d" stroke-width="1"/>
+  <line x1="${dRX - 5}" y1="${fy1}" x2="${dRX + 5}" y2="${fy1}" stroke="#b5651d" stroke-width="1"/>
+  <text x="${dRX + 13}" y="${(splitY + fy1) / 2}" text-anchor="middle" font-size="10.5" fill="#b5651d" transform="rotate(-90 ${dRX + 13} ${(splitY + fy1) / 2})">+ ${item.hAddOrig || _ftIn(hAddMm)} · ${Math.round(hAddMm)} mm</text>` : '';
+    const splitX = fx0 + fw * (hasWadd ? (wBaseMm / W) : 1);
+    const widthCota = hasWadd ? `
+  <line x1="${fx0}" y1="${fy1 + 26}" x2="${splitX}" y2="${fy1 + 26}" stroke="#157347" stroke-width="1"/>
+  <line x1="${fx0}" y1="${fy1 + 20}" x2="${fx0}" y2="${fy1 + 32}" stroke="#157347" stroke-width="1"/>
+  <line x1="${splitX}" y1="${fy1 + 20}" x2="${splitX}" y2="${fy1 + 32}" stroke="#157347" stroke-width="1"/>
+  <text x="${(fx0 + splitX) / 2}" y="${fy1 + 44}" text-anchor="middle" font-size="10.5" fill="#157347">${item.wBaseOrig || _ftIn(wBaseMm)} · ${Math.round(wBaseMm)}mm</text>
+  <line x1="${splitX}" y1="${fy1 + 26}" x2="${fx1}" y2="${fy1 + 26}" stroke="#b5651d" stroke-width="1"/>
+  <line x1="${fx1}" y1="${fy1 + 20}" x2="${fx1}" y2="${fy1 + 32}" stroke="#b5651d" stroke-width="1"/>
+  <text x="${(splitX + fx1) / 2}" y="${fy1 + 44}" text-anchor="middle" font-size="10.5" fill="#b5651d">+ ${item.wAddOrig || _ftIn(wAddMm)} · ${Math.round(wAddMm)}mm</text>
+  <text x="${(fx0 + fx1) / 2}" y="${fy1 + 58}" text-anchor="middle" font-size="10.5" fill="#6a8fb8">${W} mm (${wImp})</text>` : `
+  <line x1="${fx0}" y1="${fy1 + 26}" x2="${fx1}" y2="${fy1 + 26}" stroke="#24344b" stroke-width="1"/>
+  <line x1="${fx0}" y1="${fy1 + 20}" x2="${fx0}" y2="${fy1 + 32}" stroke="#24344b" stroke-width="1"/>
+  <line x1="${fx1}" y1="${fy1 + 20}" x2="${fx1}" y2="${fy1 + 32}" stroke="#24344b" stroke-width="1"/>
+  <text x="${(fx0 + fx1) / 2}" y="${fy1 + 44}" text-anchor="middle" font-size="13" fill="#24344b">${W} mm</text>
+  ${wImp ? `<text x="${(fx0 + fx1) / 2}" y="${fy1 + 56}" text-anchor="middle" font-size="10.5" fill="#6a8fb8">${wImp}</text>` : ''}`;
 
     return `
 <svg viewBox="0 0 ${vbW} ${vbH}" width="${Math.round(vbW)}" height="${Math.round(vbH)}" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto" font-family="Inter, sans-serif">
@@ -294,14 +334,13 @@ window.ConstructCount = window.ConstructCount || {};
   <!-- símbolo de abertura (folha/arco/ferragens) -->
   ${symbol}
 
-  <!-- COTA HORIZONTAL (largura): mm + imperial -->
-  <line x1="${fx0}" y1="${fy1 + 26}" x2="${fx1}" y2="${fy1 + 26}" stroke="#24344b" stroke-width="1"/>
-  <line x1="${fx0}" y1="${fy1 + 20}" x2="${fx0}" y2="${fy1 + 32}" stroke="#24344b" stroke-width="1"/>
-  <line x1="${fx1}" y1="${fy1 + 20}" x2="${fx1}" y2="${fy1 + 32}" stroke="#24344b" stroke-width="1"/>
-  <text x="${(fx0 + fx1) / 2}" y="${fy1 + 44}" text-anchor="middle" font-size="13" fill="#24344b">${W} mm</text>
-  ${wImp ? `<text x="${(fx0 + fx1) / 2}" y="${fy1 + 56}" text-anchor="middle" font-size="10.5" fill="#6a8fb8">${wImp}</text>` : ''}
+  <!-- faixa do ADICIONAL do projeto (base, abaixo do vão) -->
+  ${baseBand}
 
-  <!-- COTA VERTICAL (altura): mm + imperial -->
+  <!-- COTA HORIZONTAL (largura): vão + adicional quando houver -->
+  ${widthCota}
+
+  <!-- COTA VERTICAL (altura TOTAL = vão + adicional): mm + imperial -->
   <line x1="${fx0 - 34}" y1="${fy0}" x2="${fx0 - 34}" y2="${fy1}" stroke="#24344b" stroke-width="1"/>
   <line x1="${fx0 - 40}" y1="${fy0}" x2="${fx0 - 28}" y2="${fy0}" stroke="#24344b" stroke-width="1"/>
   <line x1="${fx0 - 40}" y1="${fy1}" x2="${fx0 - 28}" y2="${fy1}" stroke="#24344b" stroke-width="1"/>
@@ -309,6 +348,9 @@ window.ConstructCount = window.ConstructCount || {};
         transform="rotate(-90 ${fx0 - 44} ${cyM})">${H} mm</text>
   ${hImp ? `<text x="${fx0 - 58}" y="${cyM}" text-anchor="middle" font-size="10.5" fill="#6a8fb8"
         transform="rotate(-90 ${fx0 - 58} ${cyM})">${hImp}</text>` : ''}
+
+  <!-- COTA da altura à direita: vão (verde) + adicional (laranja) -->
+  ${heightBreak}
 
   <!-- mão da esquadria -->
   <text x="${vbW / 2}" y="${fy0 - 18}" text-anchor="middle" font-size="11" fill="#6a8fb8">${handTxt}</text>
