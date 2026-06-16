@@ -101,61 +101,57 @@ window.ConstructCount = window.ConstructCount || {};
 
     /* ---- Capa PREMIUM ---- */
     const brand = F.reportBrand ? F.reportBrand() : { company: P.company, accent: '#2c476a', logo: '', logoAR: 1 };
-    const GOLD = [198, 162, 74], DARK = [22, 38, 60], FAINT = [58, 82, 112];
+    const GOLD = [198, 162, 74], DARK = [22, 38, 60], FAINT = [62, 86, 116];
+    // centraliza CONTANDO o charSpace (jsPDF não conta no align:center → cortava/deslocava)
+    const cText = (text, y, size, cs, color, style) => {
+      doc.setFont(undefined, style || 'normal'); doc.setFontSize(size); doc.setTextColor(...color);
+      cs = cs || 0;
+      const tw = doc.getTextWidth(text) + Math.max(0, text.length - 1) * cs;
+      doc.text(text, (W - tw) / 2, y, cs ? { charSpace: cs } : undefined);
+    };
     // fundo em degradê vertical (navy → mais escuro embaixo)
-    (function () {
-      const steps = 64;
-      for (let i = 0; i < steps; i++) {
-        const k = i / (steps - 1);
-        doc.setFillColor(Math.round(STEEL[0] + (DARK[0] - STEEL[0]) * k), Math.round(STEEL[1] + (DARK[1] - STEEL[1]) * k), Math.round(STEEL[2] + (DARK[2] - STEEL[2]) * k));
-        doc.rect(0, H * i / steps, W, H / steps + 0.7, 'F');
-      }
-    })();
-    // moldura dourada (linha dupla) — premium
+    for (let i = 0, steps = 64; i < steps; i++) {
+      const k = i / (steps - 1);
+      doc.setFillColor(Math.round(STEEL[0] + (DARK[0] - STEEL[0]) * k), Math.round(STEEL[1] + (DARK[1] - STEEL[1]) * k), Math.round(STEEL[2] + (DARK[2] - STEEL[2]) * k));
+      doc.rect(0, H * i / steps, W, H / steps + 0.7, 'F');
+    }
+    // moldura dourada (linha dupla)
     doc.setDrawColor(...GOLD); doc.setLineWidth(0.7); doc.rect(10, 10, W - 20, H - 20);
     doc.setLineWidth(0.25); doc.rect(12.5, 12.5, W - 25, H - 25);
     // emblema arquitetônico sutil ao centro (janela com montantes)
     (function () {
-      const ew = 52, eh = 66, ex = (W - ew) / 2, ey = 158;
+      const ew = 46, eh = 56, ex = (W - ew) / 2, ey = 150;
       doc.setDrawColor(...FAINT); doc.setLineWidth(0.5);
-      doc.roundedRect(ex, ey, ew, eh, 3, 3); doc.roundedRect(ex + 5, ey + 5, ew - 10, eh - 10, 2, 2);
-      doc.line(ex + ew / 2, ey + 5, ex + ew / 2, ey + eh - 5); doc.line(ex + 5, ey + eh / 2, ex + ew - 5, ey + eh / 2);
+      doc.roundedRect(ex, ey, ew, eh, 3, 3); doc.roundedRect(ex + 4.5, ey + 4.5, ew - 9, eh - 9, 2, 2);
+      doc.line(ex + ew / 2, ey + 4.5, ex + ew / 2, ey + eh - 4.5); doc.line(ex + 4.5, ey + eh / 2, ex + ew - 4.5, ey + eh / 2);
     })();
     // logo da marca (ou nome) no topo
-    let topY = 48;
+    let topY = 50;
     if (brand.logo) {
       try {
         const ar = brand.logoAR || 1, lh = 24, lw = Math.min(70, lh * ar);
-        const fmt = /jpe?g/i.test(brand.logo) ? 'JPEG' : 'PNG';
-        doc.addImage(brand.logo, fmt, (W - lw) / 2, 32, lw, lh); topY = 32 + lh + 9;
+        doc.addImage(brand.logo, /jpe?g/i.test(brand.logo) ? 'JPEG' : 'PNG', (W - lw) / 2, 30, lw, lh); topY = 30 + lh + 9;
       } catch (e) { topY = 50; }
     } else {
-      doc.setTextColor(255); doc.setFont(undefined, 'bold'); doc.setFontSize(19);
-      doc.text((brand.company || P.company).toUpperCase(), W / 2, 50, { align: 'center', charSpace: 1.6 }); topY = 60;
+      cText((brand.company || P.company).toUpperCase(), 48, 18, 1.4, [255, 255, 255], 'bold'); topY = 58;
     }
-    doc.setDrawColor(...GOLD); doc.setLineWidth(0.9); doc.line(W / 2 - 17, topY, W / 2 + 17, topY);
+    doc.setDrawColor(...GOLD); doc.setLineWidth(0.9); doc.line(W / 2 - 16, topY, W / 2 + 16, topY);
     // título grande + subtítulo
-    doc.setTextColor(255); doc.setFont(undefined, 'bold'); doc.setFontSize(50);
-    doc.text(t(kindPt), W / 2, 122, { align: 'center', charSpace: 2 });
-    doc.setFont(undefined, 'normal'); doc.setFontSize(11); doc.setTextColor(...GOLD);
-    doc.text(t('Proposta técnica de esquadrias').toUpperCase(), W / 2, 134, { align: 'center', charSpace: 3 });
-    // bloco Projeto / Cliente / Data
-    let by = 244;
-    doc.setDrawColor(...GOLD); doc.setLineWidth(0.3); doc.line(W / 2 - 34, by - 9, W / 2 + 34, by - 9);
+    cText(t(kindPt), 120, 48, 1.8, [255, 255, 255], 'bold');
+    cText(t('Proposta técnica de esquadrias').toUpperCase(), 132, 9.5, 2, GOLD, 'normal');
+    // bloco Projeto / Cliente / Data (acima do rodapé)
+    let by = 224;
+    doc.setDrawColor(...GOLD); doc.setLineWidth(0.3); doc.line(W / 2 - 32, by - 9, W / 2 + 32, by - 9);
     const lbl = (label, val) => {
       if (!val) return;
-      doc.setFont(undefined, 'normal'); doc.setFontSize(7.5); doc.setTextColor(150, 170, 196);
-      doc.text(t(label).toUpperCase(), W / 2, by, { align: 'center', charSpace: 1.5 });
-      doc.setFont(undefined, 'bold'); doc.setFontSize(12); doc.setTextColor(255);
-      doc.text(String(val), W / 2, by + 6, { align: 'center' }); by += 15.5;
+      cText(t(label).toUpperCase(), by, 7.5, 1.4, [150, 170, 196], 'normal');
+      cText(String(val), by + 6, 12, 0, [255, 255, 255], 'bold'); by += 15.5;
     };
     lbl('Projeto', prj.name); lbl('Cliente', prj.client);
     lbl('Data', new Date().toLocaleDateString(DATE_LOC[L] || 'pt-BR'));
     // rodapé da capa
-    doc.setFont(undefined, 'bold'); doc.setFontSize(10.5); doc.setTextColor(...GOLD);
-    doc.text('PROJECT PROPOSAL', W / 2, H - 20, { align: 'center', charSpace: 2 });
-    doc.setFont(undefined, 'normal'); doc.setFontSize(9.5); doc.setTextColor(208, 220, 236);
-    doc.text(brand.company || P.company, W / 2, H - 14, { align: 'center' });
+    cText('PROJECT PROPOSAL', H - 21, 10.5, 2, GOLD, 'bold');
+    cText(brand.company || P.company, H - 15, 9.5, 0, [208, 220, 236], 'normal');
 
     /* ---- Dados ---- */
     doc.addPage();
