@@ -730,7 +730,7 @@
     if (!has || has('windows_doors')) {
       const counts = {}; (S.marks || []).forEach(m => { if (m.confirmed) { const k = m.label || ''; counts[k] = (counts[k] || 0) + 1; } });
       const meta = (S.pages || []).find(p => p.page === S.page) || {}; const pmult = +meta.mult || 1;
-      let tot = 0; Object.keys(counts).forEach(k => { const r = (S.sched || {})[k] || {}; const tw = r.type === 'Twin Window' ? 2 : 1; tot += counts[k] * pmult * tw; });
+      let tot = 0; Object.keys(counts).forEach(k => { const r = (S.sched || {})[k] || {}; tot += counts[k] * pmult * winUnits(r); });
       cards.push({ disc: 'windows', ico: '🪟', name: tr('Janelas e Portas'), metric: fmtN(tot) + ' ' + tr('marcas'), money: false });
     }
     let html = cards.map(c => {
@@ -743,6 +743,23 @@
     wrap.innerHTML = html;
     wrap.querySelectorAll('.sum-card[data-disc]').forEach(b => b.addEventListener('click', () => { const d = b.getAttribute('data-disc'); if (F.openTakeoff) F.openTakeoff(d); }));
   }
+
+  // unidades por marca: COMBO/MULL com N explícito (ex.: "(3) DOUBLE HUNG WINDOWS COMBO" → 3),
+  // Twin = 2, `units` do schedule, senão 1. Espelha _combo_units do motor (não chuta sem N).
+  function winUnits(r) {
+    r = r || {};
+    const blob = ((r.type || '') + ' ' + (r.type_raw || '') + ' ' + (r.desc || '') + ' ' + (r.operation || '') + ' ' + (r.model || '') + ' ' + (r.notes || '')).toUpperCase();
+    if (blob.indexOf('COMBO') >= 0 || blob.indexOf('MULL') >= 0) {
+      const m = blob.match(/\((\d+)\)[A-Z .\-\/]*?(?:WINDOWS?\s*)?(?:COMBO|MULL)/)
+        || blob.match(/(?:COMBO|MULL(?:ED|ION)?)\s*(?:OF\s*)?(\d+)/)
+        || blob.match(/(\d+)\s*[-X ]?(?:WIDE|WINDOWS?|UNITS?|LITES?)\s*(?:COMBO|MULL)/);
+      if (m) { const n = parseInt(m[1], 10); if (n >= 2 && n <= 12) return n; }
+    }
+    if (r.type === 'Twin Window') return 2;
+    const u = parseInt(r.units, 10); if (u >= 2 && u <= 12) return u;
+    return 1;
+  }
+  F._winUnits = winUnits;
 
   function renderSummary() {
     const panel = document.querySelector('#wsSummary');
@@ -771,9 +788,9 @@
     let rows = '', tot = 0;
     codes.forEach(k => {
       const r = (S.sched || {})[k] || {};
-      const tw = r.type === 'Twin Window' ? 2 : 1;
+      const tw = winUnits(r);
       const q = counts[k] * pmult * tw; tot += q;
-      const calc = '' + counts[k] + (pmult > 1 ? '×' + pmult + 'pav' : '') + (tw > 1 ? '×2tw' : '');
+      const calc = '' + counts[k] + (pmult > 1 ? '×' + pmult + 'pav' : '') + (tw > 1 ? '×' + tw + 'un' : '');
       const qtd = (calc !== '' + counts[k]) ? (calc + ' = <b>' + q + '</b>') : ('<b>' + q + '</b>');
       rows += '<tr class="border-t border-steel-700/60">'
         + '<td class="px-3 py-1 font-semibold">' + (k || '—') + '</td>'
