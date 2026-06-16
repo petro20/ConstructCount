@@ -266,10 +266,14 @@ window.ConstructCount = window.ConstructCount || {};
     const hImp = item.heightOrig || _ftIn(H);
     const cyM = (fy0 + fy1) / 2;
 
-    // --- montantes/travessas: o adicional é VIDRO; uma barra (mullion) só separa do vão ---
+    // --- montante/travessa: barra de FRAMING (mesmo perfil da moldura lateral) separando vão | adicional ---
+    const mw = Math.min(13, Math.max(8, inset - 2));                 // espessura do montante ≈ moldura
+    const frameBar = (x, y, bw, bh) =>
+      `<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="2" fill="url(#fgGrad)" stroke="#46638a" stroke-width="2"/>`
+      + `<rect x="${x + 1.5}" y="${y + 1.5}" width="${Math.max(0, bw - 3)}" height="${Math.max(0, bh - 3)}" rx="1.5" fill="none" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.5"/>`;
     const mullions =
-      (hasHadd ? `<line x1="${fx0 + 3}" y1="${splitY}" x2="${fx1 - 3}" y2="${splitY}" stroke="#46638a" stroke-width="3"/>` : '')
-      + (hasWadd ? `<line x1="${splitX}" y1="${fy0 + 3}" x2="${splitX}" y2="${fy1 - 3}" stroke="#46638a" stroke-width="3"/>` : '');
+      (hasHadd ? frameBar(fx0 + inset, splitY - mw / 2, fw - inset * 2, mw) : '')           // travessa (altura)
+      + (hasWadd ? frameBar(splitX - mw / 2, fy0 + inset, mw, fh - inset * 2) : '');         // montante lateral (largura)
     const dRX = fx1 + 34;                                              // cota de altura do lado DIREITO (vão + adicional)
     const heightBreak = hasHadd ? `
   <line x1="${dRX}" y1="${fy0}" x2="${dRX}" y2="${splitY}" stroke="#157347" stroke-width="1"/>
