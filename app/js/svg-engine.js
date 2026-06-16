@@ -127,7 +127,7 @@ window.ConstructCount = window.ConstructCount || {};
       case 'door':         // porta de abrir: arco de varredura
       case 'entry-door': { // entrada: arco + painel (almofada)
         const r = (x1 - x0);
-        let s = `<path d="M ${x1} ${y1} A ${r} ${r} 0 0 0 ${x0} ${Math.min(y1, y0 + r)}" ${DASH}/>
+        let s = `<path d="M ${x1} ${y1} A ${r} ${r} 0 0 0 ${x0} ${Math.max(y0, y1 - r)}" ${DASH}/>
                  <line x1="${x0}" y1="${y1}" x2="${x1}" y2="${y1}" stroke="#6a8fb8" stroke-width="1.5"/>`;
         if (open === 'entry-door')
           s += `<rect x="${x0 + 6}" y="${y0 + 6}" width="${(x1 - x0) - 12}" height="${(y1 - y0) - 12}" fill="none" stroke="#6a8fb8" stroke-width="1"/>`;
@@ -154,7 +154,7 @@ window.ConstructCount = window.ConstructCount || {};
       case 'dutch-door': { // holandesa: divisão horizontal + arco
         const r = (x1 - x0);
         return `<line x1="${x0}" y1="${cy}" x2="${x1}" y2="${cy}" stroke="#47709e" stroke-width="1.5"/>
-                <path d="M ${x1} ${y1} A ${r} ${r} 0 0 0 ${x0} ${Math.min(y1, y0 + r)}" ${DASH}/>
+                <path d="M ${x1} ${y1} A ${r} ${r} 0 0 0 ${x0} ${Math.max(y0, y1 - r)}" ${DASH}/>
                 <line x1="${x0}" y1="${y1}" x2="${x1}" y2="${y1}" stroke="#6a8fb8" stroke-width="1.5"/>`;
       }
 
@@ -188,7 +188,7 @@ window.ConstructCount = window.ConstructCount || {};
 
       case 'storefront-door': { // porta de fachada envidraçada: arco + GLASS
         const r = (x1 - x0);
-        return `<path d="M ${x1} ${y1} A ${r} ${r} 0 0 0 ${x0} ${Math.min(y1, y0 + r)}" ${DASH}/>
+        return `<path d="M ${x1} ${y1} A ${r} ${r} 0 0 0 ${x0} ${Math.max(y0, y1 - r)}" ${DASH}/>
                 <line x1="${x0}" y1="${y1}" x2="${x1}" y2="${y1}" stroke="#6a8fb8" stroke-width="1.5"/>`;
       }
 
