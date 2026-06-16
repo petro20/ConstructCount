@@ -887,16 +887,29 @@
   function updateSelWindow() {
     const code = S.highlight;
     const on = !!code;
-    ['#wsDimW', '#wsDimH', '#wsDimType', '#wsDimWmeas', '#wsDimHmeas', '#wsDimSave'].forEach(s => { const el = $(s); if (el) el.disabled = !on; });
+    ['#wsDimW', '#wsDimH', '#wsDimWadd', '#wsDimHadd', '#wsDimType', '#wsDimWmeas', '#wsDimHmeas', '#wsDimSave'].forEach(s => { const el = $(s); if (el) el.disabled = !on; });
     populateTypeSelect();
     const cap = $('#wsSelCode');
-    if (!on) { if (cap) cap.textContent = F.tr('Clique num código na lista à esquerda.'); return; }
+    if (!on) { if (cap) cap.textContent = F.tr('Clique num código na lista à esquerda.'); updateDimFinal(); return; }
     const r = (S.sched || {})[code] || {};
     if (cap) cap.innerHTML = F.tr('Código <b>{c}</b>', { c: code }) + (r.manual ? ' <span class="text-emerald-400">' + F.tr('(medida manual)') + '</span>' : (r.w_mm ? ' ' + F.tr('(do schedule)') : ''));
-    const w = $('#wsDimW'), h = $('#wsDimH');
-    if (w) w.value = r.w_raw || (r.w_mm ? r.w_mm + 'mm' : '');
-    if (h) h.value = r.h_raw || (r.h_mm ? r.h_mm + 'mm' : '');
+    const w = $('#wsDimW'), h = $('#wsDimH'), wa = $('#wsDimWadd'), ha = $('#wsDimHadd');
+    if (w) w.value = r.w_base_raw || r.w_raw || (r.w_mm ? r.w_mm + 'mm' : '');     // VÃO (base) quando há adicional
+    if (h) h.value = r.h_base_raw || r.h_raw || (r.h_mm ? r.h_mm + 'mm' : '');
+    if (wa) wa.value = r.w_add_raw || '';
+    if (ha) ha.value = r.h_add_raw || '';
     const ty = $('#wsDimType'); if (ty) ty.value = r.type || '';
+    updateDimFinal();
+  }
+  // mostra "vão + adicional = final" ao vivo ao lado de cada medida
+  function updateDimFinal() {
+    ['W', 'H'].forEach(ax => {
+      const baseEl = $('#wsDim' + ax), addEl = $('#wsDim' + ax + 'add'), out = $('#wsDim' + ax + 'final');
+      if (!out) return;
+      const base = (baseEl && F.parseToMm(baseEl.value)) || 0;
+      const add = (addEl && F.parseToMm(addEl.value)) || 0;
+      out.innerHTML = (base && add > 0) ? ('= <b>' + mmToFtIn(base + add) + '</b> ' + F.tr('(vão + adicional)')) : '';
+    });
   }
   /** popula o seletor de Tipo (janela/porta) a partir de F.WINDOW_TYPES (uma vez) */
   function populateTypeSelect() {
@@ -2932,15 +2945,17 @@
       if (!S.measures.length) { markSaved(F.tr('Sem medidas')); return; }
       S.measures = []; clearSel(); saveMeasures(); updateScaleInfo(); updateMeasSel(); draw(); markSaved(F.tr('Medidas limpas'));
     });
-    const dwm = $('#wsDimWmeas'); if (dwm) dwm.addEventListener('click', () => { if (S.lastMeas) $('#wsDimW').value = mmToFtIn(S.lastMeas); else markSaved(F.tr('Meça algo no desenho primeiro')); });
-    const dhm = $('#wsDimHmeas'); if (dhm) dhm.addEventListener('click', () => { if (S.lastMeas) $('#wsDimH').value = mmToFtIn(S.lastMeas); else markSaved(F.tr('Meça algo no desenho primeiro')); });
+    const dwm = $('#wsDimWmeas'); if (dwm) dwm.addEventListener('click', () => { if (S.lastMeas) { $('#wsDimW').value = mmToFtIn(S.lastMeas); updateDimFinal(); } else markSaved(F.tr('Meça algo no desenho primeiro')); });
+    const dhm = $('#wsDimHmeas'); if (dhm) dhm.addEventListener('click', () => { if (S.lastMeas) { $('#wsDimH').value = mmToFtIn(S.lastMeas); updateDimFinal(); } else markSaved(F.tr('Meça algo no desenho primeiro')); });
+    ['#wsDimW', '#wsDimH', '#wsDimWadd', '#wsDimHadd'].forEach(s => { const el = $(s); if (el) el.addEventListener('input', updateDimFinal); });
     const dsv = $('#wsDimSave'); if (dsv) dsv.addEventListener('click', async () => {
       if (!S.highlight) return;
       const wmm = F.parseToMm($('#wsDimW').value), hmm = F.parseToMm($('#wsDimH').value);
+      const wadd = F.parseToMm($('#wsDimWadd').value) || 0, hadd = F.parseToMm($('#wsDimHadd').value) || 0;
       const wtype = ($('#wsDimType') && $('#wsDimType').value) || null;
       if (!wmm && !hmm && !wtype) { markSaved(F.tr('Informe medida ou tipo')); return; }
       if (!S.prov.setWindowDim) { alert(F.tr('Disponível no app de desktop.')); return; }
-      let r; try { r = await S.prov.setWindowDim(S.highlight, wmm || null, hmm || null, wtype, null); } catch (e) { markSaved(F.tr('Falha ao salvar')); return; }
+      let r; try { r = await S.prov.setWindowDim(S.highlight, wmm || null, hmm || null, wtype, null, wadd || null, hadd || null); } catch (e) { markSaved(F.tr('Falha ao salvar')); return; }
       if (r && r.rec) { S.sched = S.sched || {}; S.sched[S.highlight] = Object.assign({}, S.sched[S.highlight], r.rec); }
       renderItems(); updateSelWindow();
       markSaved(F.tr('Medida salva para {c}', { c: S.highlight }));
