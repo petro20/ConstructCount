@@ -265,10 +265,10 @@ window.ConstructCount = window.ConstructCount || {};
     const splitY = fy0 + fh * (hasHadd ? (hBaseMm / H) : 1);          // limite janela (vão) | base (adicional)
     const baseBand = hasHadd ? (() => {
       const by0 = splitY, by1 = fy1 - inset, bh = Math.max(2, by1 - by0);
-      let louv = '';
-      for (let i = 1; i <= 4; i++) { const ly = by0 + bh * i / 5; louv += `<line x1="${g.x0 + 5}" y1="${ly}" x2="${g.x1 - 5}" y2="${ly}" stroke="#5b769b" stroke-width="1" stroke-opacity="0.55"/>`; }
-      return `<rect x="${g.x0}" y="${by0}" width="${inW}" height="${bh}" fill="#cfd9e8" fill-opacity="0.92" stroke="#6f93b8" stroke-width="1.2"/>${louv}`
-        + `<line x1="${fx0 + 3}" y1="${splitY}" x2="${fx1 - 3}" y2="${splitY}" stroke="#46638a" stroke-width="2"/>`;
+      // o ADICIONAL é VIDRO: painel envidraçado (mesma textura) + travessa (mullion) separando do vão
+      return `<rect x="${g.x0}" y="${by0}" width="${inW}" height="${bh}" fill="url(#glGrad)" stroke="#6f93b8" stroke-width="1.3"/>`
+        + `<line x1="${g.x0 + 8}" y1="${by1 - 6}" x2="${g.x1 - 8}" y2="${by0 + 6}" stroke="#ffffff" stroke-width="1.3" stroke-opacity="0.55"/>`
+        + `<line x1="${fx0 + 3}" y1="${splitY}" x2="${fx1 - 3}" y2="${splitY}" stroke="#46638a" stroke-width="3"/>`;
     })() : '';
     const dRX = fx1 + 34;                                              // cota de altura do lado DIREITO (vão + adicional)
     const heightBreak = hasHadd ? `
