@@ -102,12 +102,15 @@ window.ConstructCount = window.ConstructCount || {};
     /* ---- Capa PREMIUM ---- */
     const brand = F.reportBrand ? F.reportBrand() : { company: P.company, accent: '#2c476a', logo: '', logoAR: 1 };
     const GOLD = [198, 162, 74], DARK = [22, 38, 60], FAINT = [62, 86, 116];
-    // centraliza CONTANDO o charSpace (jsPDF não conta no align:center → cortava/deslocava)
-    const cText = (text, y, size, cs, color, style) => {
-      doc.setFont(undefined, style || 'normal'); doc.setFontSize(size); doc.setTextColor(...color);
-      cs = cs || 0;
-      const tw = doc.getTextWidth(text) + Math.max(0, text.length - 1) * cs;
-      doc.text(text, (W - tw) / 2, y, cs ? { charSpace: cs } : undefined);
+    // centraliza CONTANDO o charSpace (jsPDF não conta no align:center → cortava/deslocava);
+    // com maxW, ENCOLHE a fonte até caber na largura útil (idiomas com texto mais longo)
+    const cText = (text, y, size, cs, color, style, maxW) => {
+      doc.setFont(undefined, style || 'normal'); cs = cs || 0;
+      const wOf = () => doc.getTextWidth(text) + Math.max(0, text.length - 1) * cs;
+      doc.setFontSize(size);
+      if (maxW) { while (size > 8 && wOf() > maxW) { size -= 1; doc.setFontSize(size); } }
+      doc.setTextColor(...color);
+      doc.text(text, (W - wOf()) / 2, y, cs ? { charSpace: cs } : undefined);
     };
     // fundo em degradê vertical (navy → mais escuro embaixo)
     for (let i = 0, steps = 64; i < steps; i++) {
@@ -133,25 +136,25 @@ window.ConstructCount = window.ConstructCount || {};
         doc.addImage(brand.logo, /jpe?g/i.test(brand.logo) ? 'JPEG' : 'PNG', (W - lw) / 2, 30, lw, lh); topY = 30 + lh + 9;
       } catch (e) { topY = 50; }
     } else {
-      cText((brand.company || P.company).toUpperCase(), 48, 18, 1.4, [255, 255, 255], 'bold'); topY = 58;
+      cText((brand.company || P.company).toUpperCase(), 48, 18, 1.4, [255, 255, 255], 'bold', W - 50); topY = 58;
     }
     doc.setDrawColor(...GOLD); doc.setLineWidth(0.9); doc.line(W / 2 - 16, topY, W / 2 + 16, topY);
-    // título grande + subtítulo
-    cText(t(kindPt), 120, 48, 1.8, [255, 255, 255], 'bold');
-    cText(t('Proposta técnica de esquadrias').toUpperCase(), 132, 9.5, 2, GOLD, 'normal');
+    // título grande + subtítulo (auto-fit p/ caber em qualquer idioma)
+    cText(t(kindPt), 120, 48, 1.8, [255, 255, 255], 'bold', W - 50);
+    cText(t('Proposta técnica de esquadrias').toUpperCase(), 132, 9.5, 2, GOLD, 'normal', W - 44);
     // bloco Projeto / Cliente / Data (acima do rodapé)
     let by = 224;
     doc.setDrawColor(...GOLD); doc.setLineWidth(0.3); doc.line(W / 2 - 32, by - 9, W / 2 + 32, by - 9);
     const lbl = (label, val) => {
       if (!val) return;
       cText(t(label).toUpperCase(), by, 7.5, 1.4, [150, 170, 196], 'normal');
-      cText(String(val), by + 6, 12, 0, [255, 255, 255], 'bold'); by += 15.5;
+      cText(String(val), by + 6, 12, 0, [255, 255, 255], 'bold', W - 50); by += 15.5;
     };
     lbl('Projeto', prj.name); lbl('Cliente', prj.client);
     lbl('Data', new Date().toLocaleDateString(DATE_LOC[L] || 'pt-BR'));
     // rodapé da capa
-    cText('PROJECT PROPOSAL', H - 21, 10.5, 2, GOLD, 'bold');
-    cText(brand.company || P.company, H - 15, 9.5, 0, [208, 220, 236], 'normal');
+    cText('PROJECT PROPOSAL', H - 21, 10.5, 2, GOLD, 'bold', W - 50);
+    cText(brand.company || P.company, H - 15, 9.5, 0, [208, 220, 236], 'normal', W - 50);
 
     /* ---- Dados ---- */
     doc.addPage();
