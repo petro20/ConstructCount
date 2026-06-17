@@ -266,10 +266,11 @@ window.ConstructCount = window.ConstructCount || {};
     if (item.side === 'R') tf += `translate(${2 * g.cx} 0) scale(-1 1) `;     // espelha lado
     if (item.swing === 'out') tf += `translate(0 ${2 * g.cy}) scale(1 -1) `;  // espelha abertura
     const symbol = tf ? `<g transform="${tf}">${sym}</g>` : sym;
+    const tr = F.tr || ((s) => s);
     const handTxt = (item.side || item.swing)
-      ? ('Dobradiça: ' + (item.side === 'R' ? 'Direita' : item.side === 'L' ? 'Esquerda' : '—') +
-         '  ·  Abre: ' + (item.swing === 'out' ? 'Fora' : item.swing === 'in' ? 'Dentro' : '—'))
-      : 'Mão: a definir (conforme o projeto)';
+      ? (tr('Dobradiça:') + ' ' + (item.side === 'R' ? tr('Direita') : item.side === 'L' ? tr('Esquerda') : '—') +
+         '  ·  ' + tr('Abre:') + ' ' + (item.swing === 'out' ? tr('Fora') : item.swing === 'in' ? tr('Dentro') : '—'))
+      : tr('Mão: a definir (conforme o projeto)');
 
     const wImp = item.widthOrig || _ftIn(W);
     const hImp = item.heightOrig || _ftIn(H);
