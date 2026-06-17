@@ -166,6 +166,8 @@ window.ConstructCount = window.ConstructCount || {};
     'Esquerda': { en: 'Left', es: 'Izquierda' },
     'Direita': { en: 'Right', es: 'Derecha' },
     'Lado da dobradiça / abertura': { en: 'Hinge / opening side', es: 'Lado de la bisagra / apertura' },
+    'Lado (E/D)': { en: 'Side (L/R)', es: 'Lado (I/D)' },
+    'Abre (D/F)': { en: 'Opens (I/O)', es: 'Abre (D/F)' },
     'Abre para:': { en: 'Opens:', es: 'Abre hacia:' },
     'Dentro': { en: 'Inward', es: 'Hacia dentro' },
     'Fora': { en: 'Outward', es: 'Hacia fuera' },

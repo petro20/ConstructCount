@@ -898,7 +898,7 @@
   function updateSelWindow() {
     const code = S.highlight;
     const on = !!code;
-    ['#wsDimW', '#wsDimH', '#wsDimWadd', '#wsDimHadd', '#wsDimType', '#wsDimHinge', '#wsDimWmeas', '#wsDimHmeas', '#wsDimSave'].forEach(s => { const el = $(s); if (el) el.disabled = !on; });
+    ['#wsDimW', '#wsDimH', '#wsDimWadd', '#wsDimHadd', '#wsDimType', '#wsDimHinge', '#wsDimSwing', '#wsDimWmeas', '#wsDimHmeas', '#wsDimSave'].forEach(s => { const el = $(s); if (el) el.disabled = !on; });
     populateTypeSelect();
     const cap = $('#wsSelCode');
     if (!on) { if (cap) cap.textContent = F.tr('Clique num código na lista à esquerda.'); updateDimFinal(); return; }
@@ -911,7 +911,18 @@
     if (ha) ha.value = r.h_add_raw || '';
     const ty = $('#wsDimType'); if (ty) ty.value = r.type || '';
     const hg = $('#wsDimHinge'); if (hg) hg.value = r.side || 'L';
+    const sg = $('#wsDimSwing'); if (sg) sg.value = r.swing || 'in';
+    localizeSideSwing();
     updateDimFinal();
+  }
+  /** Iniciais dos seletores Lado/Abertura conforme o idioma (E/D, L/R, I/D…). */
+  function localizeSideSwing() {
+    const L = (F.getLang && F.getLang()) || 'pt';
+    const SD = { L: { pt: 'E', en: 'L', es: 'I' }, R: { pt: 'D', en: 'R', es: 'D' } };
+    const SW = { in: { pt: 'D', en: 'I', es: 'D' }, out: { pt: 'F', en: 'O', es: 'F' } };
+    const hg = $('#wsDimHinge'), sg = $('#wsDimSwing');
+    if (hg && hg.options.length >= 2) { hg.options[0].text = SD.L[L] || 'E'; hg.options[1].text = SD.R[L] || 'D'; }
+    if (sg && sg.options.length >= 2) { sg.options[0].text = SW.in[L] || 'D'; sg.options[1].text = SW.out[L] || 'F'; }
   }
   // mostra "vão + adicional = final" ao vivo ao lado de cada medida
   function updateDimFinal() {
@@ -2973,14 +2984,17 @@
       const wadd = F.parseToMm($('#wsDimWadd').value) || 0, hadd = F.parseToMm($('#wsDimHadd').value) || 0;
       const wtype = ($('#wsDimType') && $('#wsDimType').value) || null;
       const side = ($('#wsDimHinge') && $('#wsDimHinge').value) || 'L';
-      const curSide = ((S.sched || {})[S.highlight] || {}).side || 'L';
-      if (!wmm && !hmm && !wtype && side === curSide) { markSaved(F.tr('Informe medida ou tipo')); return; }
+      const swing = ($('#wsDimSwing') && $('#wsDimSwing').value) || 'in';
+      const curRec = (S.sched || {})[S.highlight] || {};
+      const handChanged = side !== (curRec.side || 'L') || swing !== (curRec.swing || 'in');
+      if (!wmm && !hmm && !wtype && !handChanged) { markSaved(F.tr('Informe medida ou tipo')); return; }
       if (!S.prov.setWindowDim) { alert(F.tr('Disponível no app de desktop.')); return; }
-      let r; try { r = await S.prov.setWindowDim(S.highlight, wmm || null, hmm || null, wtype, null, wadd || null, hadd || null, side); } catch (e) { markSaved(F.tr('Falha ao salvar')); return; }
+      let r; try { r = await S.prov.setWindowDim(S.highlight, wmm || null, hmm || null, wtype, null, wadd || null, hadd || null, side, swing); } catch (e) { markSaved(F.tr('Falha ao salvar')); return; }
       if (r && r.rec) { S.sched = S.sched || {}; S.sched[S.highlight] = mergeSchedRec(S.sched[S.highlight], r.rec); }
       renderItems(); updateSelWindow();
       markSaved(F.tr('Medida salva para {c}', { c: S.highlight }));
     });
+    const _prevOLC = F.onLangChange; F.onLangChange = (lg) => { if (_prevOLC) { try { _prevOLC(lg); } catch (e) {} } localizeSideSwing(); };   // re-localiza iniciais Lado/Abre
     const stsn = $('#stSnap'); if (stsn) stsn.addEventListener('click', toggleSnap);
     const stor = $('#stOrtho'); if (stor) stor.addEventListener('click', toggleOrtho);
     const wds = $('#wsDelSel'); if (wds) wds.addEventListener('click', () => {
