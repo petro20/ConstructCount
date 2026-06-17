@@ -8,6 +8,15 @@
 
 (function (F) {
 
+  // Blindagem do fluxo de abrir: nenhuma chamada à ponte pode travar a tela
+  // pra sempre. Se passar do tempo, rejeita com rótulo → cai no catch e mostra
+  // ONDE travou (em vez de ficar no "Reabrindo projeto…" eterno).
+  function withTimeout(promise, ms, label) {
+    let t;
+    const guard = new Promise((_, rej) => { t = setTimeout(() => rej(new Error('tempo esgotado em ' + label)), ms); });
+    return Promise.race([Promise.resolve(promise).finally(() => clearTimeout(t)), guard]);
+  }
+
   function init() {
     F._desktop = true;
     // no desktop, o fluxo é pelo MENU (barra do topo) — esconde upload web e o botão antigo
@@ -110,7 +119,7 @@
       if (msg) msg.textContent = F.tr('Convertendo o PDF em imagens…');
       if (sub) sub.textContent = '';
       if (bar) bar.style.width = '0%';
-      const info = await api.prepare_job(false, null, null, null, false, projName || null);   // detect=false → só converte
+      const info = await withTimeout(api.prepare_job(false, null, null, null, false, projName || null), 90000, 'prepare_job');   // detect=false → só converte
       if (!info) { if (ws) ws.classList.add('hidden'); return; }
       if (info.error) { if (ws) ws.classList.add('hidden'); if (F.uploadMsg) F.uploadMsg(F.tr('Erro ao preparar projeto: {e}', { e: info.error }), true); return; }
       const slug = info.slug;
@@ -118,7 +127,7 @@
       if (msg) msg.textContent = info.reused ? F.tr('Reabrindo projeto…') : F.tr('Convertendo o PDF em imagens…');
       // faz polling do status até concluir
       for (;;) {
-        const st = await api.job_status(slug);
+        const st = await withTimeout(api.job_status(slug), 20000, 'job_status');
         if (st && st.total) {
           const pct = Math.round((st.done || 0) / st.total * 100);
           if (bar) bar.style.width = pct + '%';
@@ -139,8 +148,10 @@
   async function openWorkspaceFromSlug(slug) {
     const api = window.pywebview.api;
     F._currentJobSlug = slug;                    // p/ exports do backend (planta marcada etc.)
-    const job = await api.load_job(slug);
-    if (!job) { if (F.uploadMsg) F.uploadMsg(F.tr('Não consegui carregar o projeto.'), true); return; }
+    let job;
+    try { job = await withTimeout(api.load_job(slug), 45000, 'load_job'); }
+    catch (e) { const p = document.querySelector('#wsPrep'); if (p) p.classList.add('hidden'); if (F.uploadMsg) F.uploadMsg(F.tr('Falha ao carregar o projeto ({e}).', { e }), true); return; }
+    if (!job) { const p = document.querySelector('#wsPrep'); if (p) p.classList.add('hidden'); if (F.uploadMsg) F.uploadMsg(F.tr('Não consegui carregar o projeto.'), true); return; }
     const prov = {
       getPage: (page) => api.get_page(slug, page),
       saveMarks: (page, marks, mult) => api.save_marks(slug, page, marks, mult),

@@ -512,6 +512,7 @@ window.ConstructCount = window.ConstructCount || {};
     "{done}/{total} folhas": { en: "{done}/{total} sheets", es: "{done}/{total} hojas" },
     "Falha no preparo: {e}": { en: "Preparation failed: {e}", es: "Error en la preparación: {e}" },
     "Falha no workspace ({e}).": { en: "Workspace failed ({e}).", es: "Error en el espacio de trabajo ({e})." },
+    "Falha ao carregar o projeto ({e}).": { en: "Failed to load the project ({e}).", es: "Error al cargar el proyecto ({e})." },
     "Não consegui carregar o projeto.": { en: "Could not load the project.", es: "No se pudo cargar el proyecto." },
     "Takeoff consolidado: {types} tipos, {marks} unidades.": { en: "Takeoff consolidated: {types} types, {marks} units.", es: "Takeoff consolidado: {types} tipos, {marks} unidades." },
     "⚠ {n} marca(s) SEM hexágono no projeto (spec reconstruída do texto): {marks}. Confirme/ajuste a marcação na tabela e na Conferência.": { en: "⚠ {n} mark(s) WITHOUT a hexagon in the project (spec reconstructed from text): {marks}. Confirm/adjust the marking in the table and in the Review.", es: "⚠ {n} marca(s) SIN hexágono en el proyecto (spec reconstruida del texto): {marks}. Confirme/ajuste la marcación en la tabla y en la Revisión." },
