@@ -49,6 +49,9 @@ $pkgBtns = function () use ($L) {
   echo '</div>';
 };
 ?>
+<?php if (function_exists('is_admin') && is_admin($u)): ?>
+<div style="margin-bottom:12px"><a class="btn" href="<?= h(url('admin/')) ?>">🔑 Admin — Licenças</a></div>
+<?php endif; ?>
 <div class="card">
   <h2><?= h(t('my_licenses')) ?></h2>
   <?php if (!$lics): ?>
