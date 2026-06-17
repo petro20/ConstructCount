@@ -368,7 +368,7 @@
     const sel = $('#previewSelect');
     if (!sel) return;
     sel.innerHTML = F.state.items.map((it, i) =>
-      `<option value="${i}" ${i === F.state.previewIdx ? 'selected' : ''}>${it.id} — ${it.type}</option>`).join('');
+      `<option value="${i}" ${i === F.state.previewIdx ? 'selected' : ''}>${it.id} — ${F.typeLabel ? F.typeLabel(it.type) : it.type}</option>`).join('');
   }
 
   function renderPreview() {

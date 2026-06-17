@@ -369,7 +369,7 @@ window.ConstructCount = window.ConstructCount || {};
 
   <!-- título -->
   <text x="${vbW / 2}" y="${vbH - 12}" text-anchor="middle" font-size="14" font-weight="600" fill="#2c476a">
-    ${item.id} - ${item.type}
+    ${item.id} - ${F.typeLabel ? F.typeLabel(item.type) : item.type}
   </text>
 </svg>`;
   };

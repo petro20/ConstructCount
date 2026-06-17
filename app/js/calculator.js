@@ -41,7 +41,7 @@ window.ConstructCount = window.ConstructCount || {};
     { name: 'Double Casement',  open: 'double-casement', cat: 'Janela' },   // de abrir (2 folhas)
     { name: 'Sliding Window',   open: 'sliding',         cat: 'Janela' },   // de correr
     { name: 'Awning Window',    open: 'awning',          cat: 'Janela' },   // basculante / maxim-ar
-    { name: 'Tilt & Turn (open in)', open: 'tilt-turn',  cat: 'Janela' },   // oscilo-batente (abre p/ dentro)
+    { name: 'Tilt & Turn',      open: 'tilt-turn',       cat: 'Janela' },   // oscilo-batente (abre p/ dentro ou fora — ver seletor)
     { name: 'Double Hung',      open: 'hung',            cat: 'Janela' },   // guilhotina
     { name: 'Picture / Fixed',  open: 'fixed',           cat: 'Janela' },   // vidro fixo
     { name: 'Twin Window',      open: 'twin',            cat: 'Janela' },   // geminada (2 unidades mulled lado a lado)
