@@ -66,7 +66,7 @@ window.ConstructCount = window.ConstructCount || {};
       case 'casement':        return hingesV(x0, y0, y1) + knob(x1 - 7, cy);
       case 'double-casement': return hingesV(x0, y0, y1) + hingesV(x1, y0, y1) + knob(cx - 7, cy, 'l') + knob(cx + 7, cy, 'r');
       case 'awning':          return hingesH(x0, x1, y0) + knob(cx, y1 - 7);
-      case 'hung':            return latch(cx, cy);                         // trava no trilho central
+      case 'tilt-turn':       return hingesV(x0, y0, y1) + knob(x1 - 7, cy); // oscilo-batente: dobradiças laterais + alavanca
       case 'sliding':
       case 'sliding-door':    return knob(cx - 8, cy);                      // puxador no painel
       case 'pocket-door':     return knob(cx - 8, cy);
@@ -134,11 +134,12 @@ window.ConstructCount = window.ConstructCount || {};
         return s;
       }
 
-      case 'hung': { // guilhotina: trilho horizontal no meio + setas ↑↓
-        const my = cy;
-        return `<line x1="${x0}" y1="${my}" x2="${x1}" y2="${my}" stroke="#47709e" stroke-width="1.5"/>
-                <path d="M ${cx - 5} ${my - 13} L ${cx} ${my - 21} L ${cx + 5} ${my - 13}" ${DASH}/>
-                <path d="M ${cx - 5} ${my + 13} L ${cx} ${my + 21} L ${cx + 5} ${my + 13}" ${DASH}/>`;
+      case 'tilt-turn': { // oscilo-batente (abre p/ DENTRO): triângulo do GIRO (dobradiça lateral, ápice à direita) + triângulo do BASCULANTE (dobradiça embaixo, ápice no topo). Linhas SÓLIDAS = abertura para dentro.
+        const SOL = 'stroke="#47709e" stroke-width="1.3" fill="none"';
+        return `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${cy}" ${SOL}/>
+                <line x1="${x0}" y1="${y1}" x2="${x1}" y2="${cy}" ${SOL}/>
+                <line x1="${x0}" y1="${y1}" x2="${cx}" y2="${y0}" ${SOL}/>
+                <line x1="${x1}" y1="${y1}" x2="${cx}" y2="${y0}" ${SOL}/>`;
       }
 
       case 'double-door':

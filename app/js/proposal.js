@@ -65,7 +65,7 @@ window.ConstructCount = window.ConstructCount || {};
   const TYPE_PT = {
     'Casement Window': 'Janela Casement (abrir)', 'Double Casement': 'Janela Casement 2 folhas',
     'Sliding Window': 'Janela de correr', 'Awning Window': 'Janela basculante / maxim-ar',
-    'Double Hung': 'Janela guilhotina', 'Picture / Fixed': 'Janela fixa', 'Fixed Window': 'Janela fixa',
+    'Tilt & Turn (open in)': 'Oscilo-batente (abre p/ dentro)', 'Picture / Fixed': 'Janela fixa', 'Fixed Window': 'Janela fixa',
     'Single Door': 'Porta de abrir', 'Single Swing Door': 'Porta de abrir', 'Double Swing Door': 'Porta 2 folhas',
     'Pre-Hung Door': 'Porta pré-montada', 'Pocket Door': 'Porta embutida', 'Bifold Door': 'Porta sanfonada',
     'Bypass / Sliding Closet': 'Porta de correr (armário)', 'Barn Door': 'Porta celeiro', 'French Door': 'Porta francesa',

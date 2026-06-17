@@ -41,7 +41,7 @@ window.ConstructCount = window.ConstructCount || {};
     { name: 'Double Casement',  open: 'double-casement', cat: 'Janela' },   // de abrir (2 folhas)
     { name: 'Sliding Window',   open: 'sliding',         cat: 'Janela' },   // de correr
     { name: 'Awning Window',    open: 'awning',          cat: 'Janela' },   // basculante / maxim-ar
-    { name: 'Double Hung',      open: 'hung',            cat: 'Janela' },   // guilhotina
+    { name: 'Tilt & Turn (open in)', open: 'tilt-turn',  cat: 'Janela' },   // oscilo-batente (abre p/ dentro)
     { name: 'Picture / Fixed',  open: 'fixed',           cat: 'Janela' },   // vidro fixo
     { name: 'Twin Window',      open: 'twin',            cat: 'Janela' },   // geminada (2 unidades mulled lado a lado)
     // ---- Portas ----
@@ -69,6 +69,8 @@ window.ConstructCount = window.ConstructCount || {};
   F.openingOf = (item) => {
     const t = F.WINDOW_TYPES.find(w => w.name === item.type);
     if (t) return t.open;
+    if (/tilt.?(and|&).?turn|tilt.?turn|oscilo|\bt&t\b/i.test(item.type)) return 'tilt-turn';
+    if (/hung|guilhotina/i.test(item.type)) return 'tilt-turn';   // Double Hung foi substituído por oscilo-batente
     if (/storefront|store front|curtain|vitrine|fachada/i.test(item.type)) return 'storefront';
     if (/double/i.test(item.type)) return 'double-casement';
     if (/sliding.*door/i.test(item.type)) return 'sliding-door';
