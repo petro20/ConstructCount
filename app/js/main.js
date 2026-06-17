@@ -392,6 +392,8 @@
     const it = F.state.items[F.state.previewIdx]; if (!it) return;
     it.swing = e.target.value; F.persist && F.persist(); F.renderSVG(it);
   });
+  // troca de idioma: re-renderiza o seletor (rótulo do tipo) e o desenho (texto da mão) no novo idioma
+  document.addEventListener('fenestra:lang', () => { if (F.state && F.state.items && F.state.items.length) { renderPreviewSelect(); renderPreview(); } });
 
   /* =======================================================================
      6. MÓDULO DE CUSTOS
