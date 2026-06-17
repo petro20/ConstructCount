@@ -34,6 +34,7 @@ $rows = db()->query('SELECT l.*, u.email, (SELECT COUNT(*) FROM license_devices 
 $cf = csrf_field();
 ?><!doctype html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Admin · Licenças</title><link rel="stylesheet" href="../assets/style.css?v=3"></head><body><main>
+<p style="margin:0 0 10px"><a class="btn ghost" href="<?= eh(url('dashboard.php')) ?>">← Voltar ao dashboard</a></p>
 <h1>🔑 Admin — Licenças</h1>
 <?php if ($msg): ?><div class="flash"><?= eh($msg) ?></div><?php endif; ?>
 <div class="card">
