@@ -898,7 +898,7 @@
   function updateSelWindow() {
     const code = S.highlight;
     const on = !!code;
-    ['#wsDimW', '#wsDimH', '#wsDimWadd', '#wsDimHadd', '#wsDimType', '#wsDimWmeas', '#wsDimHmeas', '#wsDimSave'].forEach(s => { const el = $(s); if (el) el.disabled = !on; });
+    ['#wsDimW', '#wsDimH', '#wsDimWadd', '#wsDimHadd', '#wsDimType', '#wsDimHinge', '#wsDimWmeas', '#wsDimHmeas', '#wsDimSave'].forEach(s => { const el = $(s); if (el) el.disabled = !on; });
     populateTypeSelect();
     const cap = $('#wsSelCode');
     if (!on) { if (cap) cap.textContent = F.tr('Clique num código na lista à esquerda.'); updateDimFinal(); return; }
@@ -910,6 +910,7 @@
     if (wa) wa.value = r.w_add_raw || '';
     if (ha) ha.value = r.h_add_raw || '';
     const ty = $('#wsDimType'); if (ty) ty.value = r.type || '';
+    const hg = $('#wsDimHinge'); if (hg) hg.value = r.side || 'L';
     updateDimFinal();
   }
   // mostra "vão + adicional = final" ao vivo ao lado de cada medida
@@ -2971,9 +2972,11 @@
       const wmm = F.parseToMm($('#wsDimW').value), hmm = F.parseToMm($('#wsDimH').value);
       const wadd = F.parseToMm($('#wsDimWadd').value) || 0, hadd = F.parseToMm($('#wsDimHadd').value) || 0;
       const wtype = ($('#wsDimType') && $('#wsDimType').value) || null;
-      if (!wmm && !hmm && !wtype) { markSaved(F.tr('Informe medida ou tipo')); return; }
+      const side = ($('#wsDimHinge') && $('#wsDimHinge').value) || 'L';
+      const curSide = ((S.sched || {})[S.highlight] || {}).side || 'L';
+      if (!wmm && !hmm && !wtype && side === curSide) { markSaved(F.tr('Informe medida ou tipo')); return; }
       if (!S.prov.setWindowDim) { alert(F.tr('Disponível no app de desktop.')); return; }
-      let r; try { r = await S.prov.setWindowDim(S.highlight, wmm || null, hmm || null, wtype, null, wadd || null, hadd || null); } catch (e) { markSaved(F.tr('Falha ao salvar')); return; }
+      let r; try { r = await S.prov.setWindowDim(S.highlight, wmm || null, hmm || null, wtype, null, wadd || null, hadd || null, side); } catch (e) { markSaved(F.tr('Falha ao salvar')); return; }
       if (r && r.rec) { S.sched = S.sched || {}; S.sched[S.highlight] = mergeSchedRec(S.sched[S.highlight], r.rec); }
       renderItems(); updateSelWindow();
       markSaved(F.tr('Medida salva para {c}', { c: S.highlight }));

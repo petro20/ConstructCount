@@ -188,7 +188,7 @@
       getTakeoffIndex: () => api.get_takeoff_index(slug),
       saveFraming: (data) => api.save_framing(slug, data),
       getFraming: () => api.get_framing(slug),
-      setWindowDim: (code, w, h, t, m, wadd, hadd) => api.set_window_dim(slug, code, w, h, t, m, wadd != null ? wadd : null, hadd != null ? hadd : null),
+      setWindowDim: (code, w, h, t, m, wadd, hadd, side) => api.set_window_dim(slug, code, w, h, t, m, wadd != null ? wadd : null, hadd != null ? hadd : null, side != null ? side : null),
       addSection: (name) => api.add_section(slug, name),
       setActiveSection: (name) => api.set_active_section(slug, name),
       renameSection: (o, n) => api.rename_section(slug, o, n),

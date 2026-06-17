@@ -165,6 +165,7 @@ window.ConstructCount = window.ConstructCount || {};
     '— a definir': { en: '— to define', es: '— a definir' },
     'Esquerda': { en: 'Left', es: 'Izquierda' },
     'Direita': { en: 'Right', es: 'Derecha' },
+    'Lado da dobradiça / abertura': { en: 'Hinge / opening side', es: 'Lado de la bisagra / apertura' },
     'Abre para:': { en: 'Opens:', es: 'Abre hacia:' },
     'Dentro': { en: 'Inward', es: 'Hacia dentro' },
     'Fora': { en: 'Outward', es: 'Hacia fuera' },
