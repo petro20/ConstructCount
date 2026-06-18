@@ -234,8 +234,8 @@ window.ConstructCount = window.ConstructCount || {};
     const wAddMm = +item.wAddMm || 0, wBaseMm = +item.wBaseMm || 0;
     const hasHadd = hAddMm > 0 && hBaseMm > 0 && (hBaseMm + hAddMm) <= H + 3;
     const hasWadd = wAddMm > 0 && wBaseMm > 0 && (wBaseMm + wAddMm) <= W + 3;
-    // RÓTULO do adicional (termo configurável) — aparece ao lado da cota laranja do adicional
-    const addLbl = String((F.addTermLabel && F.addTermLabel()) || '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    // RÓTULO do adicional (por janela) — aparece ao lado da cota laranja do adicional
+    const addLbl = String((F.addTermLabel ? F.addTermLabel(item.addLabel) : (item.addLabel || '')) || '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const maxPx = 320;
     const scale = maxPx / Math.max(W, H);
     const fw = W * scale, fh = H * scale;

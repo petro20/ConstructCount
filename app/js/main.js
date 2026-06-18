@@ -122,6 +122,7 @@
       color:      it.color || '',
       side:       it.side || '',        // mão: 'L'/'R' (vazio = a definir, sem chute)
       swing:      it.swing || '',       // abre: 'in'/'out'
+      addLabel:   it.add_label || it.addLabel || '',   // rótulo do adicional (por janela; vazio = padrão)
       // especificação lida do projeto (door schedule) — preservada p/ proposta/pedido
       material:   it.material || '', hinges: it.hinges || '', lockset: it.lockset || '',
       saddle:     it.saddle || '', glazing: it.glazing || '', fire: it.fire || '',

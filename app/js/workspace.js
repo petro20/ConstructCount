@@ -912,8 +912,9 @@
     const ty = $('#wsDimType'); if (ty) ty.value = r.type || '';
     const hg = $('#wsDimHinge'); if (hg) hg.value = r.side || 'L';
     const sg = $('#wsDimSwing'); if (sg) sg.value = r.swing || 'in';
+    const at = $('#wsAddTerm'); if (at && document.activeElement !== at) at.value = r.add_label || '';
     localizeSideSwing();
-    updateDimFinal();
+    applyAddTerm();
   }
   /** Iniciais dos seletores Lado/Abertura conforme o idioma (E/D, L/R, I/D…). */
   function localizeSideSwing() {
@@ -925,15 +926,17 @@
     if (sg && sg.options.length >= 2) { sg.options[0].text = SW.in[L] || 'D'; sg.options[1].text = SW.out[L] || 'F'; }
   }
   // RÓTULO do adicional (configurável p/ todo o sistema; vazio = padrão traduzido)
+  // termo do adicional DA JANELA selecionada (lê o input; vazio = padrão traduzido)
   function addTermValue() {
-    return (F.addTermLabel ? F.addTermLabel() : ((localStorage.getItem('cc_add_term') || '').trim() || F.tr('adicional do projeto')));
+    const inp = $('#wsAddTerm');
+    const v = inp ? (inp.value || '').trim() : '';
+    return (F.addTermLabel ? F.addTermLabel(v) : (v || F.tr('adicional do projeto')));
   }
   function escHtml(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
-  /** Aplica o rótulo do adicional nos campos (+ Largura/Altura) e sincroniza o input. */
+  /** Aplica o rótulo do adicional nos campos (+ Largura/Altura) ao vivo. */
   function applyAddTerm() {
     const term = addTermValue();
     document.querySelectorAll('.js-add-term').forEach(el => { el.textContent = term; });
-    const inp = $('#wsAddTerm'); if (inp && document.activeElement !== inp) inp.value = (localStorage.getItem('cc_add_term') || '');
     updateDimFinal();
   }
   // mostra "vão + adicional = final" ao vivo ao lado de cada medida
@@ -2991,12 +2994,8 @@
     const dwm = $('#wsDimWmeas'); if (dwm) dwm.addEventListener('click', () => { if (S.lastMeas) { $('#wsDimW').value = mmToFtIn(S.lastMeas); updateDimFinal(); } else markSaved(F.tr('Meça algo no desenho primeiro')); });
     const dhm = $('#wsDimHmeas'); if (dhm) dhm.addEventListener('click', () => { if (S.lastMeas) { $('#wsDimH').value = mmToFtIn(S.lastMeas); updateDimFinal(); } else markSaved(F.tr('Meça algo no desenho primeiro')); });
     ['#wsDimW', '#wsDimH', '#wsDimWadd', '#wsDimHadd'].forEach(s => { const el = $(s); if (el) el.addEventListener('input', updateDimFinal); });
-    const _addT = $('#wsAddTerm'); if (_addT) _addT.addEventListener('input', () => {   // rótulo do adicional (global, todo o sistema)
-      const v = (_addT.value || '').trim();
-      if (v) localStorage.setItem('cc_add_term', v); else localStorage.removeItem('cc_add_term');
-      applyAddTerm();
-    });
-    applyAddTerm();   // aplica o rótulo salvo (ou o padrão traduzido) já na abertura
+    const _addT = $('#wsAddTerm'); if (_addT) _addT.addEventListener('input', applyAddTerm);   // preview ao vivo do rótulo (por janela); persiste no "Salvar janela"
+    applyAddTerm();   // aplica o padrão já na abertura
     const dsv = $('#wsDimSave'); if (dsv) dsv.addEventListener('click', async () => {
       if (!S.highlight) return;
       const wmm = F.parseToMm($('#wsDimW').value), hmm = F.parseToMm($('#wsDimH').value);
@@ -3004,12 +3003,16 @@
       const wtype = ($('#wsDimType') && $('#wsDimType').value) || null;
       const side = ($('#wsDimHinge') && $('#wsDimHinge').value) || 'L';
       const swing = ($('#wsDimSwing') && $('#wsDimSwing').value) || 'in';
+      const addLabel = (($('#wsAddTerm') && $('#wsAddTerm').value) || '').trim();
       const curRec = (S.sched || {})[S.highlight] || {};
-      const handChanged = side !== (curRec.side || 'L') || swing !== (curRec.swing || 'in');
+      const handChanged = side !== (curRec.side || 'L') || swing !== (curRec.swing || 'in') || addLabel !== (curRec.add_label || '');
       if (!wmm && !hmm && !wtype && !handChanged) { markSaved(F.tr('Informe medida ou tipo')); return; }
       if (!S.prov.setWindowDim) { alert(F.tr('Disponível no app de desktop.')); return; }
-      let r; try { r = await S.prov.setWindowDim(S.highlight, wmm || null, hmm || null, wtype, null, wadd || null, hadd || null, side, swing); } catch (e) { markSaved(F.tr('Falha ao salvar')); return; }
-      if (r && r.rec) { S.sched = S.sched || {}; S.sched[S.highlight] = mergeSchedRec(S.sched[S.highlight], r.rec); }
+      let r; try { r = await S.prov.setWindowDim(S.highlight, wmm || null, hmm || null, wtype, null, wadd || null, hadd || null, side, swing, addLabel); } catch (e) { markSaved(F.tr('Falha ao salvar')); return; }
+      if (r && r.rec) {
+        S.sched = S.sched || {}; S.sched[S.highlight] = mergeSchedRec(S.sched[S.highlight], r.rec);
+        if (addLabel) S.sched[S.highlight].add_label = addLabel; else delete S.sched[S.highlight].add_label;   // limpar = remove (não fica stale)
+      }
       renderItems(); updateSelWindow();
       markSaved(F.tr('Medida salva para {c}', { c: S.highlight }));
     });
