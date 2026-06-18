@@ -234,6 +234,8 @@ window.ConstructCount = window.ConstructCount || {};
     const wAddMm = +item.wAddMm || 0, wBaseMm = +item.wBaseMm || 0;
     const hasHadd = hAddMm > 0 && hBaseMm > 0 && (hBaseMm + hAddMm) <= H + 3;
     const hasWadd = wAddMm > 0 && wBaseMm > 0 && (wBaseMm + wAddMm) <= W + 3;
+    // RÓTULO do adicional (termo configurável) — aparece ao lado da cota laranja do adicional
+    const addLbl = String((F.addTermLabel && F.addTermLabel()) || '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     const maxPx = 320;
     const scale = maxPx / Math.max(W, H);
     const fw = W * scale, fh = H * scale;
@@ -292,7 +294,8 @@ window.ConstructCount = window.ConstructCount || {};
   <text x="${dRX + 13}" y="${(fy0 + splitY) / 2}" text-anchor="middle" font-size="10.5" fill="#157347" transform="rotate(-90 ${dRX + 13} ${(fy0 + splitY) / 2})">${item.hBaseOrig || _ftIn(hBaseMm)} · ${Math.round(hBaseMm)} mm</text>
   <line x1="${dRX}" y1="${splitY}" x2="${dRX}" y2="${fy1}" stroke="#b5651d" stroke-width="1"/>
   <line x1="${dRX - 5}" y1="${fy1}" x2="${dRX + 5}" y2="${fy1}" stroke="#b5651d" stroke-width="1"/>
-  <text x="${dRX + 13}" y="${(splitY + fy1) / 2}" text-anchor="middle" font-size="10.5" fill="#b5651d" transform="rotate(-90 ${dRX + 13} ${(splitY + fy1) / 2})">+ ${item.hAddOrig || _ftIn(hAddMm)} · ${Math.round(hAddMm)} mm</text>` : '';
+  <text x="${dRX + 13}" y="${(splitY + fy1) / 2}" text-anchor="middle" font-size="10.5" fill="#b5651d" transform="rotate(-90 ${dRX + 13} ${(splitY + fy1) / 2})">+ ${item.hAddOrig || _ftIn(hAddMm)} · ${Math.round(hAddMm)} mm</text>
+  <text x="${dRX + 30}" y="${(splitY + fy1) / 2}" text-anchor="middle" font-size="9" fill="#b5651d" transform="rotate(-90 ${dRX + 30} ${(splitY + fy1) / 2})">${addLbl}</text>` : '';
     const widthCota = hasWadd ? `
   <line x1="${fx0}" y1="${fy1 + 26}" x2="${splitX}" y2="${fy1 + 26}" stroke="#157347" stroke-width="1"/>
   <line x1="${fx0}" y1="${fy1 + 20}" x2="${fx0}" y2="${fy1 + 32}" stroke="#157347" stroke-width="1"/>

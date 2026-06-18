@@ -1739,6 +1739,11 @@ window.ConstructCount = window.ConstructCount || {};
     const e = TYPE_I18N[t] || TYPE_I18N[String(t).trim()];
     return (e && e[lang]) ? e[lang] : (e && e.pt) || t;
   };
+  /** Rótulo do ADICIONAL do projeto: termo custom (localStorage, vale p/ todo o sistema) ou o padrão traduzido. */
+  F.addTermLabel = function () {
+    let c = ''; try { c = (localStorage.getItem('cc_add_term') || '').trim(); } catch (e) {}
+    return c || F.tr('adicional do projeto');
+  };
 
   /* ----------------------------------------------------------------- DOM walk */
   const origText = new WeakMap();   // textNode → {lead, core, trail}

@@ -926,8 +926,7 @@
   }
   // RÓTULO do adicional (configurável p/ todo o sistema; vazio = padrão traduzido)
   function addTermValue() {
-    const c = (localStorage.getItem('cc_add_term') || '').trim();
-    return c || F.tr('adicional do projeto');
+    return (F.addTermLabel ? F.addTermLabel() : ((localStorage.getItem('cc_add_term') || '').trim() || F.tr('adicional do projeto')));
   }
   function escHtml(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
   /** Aplica o rótulo do adicional nos campos (+ Largura/Altura) e sincroniza o input. */
