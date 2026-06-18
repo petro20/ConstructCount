@@ -924,14 +924,28 @@
     if (hg && hg.options.length >= 2) { hg.options[0].text = SD.L[L] || 'E'; hg.options[1].text = SD.R[L] || 'D'; }
     if (sg && sg.options.length >= 2) { sg.options[0].text = SW.in[L] || 'D'; sg.options[1].text = SW.out[L] || 'F'; }
   }
+  // RÓTULO do adicional (configurável p/ todo o sistema; vazio = padrão traduzido)
+  function addTermValue() {
+    const c = (localStorage.getItem('cc_add_term') || '').trim();
+    return c || F.tr('adicional do projeto');
+  }
+  function escHtml(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+  /** Aplica o rótulo do adicional nos campos (+ Largura/Altura) e sincroniza o input. */
+  function applyAddTerm() {
+    const term = addTermValue();
+    document.querySelectorAll('.js-add-term').forEach(el => { el.textContent = term; });
+    const inp = $('#wsAddTerm'); if (inp && document.activeElement !== inp) inp.value = (localStorage.getItem('cc_add_term') || '');
+    updateDimFinal();
+  }
   // mostra "vão + adicional = final" ao vivo ao lado de cada medida
   function updateDimFinal() {
+    const term = addTermValue();
     ['W', 'H'].forEach(ax => {
       const baseEl = $('#wsDim' + ax), addEl = $('#wsDim' + ax + 'add'), out = $('#wsDim' + ax + 'final');
       if (!out) return;
       const base = (baseEl && F.parseToMm(baseEl.value)) || 0;
       const add = (addEl && F.parseToMm(addEl.value)) || 0;
-      out.innerHTML = (base && add > 0) ? ('= <b>' + mmToFtIn(base + add) + '</b> ' + F.tr('(vão + adicional)')) : '';
+      out.innerHTML = (base && add > 0) ? ('= <b>' + mmToFtIn(base + add) + '</b> ' + F.tr('(vão + {t})', { t: escHtml(term) })) : '';
     });
   }
   /** popula o seletor de Tipo (janela/porta) a partir de F.WINDOW_TYPES (uma vez) */
@@ -2978,6 +2992,12 @@
     const dwm = $('#wsDimWmeas'); if (dwm) dwm.addEventListener('click', () => { if (S.lastMeas) { $('#wsDimW').value = mmToFtIn(S.lastMeas); updateDimFinal(); } else markSaved(F.tr('Meça algo no desenho primeiro')); });
     const dhm = $('#wsDimHmeas'); if (dhm) dhm.addEventListener('click', () => { if (S.lastMeas) { $('#wsDimH').value = mmToFtIn(S.lastMeas); updateDimFinal(); } else markSaved(F.tr('Meça algo no desenho primeiro')); });
     ['#wsDimW', '#wsDimH', '#wsDimWadd', '#wsDimHadd'].forEach(s => { const el = $(s); if (el) el.addEventListener('input', updateDimFinal); });
+    const _addT = $('#wsAddTerm'); if (_addT) _addT.addEventListener('input', () => {   // rótulo do adicional (global, todo o sistema)
+      const v = (_addT.value || '').trim();
+      if (v) localStorage.setItem('cc_add_term', v); else localStorage.removeItem('cc_add_term');
+      applyAddTerm();
+    });
+    applyAddTerm();   // aplica o rótulo salvo (ou o padrão traduzido) já na abertura
     const dsv = $('#wsDimSave'); if (dsv) dsv.addEventListener('click', async () => {
       if (!S.highlight) return;
       const wmm = F.parseToMm($('#wsDimW').value), hmm = F.parseToMm($('#wsDimH').value);
@@ -3075,6 +3095,7 @@
     });
     window.addEventListener('resize', () => { if (!$('#workspace').classList.contains('hidden')) { resize(); draw(); } });
     window.addEventListener('fenestra:lang', () => { if (!$('#workspace').classList.contains('hidden')) { renderItems(); renderPagesList(); draw(); } });   // legenda/itens no novo idioma
+    document.addEventListener('fenestra:lang', () => { applyAddTerm(); });   // rótulo do adicional no novo idioma (quando é o padrão)
     window.addEventListener('keydown', (e) => {
       if ($('#workspace').classList.contains('hidden')) return;
       const tag = (e.target && e.target.tagName) || '';

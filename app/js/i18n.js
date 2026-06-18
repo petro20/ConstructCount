@@ -872,8 +872,14 @@ window.ConstructCount = window.ConstructCount || {};
     'folhas': { en: 'sheets', es: 'hojas' },
     'folha': { en: 'sheet', es: 'hoja' },
     '(vão + adicional)': { en: '(opening + add-on)', es: '(vano + adicional)' },
+    '(vão + {t})': { en: '(opening + {t})', es: '(vano + {t})' },
     '+ Largura (adicional do projeto)': { en: '+ Width (project add-on)', es: '+ Ancho (adicional del proyecto)' },
     '+ Altura (adicional do projeto)': { en: '+ Height (project add-on)', es: '+ Alto (adicional del proyecto)' },
+    '+ Largura': { en: '+ Width', es: '+ Ancho' },
+    '+ Altura': { en: '+ Height', es: '+ Alto' },
+    'adicional do projeto': { en: 'project add-on', es: 'adicional del proyecto' },
+    'Rótulo do adicional': { en: 'Add-on label', es: 'Etiqueta del adicional' },
+    'Como o adicional aparece nos rótulos e no relatório (vale para todo o sistema)': { en: 'How the add-on appears in labels and the report (applies system-wide)', es: 'Cómo aparece el adicional en las etiquetas y el informe (vale para todo el sistema)' },
     'pavimentos': { en: 'floors', es: 'pisos' },
     'editável': { en: 'editable', es: 'editable' },
     'larg': { en: 'width', es: 'ancho' },
@@ -1773,7 +1779,7 @@ window.ConstructCount = window.ConstructCount || {};
     if (!root) return;
     // texto
     const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-      acceptNode: (n) => (n.parentNode && SKIP[n.parentNode.nodeName]) ? NodeFilter.FILTER_REJECT
+      acceptNode: (n) => (n.parentNode && (SKIP[n.parentNode.nodeName] || (n.parentNode.closest && n.parentNode.closest('[data-noi18n]')))) ? NodeFilter.FILTER_REJECT
         : (n.nodeValue && n.nodeValue.trim()) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
     });
     const nodes = []; let t; while ((t = tw.nextNode())) nodes.push(t);
