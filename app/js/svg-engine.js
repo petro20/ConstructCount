@@ -295,8 +295,14 @@ window.ConstructCount = window.ConstructCount || {};
           + `<rect x="${x0 + 3}" y="${y0 + 3}" width="${Math.max(0, rw - 6)}" height="${Math.max(0, rh - 6)}" rx="2" fill="none" stroke="#ffffff" stroke-width="1" stroke-opacity="0.5"/>`;
       }
       if (kind === 'louver') {
-        const n = Math.max(3, Math.round(rh / 9)); let s = '';
-        for (let i = 1; i < n; i++) { const yy = y0 + rh * i / n; s += `<line x1="${x0 + 2}" y1="${yy}" x2="${x1 - 2}" y2="${yy}" stroke="#7c8ca3" stroke-width="2"/><line x1="${x0 + 2}" y1="${yy + 1.5}" x2="${x1 - 2}" y2="${yy + 1.5}" stroke="#ffffff" stroke-width="0.7" stroke-opacity="0.5"/>`; }
+        // fundo OPACO (alumínio claro) distinto do vidro + lâminas com sombra/realce
+        let s = `<rect x="${x0}" y="${y0}" width="${rw}" height="${rh}" fill="#e3e7ec" stroke="#9aa9bd" stroke-width="0.8"/>`;
+        const n = Math.max(3, Math.round(rh / 9));
+        for (let i = 1; i < n; i++) {
+          const yy = y0 + rh * i / n;
+          s += `<line x1="${x0 + 2}" y1="${yy}" x2="${x1 - 2}" y2="${yy}" stroke="#6c7e99" stroke-width="1.6"/>`
+            + `<line x1="${x0 + 2}" y1="${yy + 1.4}" x2="${x1 - 2}" y2="${yy + 1.4}" stroke="#ffffff" stroke-width="0.7" stroke-opacity="0.55"/>`;
+        }
         return s;
       }
       if (kind === 'grill') {
