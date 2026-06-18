@@ -898,7 +898,7 @@
   function updateSelWindow() {
     const code = S.highlight;
     const on = !!code;
-    ['#wsDimW', '#wsDimH', '#wsDimWadd', '#wsDimHadd', '#wsDimType', '#wsDimHinge', '#wsDimSwing', '#wsDimWmeas', '#wsDimHmeas', '#wsDimSave'].forEach(s => { const el = $(s); if (el) el.disabled = !on; });
+    ['#wsDimW', '#wsDimH', '#wsDimWadd', '#wsDimHadd', '#wsAddTerm', '#wsAddKind', '#wsDimType', '#wsDimHinge', '#wsDimSwing', '#wsDimWmeas', '#wsDimHmeas', '#wsDimSave'].forEach(s => { const el = $(s); if (el) el.disabled = !on; });
     populateTypeSelect();
     const cap = $('#wsSelCode');
     if (!on) { if (cap) cap.textContent = F.tr('Clique num código na lista à esquerda.'); updateDimFinal(); return; }
@@ -913,6 +913,7 @@
     const hg = $('#wsDimHinge'); if (hg) hg.value = r.side || 'L';
     const sg = $('#wsDimSwing'); if (sg) sg.value = r.swing || 'in';
     const at = $('#wsAddTerm'); if (at && document.activeElement !== at) at.value = r.add_label || '';
+    const ak = $('#wsAddKind'); if (ak) ak.value = r.add_kind || 'glass';
     localizeSideSwing();
     applyAddTerm();
   }
@@ -3004,14 +3005,16 @@
       const side = ($('#wsDimHinge') && $('#wsDimHinge').value) || 'L';
       const swing = ($('#wsDimSwing') && $('#wsDimSwing').value) || 'in';
       const addLabel = (($('#wsAddTerm') && $('#wsAddTerm').value) || '').trim();
+      const addKind = (($('#wsAddKind') && $('#wsAddKind').value) || 'glass');
       const curRec = (S.sched || {})[S.highlight] || {};
-      const handChanged = side !== (curRec.side || 'L') || swing !== (curRec.swing || 'in') || addLabel !== (curRec.add_label || '');
+      const handChanged = side !== (curRec.side || 'L') || swing !== (curRec.swing || 'in') || addLabel !== (curRec.add_label || '') || addKind !== (curRec.add_kind || 'glass');
       if (!wmm && !hmm && !wtype && !handChanged) { markSaved(F.tr('Informe medida ou tipo')); return; }
       if (!S.prov.setWindowDim) { alert(F.tr('Disponível no app de desktop.')); return; }
-      let r; try { r = await S.prov.setWindowDim(S.highlight, wmm || null, hmm || null, wtype, null, wadd || null, hadd || null, side, swing, addLabel); } catch (e) { markSaved(F.tr('Falha ao salvar')); return; }
+      let r; try { r = await S.prov.setWindowDim(S.highlight, wmm || null, hmm || null, wtype, null, wadd || null, hadd || null, side, swing, addLabel, addKind); } catch (e) { markSaved(F.tr('Falha ao salvar')); return; }
       if (r && r.rec) {
         S.sched = S.sched || {}; S.sched[S.highlight] = mergeSchedRec(S.sched[S.highlight], r.rec);
         if (addLabel) S.sched[S.highlight].add_label = addLabel; else delete S.sched[S.highlight].add_label;   // limpar = remove (não fica stale)
+        if (addKind && addKind !== 'glass') S.sched[S.highlight].add_kind = addKind; else delete S.sched[S.highlight].add_kind;
       }
       renderItems(); updateSelWindow();
       markSaved(F.tr('Medida salva para {c}', { c: S.highlight }));

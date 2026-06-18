@@ -286,6 +286,31 @@ window.ConstructCount = window.ConstructCount || {};
     const mullions =
       (hasHadd ? frameBar(fx0 + inset, splitY - mw / 2, fw - inset * 2, mw) : '')           // travessa (altura)
       + (hasWadd ? frameBar(splitX - mw / 2, fy0 + inset, mw, fh - inset * 2) : '');         // montante lateral (largura)
+    // REPRESENTAÇÃO do adicional no lugar do vidro (por janela): grade / painel / veneziana
+    const addReprSVG = (kind, x0, y0, x1, y1) => {
+      const rw = x1 - x0, rh = y1 - y0;
+      if (rw <= 1 || rh <= 1) return '';
+      if (kind === 'panel') {
+        return `<rect x="${x0}" y="${y0}" width="${rw}" height="${rh}" fill="#c7d0db" stroke="#8a99ad" stroke-width="1"/>`
+          + `<rect x="${x0 + 3}" y="${y0 + 3}" width="${Math.max(0, rw - 6)}" height="${Math.max(0, rh - 6)}" rx="2" fill="none" stroke="#ffffff" stroke-width="1" stroke-opacity="0.5"/>`;
+      }
+      if (kind === 'louver') {
+        const n = Math.max(3, Math.round(rh / 9)); let s = '';
+        for (let i = 1; i < n; i++) { const yy = y0 + rh * i / n; s += `<line x1="${x0 + 2}" y1="${yy}" x2="${x1 - 2}" y2="${yy}" stroke="#7c8ca3" stroke-width="2"/><line x1="${x0 + 2}" y1="${yy + 1.5}" x2="${x1 - 2}" y2="${yy + 1.5}" stroke="#ffffff" stroke-width="0.7" stroke-opacity="0.5"/>`; }
+        return s;
+      }
+      if (kind === 'grill') {
+        const cols = Math.max(2, Math.round(rw / 15)), rows = Math.max(2, Math.round(rh / 15)); let s = '';
+        for (let i = 1; i < cols; i++) { const xx = x0 + rw * i / cols; s += `<line x1="${xx}" y1="${y0 + 2}" x2="${xx}" y2="${y1 - 2}" stroke="#52617a" stroke-width="1.3"/>`; }
+        for (let j = 1; j < rows; j++) { const yy = y0 + rh * j / rows; s += `<line x1="${x0 + 2}" y1="${yy}" x2="${x1 - 2}" y2="${yy}" stroke="#52617a" stroke-width="1.3"/>`; }
+        return s;
+      }
+      return '';   // glass (padrão): o vidro já está desenhado
+    };
+    const addKind = item.addKind || 'glass';
+    const addRepr = (addKind && addKind !== 'glass')
+      ? ((hasHadd ? addReprSVG(addKind, g.x0, splitY, ix1, iy1) : '') + (hasWadd ? addReprSVG(addKind, splitX, g.y0, ix1, iy1) : ''))
+      : '';
     const dRX = fx1 + 34;                                              // cota de altura do lado DIREITO (vão + adicional)
     const heightBreak = hasHadd ? `
   <line x1="${dRX}" y1="${fy0}" x2="${dRX}" y2="${splitY}" stroke="#157347" stroke-width="1"/>
@@ -346,6 +371,9 @@ window.ConstructCount = window.ConstructCount || {};
   <polygon points="${g.x0},${iy1} ${g.x0 + (fw - inset * 2) * 0.42},${iy1} ${g.x0 + (fw - inset * 2) * 0.78},${g.y0} ${g.x0 + (fw - inset * 2) * 0.36},${g.y0}"
            fill="url(#sheenGrad)" opacity="0.7"/>
   <line x1="${g.x0 + 8}" y1="${iy1 - 8}" x2="${ix1 - 8}" y2="${g.y0 + 8}" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.6"/>
+
+  <!-- representação do ADICIONAL no lugar do vidro (grade/painel/veneziana) -->
+  ${addRepr}
 
   <!-- símbolo de abertura (folha/arco/ferragens) — confinado ao VÃO -->
   ${symbol}
