@@ -1096,9 +1096,6 @@
         <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel-400 border-t border-steel-700 cursor-pointer flex items-center justify-between" data-collapse data-acc="janela"><span>Janela selecionada</span><span class="ws-chev">▼</span></div>
         <div data-lock="windows_doors" class="p-3 space-y-2">
           <p id="wsSelCode" class="text-xs text-steel-300">Clique num código na lista à esquerda.</p>
-          <label class="block text-xs text-steel-300" title="Como o adicional aparece nos rótulos e no relatório (vale para todo o sistema)">Rótulo do adicional
-            <input id="wsAddTerm" class="mt-1 w-full text-steel-900 px-2 py-1 rounded text-sm" placeholder="adicional do projeto" />
-          </label>
           <label class="block text-xs text-steel-300">Largura
             <div class="flex gap-1 mt-1">
               <input id="wsDimW" class="flex-1 text-steel-900 px-2 py-1 rounded text-sm" placeholder="4'-8 1/2&quot;" disabled />
@@ -1114,6 +1111,9 @@
               <input id="wsDimH" class="flex-1 text-steel-900 px-2 py-1 rounded text-sm" placeholder="5'-0&quot;" disabled />
               <button id="wsDimHmeas" class="px-2 rounded bg-steel-700 hover:bg-steel-600 text-xs" title="usar a última medida do desenho" disabled>↙med</button>
             </div>
+          </label>
+          <label class="block text-xs text-steel-300" title="Como o adicional aparece nos rótulos e no relatório (vale para todo o sistema)">Rótulo do adicional
+            <input id="wsAddTerm" class="mt-1 w-full text-steel-900 px-2 py-1 rounded text-sm" placeholder="adicional do projeto" />
           </label>
           <label class="block text-xs text-steel-300"><span>+ Altura</span> (<span class="js-add-term" data-noi18n>adicional do projeto</span>)
             <input id="wsDimHadd" class="mt-1 w-full text-steel-900 px-2 py-1 rounded text-sm" placeholder="ex.: 1'-4&quot;" disabled />
