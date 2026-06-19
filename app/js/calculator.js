@@ -103,6 +103,13 @@ window.ConstructCount = window.ConstructCount || {};
     return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
   };
   F.markShape = (i) => F.MARK_SHAPES[i % F.MARK_SHAPES.length];
+  // ordem de EXIBIÇÃO dos itens por ID/tag NATURAL (W1,W2..W9,W10) — devolve os ÍNDICES
+  // originais (p/ a cor/forma da marca seguir o ITEM, não a posição na lista).
+  F.itemsOrder = () => {
+    const its = (F.state && F.state.items) || [];
+    return its.map((_, i) => i).sort((a, b) =>
+      String(its[a].id || '').localeCompare(String(its[b].id || ''), undefined, { numeric: true, sensitivity: 'base' }));
+  };
 
   /* ---------- Dados simulados de extração por IA ---------- */
   F.SAMPLE_ITEMS = [

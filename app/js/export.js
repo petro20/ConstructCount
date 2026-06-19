@@ -183,7 +183,8 @@ window.ConstructCount = window.ConstructCount || {};
         body.push([{ content: '▸ ' + t(sec), colSpan: 8, styles: { fillColor: [224, 230, 240], textColor: [36, 52, 75], fontStyle: 'bold', halign: 'left' } }]);
         rowMeta.push({ isHeader: true });
       }
-      items.forEach((it, idx) => {
+      F.itemsOrder().forEach((idx) => {              // ordem por ID/tag natural (idx original = cor)
+        const it = items[idx];
         if ((it.section || 'Esquadrias') !== sec) return;
         const itemArea = F.areaM2(it) * it.qty;
         const itemPrice = (c.price || 0) * (itemArea / totalArea);
@@ -328,7 +329,7 @@ window.ConstructCount = window.ConstructCount || {};
     doc.setFont(undefined, 'normal');
     y += 9;
 
-    for (let i = 0; i < F.state.items.length; i++) {
+    for (const i of F.itemsOrder()) {              // ordem por ID/tag natural (cor/forma seguem o item)
       const it = F.state.items[i];
       const png = await svgToPng(F.markBadgeSVG(F.markShape(i), F.markColor(i), 48), 48);
       doc.addImage(png, 'PNG', 14, y - 5, 7, 7);

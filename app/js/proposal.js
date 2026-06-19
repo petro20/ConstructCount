@@ -177,7 +177,7 @@ window.ConstructCount = window.ConstructCount || {};
 
     /* ---- Posições (desenho + specs) ---- */
     let y = 0, perPage = 0;
-    for (let i = 0; i < F.state.items.length; i++) {
+    for (const i of F.itemsOrder()) {              // ordem por ID/tag natural
       const it = F.state.items[i];
       if (perPage === 0) {
         doc.addPage();
@@ -232,7 +232,8 @@ window.ConstructCount = window.ConstructCount || {};
     doc.setTextColor(...STEEL); doc.setFontSize(22); doc.setFont(undefined, 'bold');
     doc.text(t('Pricing'), 14, 24);
     const totalArea = F.totalAreaM2() || 1;
-    const rows = F.state.items.map(it => {
+    const rows = F.itemsOrder().map(i => {          // ordem por ID/tag natural
+      const it = F.state.items[i];
       const a = F.areaM2(it) * it.qty;
       const price = (c.price || 0) * (a / totalArea);
       return [it.id, opLabel(it.type, L), String(it.qty), `${it.width}×${it.height}`, ftLabel(it) || '—', areaTwo(a, L), F.money(price)];
