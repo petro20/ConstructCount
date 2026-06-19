@@ -222,7 +222,12 @@
 
   function renderTable() {
     itemsBody.innerHTML = '';
-    F.state.items.forEach((item, idx) => {
+    // ORDENA a EXIBIÇÃO por ID/tag de forma NATURAL (W1, W2,… W9, W10) — preserva o
+    // índice ORIGINAL (idx) p/ cor/forma da marca e edição/exclusão ficarem consistentes.
+    const order = F.state.items.map((_, i) => i).sort((a, b) =>
+      String(F.state.items[a].id || '').localeCompare(String(F.state.items[b].id || ''), undefined, { numeric: true, sensitivity: 'base' }));
+    order.forEach((idx) => {
+      const item = F.state.items[idx];
       const tr = document.createElement('tr');
       tr.className = 'border-b border-steel-100 hover:bg-steel-50';
       tr.innerHTML = `
