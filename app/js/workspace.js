@@ -2348,11 +2348,52 @@
     let r; try { r = await S.prov.rereadSchedule(regFrac ? S.page : null, regFrac); } catch (e) { S.busy = false; markSaved(F.tr('Falha ao reler medidas')); return; }
     S.busy = false;
     if (r && r.error) { markSaved(F.tr('Erro: {e}', { e: r.error })); return; }
+    const nLocal = (r && r.n) || 0;
+    // FALLBACK: códigos/cotas em VETOR (local não leu) → VISÃO de IA na área marcada
+    if (regFrac && nLocal === 0 && S.img) {
+      markSaved(F.tr('Local não leu — lendo medidas com IA de visão (nuvem)…'));
+      S.busy = true; const cv = await cloudReadMeasures(region); S.busy = false;
+      if (cv && cv.error) { alert(F.tr('IA: ') + cv.error); return; }
+      const items = (cv && cv.items) || [];
+      let applied = 0;
+      for (const it of items) {
+        const code = (it.code || '').trim().toUpperCase(); if (!code) continue;
+        const wmm = F.parseToMm(it.width || '') || null, hmm = F.parseToMm(it.height || '') || null;
+        if (!wmm && !hmm) continue;
+        try { const rr = await S.prov.setWindowDim(code, wmm, hmm, null, null, null, null, null, null, null, null);
+          if (rr && rr.rec) { S.sched = S.sched || {}; S.sched[code] = mergeSchedRec(S.sched[code], rr.rec); applied++; } } catch (e) {}
+      }
+      if (applied) {
+        renderItems(); updateSelWindow();
+        if (S.onConsolidate && S.prov.consolidate) { try { S.onConsolidate(await S.prov.consolidate(S.scope)); } catch (e) {} }
+        markSaved(F.tr('🧠 IA: {n} medidas lidas na área (confira na Conferência)', { n: applied }));
+      } else markSaved(F.tr('IA: nenhuma esquadria legível na área'));
+      return;
+    }
     if (r && r.schedule) {
       S.sched = r.schedule; renderItems(); updateSelWindow();
       if (S.onConsolidate && S.prov.consolidate) { try { S.onConsolidate(await S.prov.consolidate(S.scope)); } catch (e) {} }
     }
-    markSaved(F.tr('Medidas atualizadas: {n} códigos lidos', { n: (r && r.n) || 0 }));
+    markSaved(F.tr('Medidas atualizadas: {n} códigos lidos', { n: nLocal }));
+  }
+  // VISÃO de IA p/ medidas: recorta a área e manda pro Claude ler código+largura+altura
+  async function cloudReadMeasures(region) {
+    if (!S.img || !(S.img.naturalWidth || S.img.width)) return null;
+    const iw = S.img.naturalWidth || S.img.width, ih = S.img.naturalHeight || S.img.height;
+    let sx = 0, sy = 0, sw = iw, sh = ih;
+    if (region && region.w > 4 && region.h > 4) { sx = Math.max(0, region.x); sy = Math.max(0, region.y); sw = Math.min(iw - sx, region.w); sh = Math.min(ih - sy, region.h); }
+    const sc = Math.min(1, 1800 / Math.max(sw, sh));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(sw * sc)); c.height = Math.max(1, Math.round(sh * sc));
+    c.getContext('2d').drawImage(S.img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+    let b64; try { b64 = c.toDataURL('image/jpeg', 0.85).split(',')[1]; } catch (e) { return { error: F.tr('Não foi possível ler a imagem da folha.') }; }
+    const lic = F.licenseInfo ? F.licenseInfo() : { key: '', device: '' };
+    let resp;
+    try { resp = await fetch('api/read_windows.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_base64: b64, license_key: lic.key, device: lic.device }) }); }
+    catch (e) { return { error: F.tr('Sem conexão com o servidor de IA.') }; }
+    let j = null; try { j = await resp.json(); } catch (e) { j = null; }
+    if (!j) return { error: F.tr('Resposta inválida do servidor de IA (HTTP {s}).', { s: resp.status }) };
+    return j;
   }
 
   // 🧠 LER ESCOPO DA FOLHA DE MEDIDAS: a IA lê SÓ os ofícios LIGADOS no escopo
