@@ -17,6 +17,7 @@
     countMode: false, autoMode: false, delMode: false, busy: false, highlight: null,
     rectMode: false, rectStart: null, rectNow: null,   // marcar JANELA por retângulo (caixa na cor da marca + tag grande)
     autoRectMode: false,   // Auto Retângulo: clica numa caixa modelo → acha as iguais e cria a mesma caixa
+    wallReadArm: false, wallRegStart: null, wallRegNow: null,   // Ler tipos de parede: marcar ÁREA p/ a IA ler
     calibMode: false, measMode: false, mmPerPx: null, clickA: null, measures: [],
     lineMode: false, linePts: [], lines: [], lineSel: new Set(), hiddenTypes: new Set(),   // LINEAR + seleção + tipos ocultos
     snap: false, ortho: false, hover: null, snapData: null, lastMeas: null, dragMeas: null, selSet: null, curX: null, curY: null,
@@ -37,6 +38,7 @@
     S.onConsolidate = opts.onConsolidate || null;
     S.labelIdx = {}; S.countMode = false; S.autoMode = false; S.delMode = false;
     S.rectMode = false; S.rectStart = null; S.rectNow = null; S.autoRectMode = false;
+    S.wallReadArm = false; S.wallRegStart = null; S.wallRegNow = null;
     S.calibMode = false; S.measMode = false; S.clickA = null; S.measures = [];
     S.lineMode = false; S.linePts = []; S.lines = []; S.lineSel = new Set(); S.hiddenTypes = new Set();
     S.areas = []; S.areaSel = new Set(); S.areaSeeds = [];   // áreas (Piso/Forro) + seleção + sementes da varinha em lote
@@ -1221,6 +1223,12 @@
       ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
       ctx.strokeRect(a.x0, a.y0, a.x1 - a.x0, a.y1 - a.y0); ctx.setLineDash([]);
     }
+    if (S.wallRegStart && S.wallRegNow) {      // ÁREA p/ a IA ler os tipos de parede (roxo)
+      const x0 = Math.min(S.wallRegStart[0], S.wallRegNow[0]), y0 = Math.min(S.wallRegStart[1], S.wallRegNow[1]);
+      const rw = Math.abs(S.wallRegNow[0] - S.wallRegStart[0]), rh = Math.abs(S.wallRegNow[1] - S.wallRegStart[1]);
+      ctx.fillStyle = 'rgba(139,92,246,.14)'; ctx.fillRect(x0, y0, rw, rh);
+      ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.strokeRect(x0, y0, rw, rh); ctx.setLineDash([]);
+    }
     if (S.rectStart && S.rectNow) {            // CAIXA da janela em construção (modo Retângulo) — cor do rótulo atual
       const c = colorOf((($('#wsLabel') && $('#wsLabel').value) || '').trim().toUpperCase());
       const x0 = Math.min(S.rectStart[0], S.rectNow[0]), y0 = Math.min(S.rectStart[1], S.rectNow[1]);
@@ -2245,13 +2253,18 @@
   // 🧠 IA: lê os TIPOS DE PAREDE desta folha → cria as assemblies.
   // DESKTOP: leitura LOCAL do texto do PDF (sem chave). WEB: Claude na nuvem (read_assembly.php).
   // IA de VISÃO na nuvem lê a folha ATUAL (qualquer formato de wall type detail)
-  async function cloudReadWalls() {
+  async function cloudReadWalls(region) {
     if (!S.img || !(S.img.naturalWidth || S.img.width)) return null;
     const iw = S.img.naturalWidth || S.img.width, ih = S.img.naturalHeight || S.img.height;
-    const sc = Math.min(1, 1800 / Math.max(iw, ih));          // reduz p/ a visão (payload menor; resolução basta)
+    let sx = 0, sy = 0, sw = iw, sh = ih;                     // recorta na ÁREA marcada (px de imagem)
+    if (region && region.w > 4 && region.h > 4) {
+      sx = Math.max(0, region.x); sy = Math.max(0, region.y);
+      sw = Math.min(iw - sx, region.w); sh = Math.min(ih - sy, region.h);
+    }
+    const sc = Math.min(1, 1800 / Math.max(sw, sh));          // reduz p/ a visão (payload menor; resolução basta)
     const c = document.createElement('canvas');
-    c.width = Math.max(1, Math.round(iw * sc)); c.height = Math.max(1, Math.round(ih * sc));
-    c.getContext('2d').drawImage(S.img, 0, 0, c.width, c.height);
+    c.width = Math.max(1, Math.round(sw * sc)); c.height = Math.max(1, Math.round(sh * sc));
+    c.getContext('2d').drawImage(S.img, sx, sy, sw, sh, 0, 0, c.width, c.height);
     let b64;
     try { b64 = c.toDataURL('image/jpeg', 0.85).split(',')[1]; } catch (e) { return { error: F.tr('Não foi possível ler a imagem da folha.') }; }
     const lic = F.licenseInfo ? F.licenseInfo() : { key: '', device: '' };
@@ -2262,21 +2275,29 @@
     if (!j) return { error: F.tr('Resposta inválida do servidor de IA (HTTP {s}).', { s: resp.status }) };
     return j;                                                  // pode trazer {error:"API key não configurada…"} → mostrado claro ao usuário
   }
-  async function readWallTypesAI() {
+  async function readWallTypesAI(region) {
     if (S.busy) return;
     S.busy = true; markSaved(F.tr('🧠 IA: lendo os tipos de parede desta folha…'));
     let r = null;
+    // ÁREA marcada (px de imagem) → frações da folha p/ o parser local
+    let regFrac = null;
+    if (region && region.w > 4 && region.h > 4 && S.img) {
+      const iw = S.img.naturalWidth || S.img.width, ih = S.img.naturalHeight || S.img.height;
+      if (iw && ih) regFrac = { x: region.x / iw, y: region.y / ih, w: region.w / iw, h: region.h / ih };
+    }
     try {
-      if (S.prov && S.prov.readWallTypesAll) {              // DESKTOP — varre TODAS as folhas (acha a prancha de partições)
+      if (regFrac) {                                       // marcou área → lê SÓ a folha atual nessa área
+        if (S.prov && S.prov.readWallTypes) r = await S.prov.readWallTypes(S.page, regFrac);
+      } else if (S.prov && S.prov.readWallTypesAll) {      // DESKTOP — varre TODAS as folhas (acha a prancha de partições)
         r = await S.prov.readWallTypesAll();
       } else if (S.prov && S.prov.readWallTypes) {
         r = await S.prov.readWallTypes(S.page);
       }
       // cada projeto desenha os tipos de um jeito — parser local não reconheceu →
-      // FALLBACK: IA de visão na nuvem lê a folha ABERTA (abra a folha dos wall types)
+      // FALLBACK: IA de visão na nuvem lê a folha ABERTA (ou a ÁREA marcada)
       if (!r || !(r.walls || []).length) {
         markSaved(F.tr('Formato não reconhecido — lendo com IA de visão (nuvem)…'));
-        const r2 = await cloudReadWalls();
+        const r2 = await cloudReadWalls(region);
         if (r2 && (r2.walls || []).length) {
           r = r2;
           // caso de APRENDIZADO: a visão leu o que o parser local não reconheceu —
@@ -2742,6 +2763,7 @@
       if (e.button === 2) { S.panning = true; }                                  // direito = mover (cursor segue cruz)
       else if (e.button === 0) {
         S.lpress = true;
+        if (S.wallReadArm) { S.wallRegStart = [e.offsetX, e.offsetY]; S.wallRegNow = null; S.moved = false; return; }   // arrasta = área p/ a IA ler os tipos de parede
         if (S.rectMode) { S.rectStart = [e.offsetX, e.offsetY]; S.rectNow = null; S.moved = false; return; }   // arrasta = caixa da janela
         if (S.autoMode) {                              // arraste = ÁREA de busca do Auto Count
           S.autoDragStart = [e.offsetX, e.offsetY];
@@ -2749,7 +2771,7 @@
           S.autoRegion = null;
         }
         // pode selecionar/arrastar/laço fora dos modos de clique (Medir ou neutro)
-        const canSelect = !S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.rectMode && !S.autoRectMode && !S.clickA;
+        const canSelect = !S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.rectMode && !S.autoRectMode && !S.wallReadArm && !S.clickA;
         if (canSelect) {
           S.dragMeas = hitMeasEnd(e.offsetX, e.offsetY);   // pegar ponta de medida p/ arrastar
           const hap = S.dragMeas ? null : hitAreaPoint(e.offsetX, e.offsetY);   // pegar canto de ÁREA p/ EDITAR
@@ -2802,6 +2824,11 @@
         }
         return;
       }
+      if (S.wallRegStart) {                    // desenhando a ÁREA p/ a IA ler os tipos de parede
+        if (Math.abs(e.offsetX - S.wallRegStart[0]) + Math.abs(e.offsetY - S.wallRegStart[1]) > 2) S.moved = true;
+        S.wallRegNow = [e.offsetX, e.offsetY]; draw();
+        return;
+      }
       if (S.rectStart) {                       // desenhando a CAIXA da janela (modo Retângulo)
         if (Math.abs(e.offsetX - S.rectStart[0]) + Math.abs(e.offsetY - S.rectStart[1]) > 2) S.moved = true;
         S.rectNow = [e.offsetX, e.offsetY]; draw();
@@ -2845,6 +2872,15 @@
       }
       if (e.button !== 0) return;
       S.lpress = false;
+      if (S.wallReadArm && S.wallRegStart) {  // soltou a ÁREA → IA lê os tipos de parede SÓ ali
+        const [ax, ay] = toImg(S.wallRegStart[0], S.wallRegStart[1]);
+        const [bx, by] = toImg(e.offsetX, e.offsetY);
+        const rx = Math.min(ax, bx), ry = Math.min(ay, by), rw = Math.abs(bx - ax), rh = Math.abs(by - ay);
+        S.wallReadArm = false; S.wallRegStart = null; S.wallRegNow = null; applyCursor();
+        if (rw > 8 && rh > 8) readWallTypesAI({ x: rx, y: ry, w: rw, h: rh });
+        else readWallTypesAI();               // clique sem arrastar → folha toda (comportamento antigo)
+        return;
+      }
       if (S.rectMode && S.rectStart) {        // soltou a CAIXA da janela → cria a marca-caixa
         const [ax, ay] = toImg(S.rectStart[0], S.rectStart[1]);
         const [bx, by] = toImg(e.offsetX, e.offsetY);
@@ -2904,7 +2940,7 @@
         // sem arraste (só clique) → segue o fluxo normal (folha toda) abaixo
       }
       if (S.moved) return;                            // foi arraste, não clique
-      if (!S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.rectMode && !S.autoRectMode && !S.clickA) {  // clicar numa medida/linha = selecionar (Ctrl/Shift = múltiplas)
+      if (!S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.rectMode && !S.autoRectMode && !S.wallReadArm && !S.clickA) {  // clicar numa medida/linha = selecionar (Ctrl/Shift = múltiplas)
         const hm = hitMeasLine(e.offsetX, e.offsetY);
         if (hm) { pickMeasure(hm, e); markSaved(F.tr('{n} medida(s) selecionada(s) · Del p/ apagar', { n: selSet().size })); draw(); return; }
         const hl = hitLine(e.offsetX, e.offsetY);
@@ -2996,7 +3032,11 @@
     { const war = $('#wsAutoRect'); if (war) war.addEventListener('click', () => setMode('autorect')); }
     { const wl = $('#wsLinear'); if (wl) wl.addEventListener('click', () => setMode('linear')); }
     { const dwb = $('#wsDetectWalls'); if (dwb) dwb.addEventListener('click', detectWallsAI); }
-    { const rwb = $('#wsReadWalls'); if (rwb) rwb.addEventListener('click', readWallTypesAI); }
+    { const rwb = $('#wsReadWalls'); if (rwb) rwb.addEventListener('click', () => {   // arma: ARRASTE a área dos tipos de parede (clique sem arrastar = folha toda)
+      if (S.busy) return;
+      S.wallReadArm = true; S.wallRegStart = null; S.wallRegNow = null;
+      markSaved(F.tr('Arraste um retângulo sobre os TIPOS DE PAREDE (Esc cancela; clique sem arrastar = folha toda).')); draw();
+    }); }
     { const rsb = $('#wsReadScope'); if (rsb) rsb.addEventListener('click', () => readScopeFromSchedule()); }
     { const wts = $('#wsWallType'); if (wts) wts.addEventListener('change', () => {
       if (F.framing) F.framing.activeWT = wts.value; updateWallTypeSwatch();
@@ -3202,6 +3242,7 @@
         }
       }
       if (e.key === 'Escape') {                        // Linear/Área: finaliza; senão cancela ponto/arraste/seleção
+        if (S.wallReadArm) { S.wallReadArm = false; S.wallRegStart = null; S.wallRegNow = null; markSaved(F.tr('Cancelado')); draw(); return; }
         if (S.areaMode && S.areaPts && S.areaPts.length) { finishArea(); return; }
         if (S.lineMode && S.linePts.length) { finishLine(); return; }
         if (S.lineSel && S.lineSel.size) { S.lineSel.clear(); draw(); }

@@ -166,7 +166,7 @@
       autoCount: (page, x, y, w, h, thresh) => api.auto_count(slug, page, x, y, w, h, thresh),
       autoCountFind: (page, x, y, w, h, thresh, region, fit) => api.auto_count_find(slug, page, x, y, w, h, thresh, region || null, fit !== false),
       detectWalls: (page) => api.detect_walls(slug, page),
-      readWallTypes: (page) => api.read_wall_types(slug, page),
+      readWallTypes: (page, region) => api.read_wall_types(slug, page, region || null),
       readWallTypesAll: () => api.read_wall_types_all(slug),
       readHeights: () => api.read_ceiling_heights(slug),
       readRegion: () => api.read_project_region(slug),
