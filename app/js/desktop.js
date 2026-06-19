@@ -173,7 +173,7 @@
       readCodes: (page, boxes) => api.read_marks_codes(slug, page, boxes),
       prewarmAutoCount: (page) => api.prewarm_autocount(slug, page),
       setSchedulePage: (page, on) => api.set_schedule_page(slug, page, on),
-      rereadSchedule: () => api.reread_schedule(slug),
+      rereadSchedule: (page, region) => api.reread_schedule(slug, page != null ? page : null, region || null),
       deletePages: (pages) => api.delete_pages(slug, pages),
       setPageScale: (page, mmPerPx) => api.set_page_scale(slug, page, mmPerPx),
       upscalePage: (page, dispMax) => api.upscale_page(slug, page, dispMax),

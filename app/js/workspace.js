@@ -17,7 +17,7 @@
     countMode: false, autoMode: false, delMode: false, busy: false, highlight: null,
     rectMode: false, rectStart: null, rectNow: null,   // marcar JANELA por retângulo (caixa na cor da marca + tag grande)
     autoRectMode: false,   // Auto Retângulo: clica numa caixa modelo → acha as iguais e cria a mesma caixa
-    wallReadArm: false, wallRegStart: null, wallRegNow: null,   // Ler tipos de parede: marcar ÁREA p/ a IA ler
+    regionArm: null, regStart: null, regNow: null,   // Ler tipos de parede: marcar ÁREA p/ a IA ler
     calibMode: false, measMode: false, mmPerPx: null, clickA: null, measures: [],
     lineMode: false, linePts: [], lines: [], lineSel: new Set(), hiddenTypes: new Set(),   // LINEAR + seleção + tipos ocultos
     snap: false, ortho: false, hover: null, snapData: null, lastMeas: null, dragMeas: null, selSet: null, curX: null, curY: null,
@@ -38,7 +38,7 @@
     S.onConsolidate = opts.onConsolidate || null;
     S.labelIdx = {}; S.countMode = false; S.autoMode = false; S.delMode = false;
     S.rectMode = false; S.rectStart = null; S.rectNow = null; S.autoRectMode = false;
-    S.wallReadArm = false; S.wallRegStart = null; S.wallRegNow = null;
+    S.regionArm = null; S.regStart = null; S.regNow = null;
     S.calibMode = false; S.measMode = false; S.clickA = null; S.measures = [];
     S.lineMode = false; S.linePts = []; S.lines = []; S.lineSel = new Set(); S.hiddenTypes = new Set();
     S.areas = []; S.areaSel = new Set(); S.areaSeeds = [];   // áreas (Piso/Forro) + seleção + sementes da varinha em lote
@@ -52,7 +52,7 @@
     S.scope = opts.scope || 'all';        // modo de reconhecimento do projeto
     S.toDelete = new Set();
     try { const lm = JSON.parse(localStorage.getItem('fenestra_legend2_' + S.slug) || '{}'); S.legendByPage = (lm && typeof lm === 'object') ? lm : {}; } catch (e) { S.legendByPage = {}; }
-    try { const wm = JSON.parse(localStorage.getItem('fenestra_wallrgn_' + S.slug) || '{}'); S.wallRgnByPage = (wm && typeof wm === 'object') ? wm : {}; } catch (e) { S.wallRgnByPage = {}; }   // áreas de leitura de tipos de parede (anotação)
+    try { const wm = JSON.parse(localStorage.getItem('fenestra_wallrgn_' + S.slug) || '{}'); S.rgnByPage = (wm && typeof wm === 'object') ? wm : {}; } catch (e) { S.rgnByPage = {}; }   // áreas de leitura de tipos de parede (anotação)
     renderScope();
     $('#wsTitle').textContent = opts.name || 'Takeoff';
     $('#wsPrep').classList.add('hidden');
@@ -1217,14 +1217,15 @@
       ctx.setLineDash(del ? [6, 3] : []);
       ctx.strokeRect(r.x0, r.y0, r.x1 - r.x0, r.y1 - r.y0); ctx.setLineDash([]);
     }
-    // ÁREAS de leitura de tipos de parede (anotação persistente: cor + rótulo)
-    (S.wallRgnByPage && S.wallRgnByPage[S.page] || []).forEach(rg => {
+    // ÁREAS de leitura (anotação persistente: cor + rótulo) — paredes (roxo) e medidas (azul)
+    (S.rgnByPage && S.rgnByPage[S.page] || []).forEach(rg => {
       const x = rg.x * S.scale + S.ox, y = rg.y * S.scale + S.oy, w = rg.w * S.scale, h = rg.h * S.scale;
-      ctx.fillStyle = 'rgba(139,92,246,.10)'; ctx.fillRect(x, y, w, h);
-      ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
-      const txt = F.tr('Tipos de parede (IA)');
+      const meas = rg.kind === 'measures', col = meas ? '#0ea5e9' : '#8b5cf6';
+      ctx.fillStyle = meas ? 'rgba(14,165,233,.10)' : 'rgba(139,92,246,.10)'; ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
+      const txt = F.tr(meas ? 'Medidas (IA)' : 'Tipos de parede (IA)');
       ctx.font = '700 12px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
-      ctx.fillStyle = '#8b5cf6'; ctx.fillRect(x, Math.max(0, y - 18), tw + 10, 18);
+      ctx.fillStyle = col; ctx.fillRect(x, Math.max(0, y - 18), tw + 10, 18);
       ctx.fillStyle = '#fff'; ctx.fillText(txt, x + 5, Math.max(13, y - 5));
     });
     if (S.autoRegion) {                        // ÁREA de busca do Auto Count (arraste)
@@ -1234,11 +1235,12 @@
       ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
       ctx.strokeRect(a.x0, a.y0, a.x1 - a.x0, a.y1 - a.y0); ctx.setLineDash([]);
     }
-    if (S.wallRegStart && S.wallRegNow) {      // ÁREA p/ a IA ler os tipos de parede (roxo)
-      const x0 = Math.min(S.wallRegStart[0], S.wallRegNow[0]), y0 = Math.min(S.wallRegStart[1], S.wallRegNow[1]);
-      const rw = Math.abs(S.wallRegNow[0] - S.wallRegStart[0]), rh = Math.abs(S.wallRegNow[1] - S.wallRegStart[1]);
-      ctx.fillStyle = 'rgba(139,92,246,.14)'; ctx.fillRect(x0, y0, rw, rh);
-      ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.strokeRect(x0, y0, rw, rh); ctx.setLineDash([]);
+    if (S.regStart && S.regNow) {      // ÁREA em construção — paredes (roxo) ou medidas (azul)
+      const meas = S.regionArm === 'measures', col = meas ? '#0ea5e9' : '#8b5cf6';
+      const x0 = Math.min(S.regStart[0], S.regNow[0]), y0 = Math.min(S.regStart[1], S.regNow[1]);
+      const rw = Math.abs(S.regNow[0] - S.regStart[0]), rh = Math.abs(S.regNow[1] - S.regStart[1]);
+      ctx.fillStyle = meas ? 'rgba(14,165,233,.14)' : 'rgba(139,92,246,.14)'; ctx.fillRect(x0, y0, rw, rh);
+      ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.strokeRect(x0, y0, rw, rh); ctx.setLineDash([]);
     }
     if (S.rectStart && S.rectNow) {            // CAIXA da janela em construção (modo Retângulo) — cor do rótulo atual
       const c = colorOf((($('#wsLabel') && $('#wsLabel').value) || '').trim().toUpperCase());
@@ -1268,7 +1270,7 @@
     S.legendByPage[S.page] = Object.assign(cur, patch);
   }
   function legSave() { try { localStorage.setItem('fenestra_legend2_' + S.slug, JSON.stringify(S.legendByPage)); } catch (e) {} }
-  function saveWallRgns() { try { localStorage.setItem('fenestra_wallrgn_' + S.slug, JSON.stringify(S.wallRgnByPage || {})); } catch (e) {} }
+  function saveRgns() { try { localStorage.setItem('fenestra_wallrgn_' + S.slug, JSON.stringify(S.rgnByPage || {})); } catch (e) {} }
 
   /** TABELA de LEGENDA (Marca · Tipo · Qtd) das marcas confirmadas desta folha,
    *  ordenada por código. Posição/escala são POR FOLHA (arraste/alça). Coords de TELA. */
@@ -2332,6 +2334,26 @@
     markSaved(F.tr('🧠 IA: {n} tipos lidos' + onSheet + ' — escolha o tipo em FERRAMENTAS e traçe', { n: n }));
     alert(F.tr('A IA leu {n} tipo(s) de parede' + onSheet + '. Escolha o TIPO na caixa de seleção (FERRAMENTAS) e trace — a parede entra nesse tipo, com a cor dele.', { n: n }));
   }
+  // RELER MEDIDAS: opcionalmente SÓ na área marcada (region) — senão, folhas marcadas
+  async function rereadMeasuresAI(region) {
+    if (S.busy) return;
+    if (!S.prov || !S.prov.rereadSchedule) { alert(F.tr('Disponível no app de desktop.')); return; }
+    let regFrac = null;
+    if (region && region.w > 4 && region.h > 4 && S.img) {
+      const iw = S.img.naturalWidth || S.img.width, ih = S.img.naturalHeight || S.img.height;
+      if (iw && ih) regFrac = { x: region.x / iw, y: region.y / ih, w: region.w / iw, h: region.h / ih };
+    }
+    if (!regFrac && !S.schedulePages.length) { alert(F.tr('Marque ao menos uma folha como medidas (botão 📐) antes de reler.')); return; }
+    S.busy = true; markSaved(regFrac ? F.tr('Relendo medidas na área marcada…') : F.tr('Relendo medidas das folhas {list}…', { list: S.schedulePages.join(', ') }));
+    let r; try { r = await S.prov.rereadSchedule(regFrac ? S.page : null, regFrac); } catch (e) { S.busy = false; markSaved(F.tr('Falha ao reler medidas')); return; }
+    S.busy = false;
+    if (r && r.error) { markSaved(F.tr('Erro: {e}', { e: r.error })); return; }
+    if (r && r.schedule) {
+      S.sched = r.schedule; renderItems(); updateSelWindow();
+      if (S.onConsolidate && S.prov.consolidate) { try { S.onConsolidate(await S.prov.consolidate(S.scope)); } catch (e) {} }
+    }
+    markSaved(F.tr('Medidas atualizadas: {n} códigos lidos', { n: (r && r.n) || 0 }));
+  }
 
   // 🧠 LER ESCOPO DA FOLHA DE MEDIDAS: a IA lê SÓ os ofícios LIGADOS no escopo
   // (parede→tipos, piso/forro→acabamentos, alturas, janelas/portas→schedule).
@@ -2775,7 +2797,7 @@
       if (e.button === 2) { S.panning = true; }                                  // direito = mover (cursor segue cruz)
       else if (e.button === 0) {
         S.lpress = true;
-        if (S.wallReadArm) { S.wallRegStart = [e.offsetX, e.offsetY]; S.wallRegNow = null; S.moved = false; return; }   // arrasta = área p/ a IA ler os tipos de parede
+        if (S.regionArm) { S.regStart = [e.offsetX, e.offsetY]; S.regNow = null; S.moved = false; return; }   // arrasta = área p/ a IA ler os tipos de parede
         if (S.rectMode) { S.rectStart = [e.offsetX, e.offsetY]; S.rectNow = null; S.moved = false; return; }   // arrasta = caixa da janela
         if (S.autoMode) {                              // arraste = ÁREA de busca do Auto Count
           S.autoDragStart = [e.offsetX, e.offsetY];
@@ -2783,7 +2805,7 @@
           S.autoRegion = null;
         }
         // pode selecionar/arrastar/laço fora dos modos de clique (Medir ou neutro)
-        const canSelect = !S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.rectMode && !S.autoRectMode && !S.wallReadArm && !S.clickA;
+        const canSelect = !S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.rectMode && !S.autoRectMode && !S.regionArm && !S.clickA;
         if (canSelect) {
           S.dragMeas = hitMeasEnd(e.offsetX, e.offsetY);   // pegar ponta de medida p/ arrastar
           const hap = S.dragMeas ? null : hitAreaPoint(e.offsetX, e.offsetY);   // pegar canto de ÁREA p/ EDITAR
@@ -2836,9 +2858,9 @@
         }
         return;
       }
-      if (S.wallRegStart) {                    // desenhando a ÁREA p/ a IA ler os tipos de parede
-        if (Math.abs(e.offsetX - S.wallRegStart[0]) + Math.abs(e.offsetY - S.wallRegStart[1]) > 2) S.moved = true;
-        S.wallRegNow = [e.offsetX, e.offsetY]; draw();
+      if (S.regStart) {                    // desenhando a ÁREA p/ a IA ler os tipos de parede
+        if (Math.abs(e.offsetX - S.regStart[0]) + Math.abs(e.offsetY - S.regStart[1]) > 2) S.moved = true;
+        S.regNow = [e.offsetX, e.offsetY]; draw();
         return;
       }
       if (S.rectStart) {                       // desenhando a CAIXA da janela (modo Retângulo)
@@ -2884,17 +2906,19 @@
       }
       if (e.button !== 0) return;
       S.lpress = false;
-      if (S.wallReadArm && S.wallRegStart) {  // soltou a ÁREA → IA lê os tipos de parede SÓ ali
-        const [ax, ay] = toImg(S.wallRegStart[0], S.wallRegStart[1]);
+      if (S.regionArm && S.regStart) {  // soltou a ÁREA → lê SÓ ali (paredes ou medidas)
+        const kind = S.regionArm;
+        const [ax, ay] = toImg(S.regStart[0], S.regStart[1]);
         const [bx, by] = toImg(e.offsetX, e.offsetY);
         const rx = Math.min(ax, bx), ry = Math.min(ay, by), rw = Math.abs(bx - ax), rh = Math.abs(by - ay);
-        S.wallReadArm = false; S.wallRegStart = null; S.wallRegNow = null; applyCursor();
+        S.regionArm = null; S.regStart = null; S.regNow = null; applyCursor();
+        const region = { x: rx, y: ry, w: rw, h: rh };
         if (rw > 8 && rh > 8) {
-          S.wallRgnByPage = S.wallRgnByPage || {};
-          (S.wallRgnByPage[S.page] = S.wallRgnByPage[S.page] || []).push({ x: rx, y: ry, w: rw, h: rh });   // anotação: fica marcado pra que serve
-          saveWallRgns();
-          readWallTypesAI({ x: rx, y: ry, w: rw, h: rh });
-        } else readWallTypesAI();             // clique sem arrastar → folha toda (comportamento antigo)
+          S.rgnByPage = S.rgnByPage || {};
+          (S.rgnByPage[S.page] = S.rgnByPage[S.page] || []).push({ x: rx, y: ry, w: rw, h: rh, kind: kind });   // anotação: fica marcado pra que serve
+          saveRgns();
+          if (kind === 'measures') rereadMeasuresAI(region); else readWallTypesAI(region);
+        } else { if (kind === 'measures') rereadMeasuresAI(); else readWallTypesAI(); }   // clique sem arrastar → folha/todas (comportamento antigo)
         return;
       }
       if (S.rectMode && S.rectStart) {        // soltou a CAIXA da janela → cria a marca-caixa
@@ -2956,7 +2980,7 @@
         // sem arraste (só clique) → segue o fluxo normal (folha toda) abaixo
       }
       if (S.moved) return;                            // foi arraste, não clique
-      if (!S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.rectMode && !S.autoRectMode && !S.wallReadArm && !S.clickA) {  // clicar numa medida/linha = selecionar (Ctrl/Shift = múltiplas)
+      if (!S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.rectMode && !S.autoRectMode && !S.regionArm && !S.clickA) {  // clicar numa medida/linha = selecionar (Ctrl/Shift = múltiplas)
         const hm = hitMeasLine(e.offsetX, e.offsetY);
         if (hm) { pickMeasure(hm, e); markSaved(F.tr('{n} medida(s) selecionada(s) · Del p/ apagar', { n: selSet().size })); draw(); return; }
         const hl = hitLine(e.offsetX, e.offsetY);
@@ -2988,10 +3012,10 @@
       } else if (m) { m.confirmed = !m.confirmed; changed(); }
     });
     cv.addEventListener('dblclick', (e) => {
-      { const rgs = S.wallRgnByPage && S.wallRgnByPage[S.page]; if (rgs && rgs.length) {   // duplo-clique numa área de leitura = remove a anotação
+      { const rgs = S.rgnByPage && S.rgnByPage[S.page]; if (rgs && rgs.length) {   // duplo-clique numa área de leitura = remove a anotação
         const [ix, iy] = toImg(e.offsetX, e.offsetY);
         const idx = rgs.findIndex(rg => ix >= rg.x && ix <= rg.x + rg.w && iy >= rg.y && iy <= rg.y + rg.h);
-        if (idx >= 0) { e.preventDefault(); rgs.splice(idx, 1); saveWallRgns(); markSaved(F.tr('Área de leitura removida')); draw(); return; }
+        if (idx >= 0) { e.preventDefault(); rgs.splice(idx, 1); saveRgns(); markSaved(F.tr('Área de leitura removida')); draw(); return; }
       } }
       if (S.areaMode) { e.preventDefault(); finishArea(); return; }   // duplo-clique fecha a Área
       if (S.lineMode) { e.preventDefault(); finishLine(); return; }   // duplo-clique finaliza o Linear
@@ -3055,7 +3079,7 @@
     { const dwb = $('#wsDetectWalls'); if (dwb) dwb.addEventListener('click', detectWallsAI); }
     { const rwb = $('#wsReadWalls'); if (rwb) rwb.addEventListener('click', () => {   // arma: ARRASTE a área dos tipos de parede (clique sem arrastar = folha toda)
       if (S.busy) return;
-      S.wallReadArm = true; S.wallRegStart = null; S.wallRegNow = null;
+      S.regionArm = 'walls'; S.regStart = null; S.regNow = null;
       markSaved(F.tr('Arraste um retângulo sobre os TIPOS DE PAREDE (Esc cancela; clique sem arrastar = folha toda).')); draw();
     }); }
     { const rsb = $('#wsReadScope'); if (rsb) rsb.addEventListener('click', () => readScopeFromSchedule()); }
@@ -3185,14 +3209,11 @@
       renderPagesList(); updateSchedUI();
       markSaved(on ? F.tr('Folha {p} marcada p/ medidas', { p: S.page }) : F.tr('Folha {p} desmarcada', { p: S.page }));
     });
-    const wrs = $('#wsReadSched'); if (wrs) wrs.addEventListener('click', async () => {
-      if (!S.schedulePages.length) { alert(F.tr('Marque ao menos uma folha como medidas (botão 📐) antes de reler.')); return; }
+    const wrs = $('#wsReadSched'); if (wrs) wrs.addEventListener('click', () => {   // arma: ARRASTE a área das medidas (clique sem arrastar = folhas marcadas)
+      if (S.busy) return;
       if (!S.prov.rereadSchedule) { alert(F.tr('Disponível no app de desktop.')); return; }
-      markSaved(F.tr('Relendo medidas das folhas {list}…', { list: S.schedulePages.join(', ') }));
-      let r; try { r = await S.prov.rereadSchedule(); } catch (e) { markSaved(F.tr('Falha ao reler medidas')); return; }
-      if (r && r.error) { markSaved(F.tr('Erro: {e}', { e: r.error })); return; }
-      if (r && r.schedule) { S.sched = r.schedule; renderItems(); }   // atualiza a info por janela
-      markSaved(F.tr('Medidas atualizadas: {n} códigos lidos', { n: (r && r.n) || 0 }));
+      S.regionArm = 'measures'; S.regStart = null; S.regNow = null;
+      markSaved(F.tr('Arraste um retângulo sobre as MEDIDAS/SCHEDULE (Esc cancela; clique sem arrastar = folhas marcadas).')); draw();
     });
     const wcr = $('#wsClearRej'); if (wcr) wcr.addEventListener('click', () => {
       const before = S.marks.length;
@@ -3263,7 +3284,7 @@
         }
       }
       if (e.key === 'Escape') {                        // Linear/Área: finaliza; senão cancela ponto/arraste/seleção
-        if (S.wallReadArm) { S.wallReadArm = false; S.wallRegStart = null; S.wallRegNow = null; markSaved(F.tr('Cancelado')); draw(); return; }
+        if (S.regionArm) { S.regionArm = null; S.regStart = null; S.regNow = null; markSaved(F.tr('Cancelado')); draw(); return; }
         if (S.areaMode && S.areaPts && S.areaPts.length) { finishArea(); return; }
         if (S.lineMode && S.linePts.length) { finishLine(); return; }
         if (S.lineSel && S.lineSel.size) { S.lineSel.clear(); draw(); }
