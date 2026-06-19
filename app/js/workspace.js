@@ -1965,6 +1965,14 @@
     const n = selCount();
     const b = $('#wsDelMeas'); if (b) { b.disabled = !n; b.textContent = n > 1 ? F.tr('🗑 Apagar {n} selecionadas', { n: n }) : F.tr('🗑 Apagar selecionada'); }
   }
+  /** Seleciona uma MARCA (caixa) — Ctrl alterna, Shift adiciona, clique só ela. Del/laço-esquerda apaga. */
+  function pickMark(m, e) {
+    const set = selMarks();
+    if (e && (e.ctrlKey || e.metaKey)) { set.has(m) ? set.delete(m) : set.add(m); }
+    else if (e && e.shiftKey) { set.add(m); }
+    else { clearSel(); set.add(m); }
+    updateMeasSel();
+  }
   function deleteSelMeas() {
     const mset = selSet(), kset = selMarks();
     const n = mset.size + kset.size; if (!n) return;
@@ -2898,6 +2906,8 @@
         if (hl) { pickLine(hl, e); draw(); return; }
         const ha = hitArea(e.offsetX, e.offsetY);
         if (ha) { pickArea(ha, e); draw(); return; }
+        const hk = hit(e.offsetX, e.offsetY);                 // clicar numa CAIXA = SELECIONA (não apaga); Del ou laço-esquerda apaga
+        if (hk && hk.box) { pickMark(hk, e); draw(); markSaved(F.tr('{n} selecionada(s) · Del p/ apagar', { n: selCount() })); return; }
       }
       if (S.areaMode) { if (S.areaAI) addAreaSeed(e.offsetX, e.offsetY, e.shiftKey); else handleArea(e.offsetX, e.offsetY, e.shiftKey); return; }   // Shift = NEGATIVO (desconta)
       if (S.lineMode) { handleLine(e.offsetX, e.offsetY); return; }
