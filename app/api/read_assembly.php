@@ -105,7 +105,12 @@ $system = "Você lê DETALHES DE TIPO DE PAREDE e notas de partição (wall type
         . "Leia tanto o DESENHO do detalhe quanto a NOTA de texto associada (a nota costuma trazer "
         . "'single bottom plate, double top plate', '@ 16\\\" O.C.', 'both sides of 2x4', etc.). "
         . "Se a mesma parede admite wood OU metal, use material='both'. "
-        . "found=false e walls=[] só se não houver nenhum tipo de parede legível.";
+        . "NÃO trate como tipo de parede (ignore): notas de ESCADA (wood stair, treads, risers, 'stair from/to'), "
+        . "schedule/notas de JANELAS e PORTAS, glazing/tempered, acabamentos de PISO/FORRO (ceramic tile floor, "
+        . "carpet, finish floor isolado) e notas gerais. Só extraia PAREDES/PARTIÇÕES verticais com composição de "
+        . "framing (montantes/plates/gypsum) ou alvenaria (CMU). "
+        . "found=false e walls=[] se a folha não tiver um schedule/detalhe de TIPOS DE PAREDE legível "
+        . "(ex.: folha de elevações com Window Schedule e notas NÃO tem tipos de parede).";
 
 $body = [
   'model'      => $model,
