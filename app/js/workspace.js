@@ -2359,8 +2359,9 @@
       for (const it of items) {
         const code = (it.code || '').trim().toUpperCase(); if (!code) continue;
         const wmm = F.parseToMm(it.width || '') || null, hmm = F.parseToMm(it.height || '') || null;
-        if (!wmm && !hmm) continue;
-        try { const rr = await S.prov.setWindowDim(code, wmm, hmm, null, null, null, null, null, null, null, null);
+        const wtype = (it.type || '').trim() || null;        // TIPO lido pelo símbolo da elevação
+        if (!wmm && !hmm && !wtype) continue;
+        try { const rr = await S.prov.setWindowDim(code, wmm, hmm, wtype, null, null, null, null, null, null, null);
           if (rr && rr.rec) { S.sched = S.sched || {}; S.sched[code] = mergeSchedRec(S.sched[code], rr.rec); applied++; } } catch (e) {}
       }
       if (applied) {

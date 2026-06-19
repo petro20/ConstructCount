@@ -63,12 +63,13 @@ $schema = [
       'type' => 'array',
       'items' => [
         'type' => 'object', 'additionalProperties' => false,
-        'required' => ['code', 'width', 'height', 'category', 'notes'],
+        'required' => ['code', 'width', 'height', 'category', 'type', 'notes'],
         'properties' => [
           'code'     => ['type' => 'string'],   // MARCA como no desenho: W5, W6R, SF12, D1, 101A
           'width'    => ['type' => 'string'],    // LARGURA como cotada: 3'-6" (vazio se ilegível)
           'height'   => ['type' => 'string'],    // ALTURA como cotada: 5'-0"
           'category' => ['type' => 'string', 'enum' => ['window', 'door', 'storefront', 'other']],
+          'type'     => ['type' => 'string'],    // TIPO pelo símbolo da elevação (ver lista no prompt); '' se não der p/ saber
           'notes'    => ['type' => 'string'],
         ],
       ],
@@ -82,6 +83,15 @@ $system = "Você lê WINDOW/DOOR SCHEDULES e ELEVAÇÕES de esquadrias de planta
         . "  • width: a LARGURA cotada, como aparece (ex.: \"3'-6\\\"\"). '' se não houver/ilegível.\n"
         . "  • height: a ALTURA cotada, como aparece (ex.: \"5'-0\\\"\"). '' se não houver/ilegível.\n"
         . "  • category: 'window' (janela), 'door' (porta), 'storefront' (fachada envidraçada) ou 'other'.\n"
+        . "  • type: o TIPO de abertura, deduzido do SÍMBOLO da elevação. Escolha o mais próximo desta lista:\n"
+        . "      Janelas: 'Casement Window', 'Double Casement', 'Awning Window', 'Sliding Window', 'Double Hung',\n"
+        . "               'Tilt & Turn', 'Picture / Fixed', 'Twin Window'.\n"
+        . "      Portas:  'Single Swing Door', 'Double Swing Door', 'Sliding Glass / Patio', 'French Door', 'Garage Door'.\n"
+        . "      Como ler o símbolo: linhas diagonais formando um 'V'/triângulo cujo ÁPICE aponta p/ a dobradiça = "
+        . "CASEMENT (1 folha) ou DOUBLE CASEMENT (2 folhas, montante central); ápice no TOPO/dobradiça em cima = AWNING; "
+        . "linha horizontal no meio com setas ↑↓ = DOUBLE HUNG (guilhotina); 'X' (duas diagonais) abrindo p/ dentro = "
+        . "TILT & TURN; seta horizontal + montante = SLIDING; SEM nenhuma linha de abertura (só o caixilho) = "
+        . "PICTURE / FIXED. Se não der p/ deduzir com segurança, type=''.\n"
         . "  • notes: detalhe útil (TEMP, combo, qtd) se houver.\n\n"
         . "Em ELEVAÇÕES: a largura costuma estar EM CIMA do desenho, a altura NO LADO e o código EMBAIXO. "
         . "Em TABELA (schedule): cada linha tem MARK | WIDTH | HEIGHT. Leia do jeito que estiver.\n\n"
