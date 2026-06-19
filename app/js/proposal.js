@@ -175,6 +175,23 @@ window.ConstructCount = window.ConstructCount || {};
     doc.text(t('{n} tipos · {q} unidades{brk}', { n: F.state.items.length, q: totalQty, brk }), W / 2, 88, { align: 'center' });
     foot();
 
+    /* ---- Planta marcada (elevação + caixas coloridas com a tag) ---- */
+    const plans = (F.markedPlanImages ? F.markedPlanImages() : []) || [];
+    for (const pl of plans) {
+      if (!pl || !pl.png) continue;
+      doc.addPage();
+      doc.setTextColor(...STEEL); doc.setFontSize(14); doc.setFont(undefined, 'bold');
+      doc.text(t('Planta marcada') + (pl.sheet ? ' — ' + pl.sheet : ''), 14, 22);
+      try {
+        const pr = doc.getImageProperties(pl.png);
+        const availW = W - 20, availH = doc.internal.pageSize.getHeight() - 40;
+        let iw = availW, ih = iw * pr.height / pr.width;
+        if (ih > availH) { ih = availH; iw = ih * pr.width / pr.height; }
+        doc.addImage(pl.png, 'JPEG', (W - iw) / 2, 30, iw, ih);
+      } catch (e) {}
+      foot();
+    }
+
     /* ---- Posições (desenho + specs) ---- */
     let y = 0, perPage = 0;
     for (const i of F.itemsOrder()) {              // ordem por ID/tag natural

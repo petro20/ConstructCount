@@ -197,6 +197,32 @@
   }
   const colorOf = (label) => F.markColor(idxOf(label));
   const rgbaOf = (c, a) => (typeof c === 'string' && c.indexOf('rgb(') === 0) ? c.replace('rgb(', 'rgba(').replace(')', ', ' + a + ')') : c;
+  /** PLANTA MARCADA p/ o relatório: renderiza a FOLHA ATUAL (imagem + marcas-caixa na
+   *  cor + tag grande) num canvas off-screen e devolve [{page, sheet, png}]. */
+  F.markedPlanImages = function () {
+    if (!S.img || !(S.img.naturalWidth || S.img.width)) return [];
+    const iw = S.img.naturalWidth || S.img.width, ih = S.img.naturalHeight || S.img.height;
+    const sc = Math.min(1, 1700 / Math.max(iw, ih));
+    const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(iw * sc)); c.height = Math.max(1, Math.round(ih * sc));
+    const g = c.getContext('2d');
+    g.drawImage(S.img, 0, 0, c.width, c.height);
+    (S.marks || []).forEach(m => {
+      if (!m.confirmed || !layerVisible(m.layer)) return;
+      const x = m.x * sc, y = m.y * sc, w = m.w * sc, h = m.h * sc, col = colorOf(m.label);
+      if (m.box) { g.fillStyle = rgbaOf(col, 0.14); g.fillRect(x, y, w, h); }
+      g.lineWidth = m.box ? 2.5 : 2; g.strokeStyle = col; g.strokeRect(x, y, w, h);
+      if (m.label) {
+        if (m.box && w >= 22 && h >= 16) {
+          let fs = Math.min(h * 0.62, (w * 1.7) / Math.max(1, m.label.length)); fs = Math.max(9, Math.min(fs, 80));
+          g.font = '800 ' + fs + 'px Inter, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+          g.lineWidth = Math.max(2, fs / 10); g.strokeStyle = 'rgba(255,255,255,.85)'; g.strokeText(m.label, x + w / 2, y + h / 2);
+          g.fillStyle = col; g.fillText(m.label, x + w / 2, y + h / 2); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+        } else { g.fillStyle = '#111'; g.font = '600 11px Inter, sans-serif'; g.fillText(m.label, x, y - 3); }
+      }
+    });
+    const sh = ((S.pages || []).find(p => p.page === S.page) || {});
+    return [{ page: S.page, sheet: sh.sheet || ('p' + S.page), png: c.toDataURL('image/jpeg', 0.9) }];
+  };
 
   // ----------------------------------------------------------------- camadas (trades)
   function layerById(id) { return S.layers.find(l => l.id === (id || 'default')) || null; }
