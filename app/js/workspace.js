@@ -15,6 +15,7 @@
     slug: null, prov: null, pages: [], page: null, marks: [], img: null,
     scale: 1, ox: 0, oy: 0, dragging: false, moved: false, lastX: 0, lastY: 0,
     countMode: false, autoMode: false, delMode: false, busy: false, highlight: null,
+    rectMode: false, rectStart: null, rectNow: null,   // marcar JANELA por retângulo (caixa na cor da marca + tag grande)
     calibMode: false, measMode: false, mmPerPx: null, clickA: null, measures: [],
     lineMode: false, linePts: [], lines: [], lineSel: new Set(), hiddenTypes: new Set(),   // LINEAR + seleção + tipos ocultos
     snap: false, ortho: false, hover: null, snapData: null, lastMeas: null, dragMeas: null, selSet: null, curX: null, curY: null,
@@ -34,6 +35,7 @@
     S.pages = (opts.pages || []).map(p => ({ ...p }));
     S.onConsolidate = opts.onConsolidate || null;
     S.labelIdx = {}; S.countMode = false; S.autoMode = false; S.delMode = false;
+    S.rectMode = false; S.rectStart = null; S.rectNow = null;
     S.calibMode = false; S.measMode = false; S.clickA = null; S.measures = [];
     S.lineMode = false; S.linePts = []; S.lines = []; S.lineSel = new Set(); S.hiddenTypes = new Set();
     S.areas = []; S.areaSel = new Set(); S.areaSeeds = [];   // áreas (Piso/Forro) + seleção + sementes da varinha em lote
@@ -190,6 +192,7 @@
     return S.labelIdx[k];
   }
   const colorOf = (label) => F.markColor(idxOf(label));
+  const rgbaOf = (c, a) => (typeof c === 'string' && c.indexOf('rgb(') === 0) ? c.replace('rgb(', 'rgba(').replace(')', ', ' + a + ')') : c;
 
   // ----------------------------------------------------------------- camadas (trades)
   function layerById(id) { return S.layers.find(l => l.id === (id || 'default')) || null; }
@@ -602,7 +605,7 @@
     S.marks = (data.marks || []).map(m => ({
       x: m.x, y: m.y, w: m.w || 24, h: m.h || 24,
       label: (m.label || '').toString().trim().toUpperCase(),
-      confirmed: m.confirmed !== false, cv: !!m.cv, section: m.section || 'Geral',
+      confirmed: m.confirmed !== false, cv: !!m.cv, box: !!m.box, section: m.section || 'Geral',
       layer: m.layer || 'default',
     }));
     S.measures = Array.isArray(data.measures) ? data.measures : [];   // medidas salvas
@@ -1004,15 +1007,30 @@
     S.marks.forEach(m => {
       if (!layerVisible(m.layer)) return;     // camada oculta → não desenha
       const x = m.x * S.scale + S.ox, y = m.y * S.scale + S.oy, w = m.w * S.scale, h = m.h * S.scale;
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = m.confirmed ? colorOf(m.label) : 'rgba(150,150,150,.5)';
+      const col = m.confirmed ? colorOf(m.label) : 'rgba(150,150,150,.5)';
+      if (m.box && m.confirmed) {             // marca-caixa (retângulo da janela): preenchimento translúcido na cor
+        ctx.fillStyle = rgbaOf(col, 0.14); ctx.fillRect(x, y, w, h);
+      }
+      ctx.lineWidth = m.box ? 2.5 : 2;
+      ctx.strokeStyle = col;
       ctx.strokeRect(x, y, w, h);
       if (ksel && ksel.has(m)) {              // marca selecionada (laço) → realce vermelho
         ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3; ctx.strokeRect(x - 3, y - 3, w + 6, h + 6);
       }
       if (m.confirmed && m.label) {
-        ctx.fillStyle = '#111'; ctx.font = '600 12px Inter, sans-serif';
-        ctx.fillText(m.label, x, y - 3);
+        if (m.box && w >= 22 && h >= 16) {     // TAG grande centralizada na caixa (escala p/ caber)
+          let fs = Math.min(h * 0.62, (w * 1.7) / Math.max(1, m.label.length));
+          fs = Math.max(11, Math.min(fs, 80));
+          ctx.font = `800 ${fs}px Inter, sans-serif`;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.lineWidth = Math.max(2, fs / 10); ctx.strokeStyle = 'rgba(255,255,255,.85)';
+          ctx.strokeText(m.label, x + w / 2, y + h / 2);   // contorno branco p/ legibilidade
+          ctx.fillStyle = col; ctx.fillText(m.label, x + w / 2, y + h / 2);
+          ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        } else {
+          ctx.fillStyle = '#111'; ctx.font = '600 12px Inter, sans-serif';
+          ctx.fillText(m.label, x, y - 3);
+        }
       }
     });
     // linhas de medida (régua) — todas as medidas da folha
@@ -1197,6 +1215,13 @@
       ctx.fillRect(a.x0, a.y0, a.x1 - a.x0, a.y1 - a.y0);
       ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
       ctx.strokeRect(a.x0, a.y0, a.x1 - a.x0, a.y1 - a.y0); ctx.setLineDash([]);
+    }
+    if (S.rectStart && S.rectNow) {            // CAIXA da janela em construção (modo Retângulo) — cor do rótulo atual
+      const c = colorOf((($('#wsLabel') && $('#wsLabel').value) || '').trim().toUpperCase());
+      const x0 = Math.min(S.rectStart[0], S.rectNow[0]), y0 = Math.min(S.rectStart[1], S.rectNow[1]);
+      const rw = Math.abs(S.rectNow[0] - S.rectStart[0]), rh = Math.abs(S.rectNow[1] - S.rectStart[1]);
+      ctx.fillStyle = rgbaOf(c, 0.14); ctx.fillRect(x0, y0, rw, rh);
+      ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.strokeRect(x0, y0, rw, rh); ctx.setLineDash([]);
     }
     drawLegend();                              // quadro de legenda das marcas (canto livre)
     // CRUZ DE TELA CHEIA (estilo CAD/PlanSwift) — cursor padrão sempre
@@ -2459,7 +2484,7 @@
   async function flushSave() {
     if (S.saveTimer) { clearTimeout(S.saveTimer); S.saveTimer = null; }
     if (!S.dirty || S.page == null) return;
-    const payload = S.marks.map(m => ({ x: m.x, y: m.y, w: m.w, h: m.h, label: m.label, confirmed: m.confirmed, cv: m.cv, section: m.section || S.activeSection, layer: m.layer || S.activeLayer }));
+    const payload = S.marks.map(m => ({ x: m.x, y: m.y, w: m.w, h: m.h, label: m.label, confirmed: m.confirmed, cv: m.cv, box: !!m.box, section: m.section || S.activeSection, layer: m.layer || S.activeLayer }));
     const mult = curMult();
     const meta = S.pages.find(p => p.page === S.page); if (meta) meta.mult = mult;
     S.dirty = false;
@@ -2558,7 +2583,7 @@
   }
   F._updateSmartPanel = updateSmartPanel;
 
-  function toolActive() { return S.countMode || S.autoMode || S.delMode || S.calibMode || S.measMode || S.lineMode || S.areaMode; }
+  function toolActive() { return S.countMode || S.autoMode || S.delMode || S.calibMode || S.measMode || S.lineMode || S.areaMode || S.rectMode; }
   function applyCursor() { if (cv) cv.style.cursor = 'none'; }   // cruz de tela cheia é sempre o cursor
   function syncBarActive() {
     const on = { wsCount: S.countMode, wsAuto: S.autoMode, wsDelete: S.delMode, wsCalib: S.calibMode, wsMeasure: S.measMode, wsLinear: S.lineMode, wsArea: S.areaMode };
@@ -2702,13 +2727,14 @@
       if (e.button === 2) { S.panning = true; }                                  // direito = mover (cursor segue cruz)
       else if (e.button === 0) {
         S.lpress = true;
+        if (S.rectMode) { S.rectStart = [e.offsetX, e.offsetY]; S.rectNow = null; S.moved = false; return; }   // arrasta = caixa da janela
         if (S.autoMode) {                              // arraste = ÁREA de busca do Auto Count
           S.autoDragStart = [e.offsetX, e.offsetY];
           S.autoSample = hit(e.offsetX, e.offsetY);    // marca-amostra sob o início do arraste
           S.autoRegion = null;
         }
         // pode selecionar/arrastar/laço fora dos modos de clique (Medir ou neutro)
-        const canSelect = !S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.clickA;
+        const canSelect = !S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.rectMode && !S.clickA;
         if (canSelect) {
           S.dragMeas = hitMeasEnd(e.offsetX, e.offsetY);   // pegar ponta de medida p/ arrastar
           const hap = S.dragMeas ? null : hitAreaPoint(e.offsetX, e.offsetY);   // pegar canto de ÁREA p/ EDITAR
@@ -2738,7 +2764,7 @@
         legSet({ pos: { x: (sx - S.ox) / (S.scale || 1), y: (sy - S.oy) / (S.scale || 1) } });
         S.moved = true; draw(); return;
       }
-      const toolMode = S.countMode || S.autoMode || S.delMode || S.calibMode || S.measMode;
+      const toolMode = S.countMode || S.autoMode || S.delMode || S.calibMode || S.measMode || S.rectMode;
       if (S.dragAreaPt) {                     // arrastando um CANTO de área (editar)
         const [ix, iy] = snapPt(mix, miy);
         S.dragAreaPt.poly[S.dragAreaPt.i] = [ix, iy];
@@ -2759,6 +2785,11 @@
           S.autoRegion = { x0: Math.min(S.autoDragStart[0], e.offsetX), y0: Math.min(S.autoDragStart[1], e.offsetY), x1: Math.max(S.autoDragStart[0], e.offsetX), y1: Math.max(S.autoDragStart[1], e.offsetY) };
           draw();
         }
+        return;
+      }
+      if (S.rectStart) {                       // desenhando a CAIXA da janela (modo Retângulo)
+        if (Math.abs(e.offsetX - S.rectStart[0]) + Math.abs(e.offsetY - S.rectStart[1]) > 2) S.moved = true;
+        S.rectNow = [e.offsetX, e.offsetY]; draw();
         return;
       }
       if (S.maybeMarquee) {                    // laço de seleção (arraste esquerdo no modo Medir)
@@ -2799,6 +2830,19 @@
       }
       if (e.button !== 0) return;
       S.lpress = false;
+      if (S.rectMode && S.rectStart) {        // soltou a CAIXA da janela → cria a marca-caixa
+        const [ax, ay] = toImg(S.rectStart[0], S.rectStart[1]);
+        const [bx, by] = toImg(e.offsetX, e.offsetY);
+        const rx = Math.min(ax, bx), ry = Math.min(ay, by), rw = Math.abs(bx - ax), rh = Math.abs(by - ay);
+        S.rectStart = null; S.rectNow = null;
+        if (rw > 6 && rh > 6) {
+          pushUndo();
+          const lab = ($('#wsLabel').value || '').trim().toUpperCase();
+          S.marks.push({ x: rx, y: ry, w: rw, h: rh, label: lab, confirmed: true, cv: false, box: true, section: S.activeSection, layer: S.activeLayer });
+          changed(); markSaved(F.tr('Caixa marcada{l}', { l: lab ? (' · ' + lab) : '' }));
+        } else { draw(); }
+        return;
+      }
       if (S.dragAreaPt) {                     // soltou um canto de área
         if (S.moved) { if (!S.dragAreaPt.ar.sfLock) S.dragAreaPt.ar.sf = areaSf(S.dragAreaPt.ar); saveAreas(); updateAreaTot(); renderPagesList(); markSaved(F.tr('Área editada')); }
         S.dragAreaPt = null; applyCursor(); draw(); return;
@@ -2845,7 +2889,7 @@
         // sem arraste (só clique) → segue o fluxo normal (folha toda) abaixo
       }
       if (S.moved) return;                            // foi arraste, não clique
-      if (!S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.clickA) {  // clicar numa medida/linha = selecionar (Ctrl/Shift = múltiplas)
+      if (!S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.rectMode && !S.clickA) {  // clicar numa medida/linha = selecionar (Ctrl/Shift = múltiplas)
         const hm = hitMeasLine(e.offsetX, e.offsetY);
         if (hm) { pickMeasure(hm, e); markSaved(F.tr('{n} medida(s) selecionada(s) · Del p/ apagar', { n: selSet().size })); draw(); return; }
         const hl = hitLine(e.offsetX, e.offsetY);
@@ -2892,6 +2936,8 @@
       S.measMode = which === 'measure' && !S.measMode;
       S.lineMode = which === 'linear' && !S.lineMode;
       S.areaMode = which === 'area' && !S.areaMode;
+      S.rectMode = which === 'rect' && !S.rectMode;
+      if (which !== 'rect') { S.rectStart = null; S.rectNow = null; }
       if (which !== 'linear') S.linePts = [];
       if (which !== 'area') { S.areaPts = []; S.areaAI = false; S.areaSeeds = []; S.areaNeg = false; S.areaRect = false; const wai = $('#wsAreaAI'); if (wai) wai.classList.remove('ring-2', 'ring-emerald-300'); const war = $('#wsAreaRect'); if (war) war.classList.remove('ring-2', 'ring-emerald-300'); if (typeof updateDetectAllBtn === 'function') updateDetectAllBtn(); }
       if (S.lineSel) S.lineSel.clear();
@@ -2905,6 +2951,7 @@
       act('#wsMeasure', S.measMode);
       act('#wsLinear', S.lineMode);
       act('#wsArea', S.areaMode);
+      act('#wsRect', S.rectMode);
       const wd = $('#wsDelete'); if (wd) wd.classList.toggle('ws-tool-active-del', S.delMode);
       applyCursor(); syncBarActive();
       if (ruler && S.measMode && !S.mmPerPx) markSaved(F.tr('Calibre a escala primeiro (📏).'));
@@ -2916,6 +2963,7 @@
       draw();
     }
     $('#wsCount').addEventListener('click', () => setMode('count'));
+    { const wr = $('#wsRect'); if (wr) wr.addEventListener('click', () => setMode('rect')); }
     { const wl = $('#wsLinear'); if (wl) wl.addEventListener('click', () => setMode('linear')); }
     { const dwb = $('#wsDetectWalls'); if (dwb) dwb.addEventListener('click', detectWallsAI); }
     { const rwb = $('#wsReadWalls'); if (rwb) rwb.addEventListener('click', readWallTypesAI); }
