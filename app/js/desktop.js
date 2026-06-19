@@ -164,7 +164,7 @@
       status: () => api.job_status(slug),
       reload: () => api.load_job(slug),
       autoCount: (page, x, y, w, h, thresh) => api.auto_count(slug, page, x, y, w, h, thresh),
-      autoCountFind: (page, x, y, w, h, thresh, region) => api.auto_count_find(slug, page, x, y, w, h, thresh, region || null),
+      autoCountFind: (page, x, y, w, h, thresh, region, fit) => api.auto_count_find(slug, page, x, y, w, h, thresh, region || null, fit !== false),
       detectWalls: (page) => api.detect_walls(slug, page),
       readWallTypes: (page) => api.read_wall_types(slug, page),
       readWallTypesAll: () => api.read_wall_types_all(slug),

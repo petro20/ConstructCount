@@ -2446,14 +2446,15 @@
     const target = label;            // SÓ conta o código que você clicou
     S.busy = true; markSaved(F.tr(asBox ? 'Auto Retângulo…' : 'Auto Count…'));
     const fast = !!S.prov.autoCountFind;
+    const th = asBox ? Math.min(autoThresh(), 0.72) : autoThresh();   // janela grande: template exato + limiar mais tolerante
     let res;
     try {
       res = fast
-        ? await S.prov.autoCountFind(S.page, box.x, box.y, box.w, box.h, autoThresh(), region || null)
-        : await S.prov.autoCount(S.page, box.x, box.y, box.w, box.h, autoThresh());
+        ? await S.prov.autoCountFind(S.page, box.x, box.y, box.w, box.h, th, region || null, !asBox)
+        : await S.prov.autoCount(S.page, box.x, box.y, box.w, box.h, th);
     } catch (e) { S.busy = false; markSaved(F.tr('Falha no Auto Count')); return; }
     const matches = (res && res.matches) || [];
-    if (!matches.length) { S.busy = false; markSaved(F.tr('Auto Count: nada encontrado')); return; }
+    if (!matches.length) { S.busy = false; markSaved(F.tr(asBox ? 'Auto Retângulo: nada igual encontrado (ajuste a sensibilidade)' : 'Auto Count: nada encontrado')); return; }
 
     // Tags de NÚMERO em círculo (①②③) são quase idênticas → o template casa TODAS.
     // Lê o código de cada candidato (OCR) e mantém só os iguais ao que você clicou.
