@@ -196,6 +196,7 @@
     return S.labelIdx[k];
   }
   const colorOf = (label) => F.markColor(idxOf(label));
+  F.markLabelIndex = () => Object.assign({}, S.labelIdx || {});   // {RÓTULO: índice} p/ a planta marcada do motor casar a cor
   const rgbaOf = (c, a) => (typeof c === 'string' && c.indexOf('rgb(') === 0) ? c.replace('rgb(', 'rgba(').replace(')', ', ' + a + ')') : c;
   /** PLANTA MARCADA p/ o relatório: renderiza a FOLHA ATUAL (imagem + marcas-caixa na
    *  cor + tag grande) num canvas off-screen e devolve [{page, sheet, png}]. */

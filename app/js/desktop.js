@@ -42,7 +42,8 @@
           const lang = F.pickDocLang ? await F.pickDocLang() : (F.getLang ? F.getLang() : 'pt');
           if (!lang) return;                              // cancelado no seletor
           if (F.flashExport) F.flashExport(F.tr('Gerando planta marcada…'));
-          let r; try { r = await window.pywebview.api.export_marked_plan(F._currentJobSlug, lang); } catch (e) { if (F.flashExport) F.flashExport(F.tr('Falha: {e}', { e })); return; }
+          const lidx = F.markLabelIndex ? F.markLabelIndex() : null;   // cores idênticas às do workspace
+          let r; try { r = await window.pywebview.api.export_marked_plan(F._currentJobSlug, lang, lidx); } catch (e) { if (F.flashExport) F.flashExport(F.tr('Falha: {e}', { e })); return; }
           if (r && r.error) { if (F.flashExport) F.flashExport(F.tr('Planta marcada: {e}', { e: r.error })); }
           else if (F.flashExport) F.flashExport(F.tr('✓ Planta marcada gerada ({n} folhas) e aberta.', { n: (r && r.pages) || 0 }));
           return;
