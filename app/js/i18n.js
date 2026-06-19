@@ -180,6 +180,8 @@ window.ConstructCount = window.ConstructCount || {};
     'Auto Retângulo: +{a} caixa(s) de {m}': { en: 'Auto Rectangle: +{a} box(es) of {m}', es: 'Auto Rectángulo: +{a} caja(s) de {m}' },
     'Auto Retângulo: nada igual encontrado (ajuste a sensibilidade)': { en: 'Auto Rectangle: no match found (adjust sensitivity)', es: 'Auto Rectángulo: no se encontró nada igual (ajuste la sensibilidad)' },
     'Arraste um retângulo sobre os TIPOS DE PAREDE (Esc cancela; clique sem arrastar = folha toda).': { en: 'Drag a rectangle over the WALL TYPES (Esc cancels; click without dragging = whole sheet).', es: 'Arrastre un rectángulo sobre los TIPOS DE PARED (Esc cancela; clic sin arrastrar = hoja entera).' },
+    'Tipos de parede (IA)': { en: 'Wall types (AI)', es: 'Tipos de pared (IA)' },
+    'Área de leitura removida': { en: 'Read area removed', es: 'Área de lectura eliminada' },
     'Auto Retângulo: clique numa caixa modelo (marque uma com ▭ antes).': { en: 'Auto Rectangle: click a template box (mark one with ▭ first).', es: 'Auto Rectángulo: haga clic en una caja modelo (marque una con ▭ antes).' },
     'Auto Retângulo: marque UMA caixa com ▭ e clique nela aqui. Ele acha as janelas iguais na folha e cria a mesma caixa (cor + tag) em todas.': { en: 'Auto Rectangle: mark ONE box with ▭ and click it here. It finds the matching windows on the sheet and creates the same box (color + tag) on all of them.', es: 'Auto Rectángulo: marque UNA caja con ▭ y haga clic en ella aquí. Encuentra las ventanas iguales en la hoja y crea la misma caja (color + etiqueta) en todas.' },
     'Abre para:': { en: 'Opens:', es: 'Abre hacia:' },

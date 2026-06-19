@@ -52,6 +52,7 @@
     S.scope = opts.scope || 'all';        // modo de reconhecimento do projeto
     S.toDelete = new Set();
     try { const lm = JSON.parse(localStorage.getItem('fenestra_legend2_' + S.slug) || '{}'); S.legendByPage = (lm && typeof lm === 'object') ? lm : {}; } catch (e) { S.legendByPage = {}; }
+    try { const wm = JSON.parse(localStorage.getItem('fenestra_wallrgn_' + S.slug) || '{}'); S.wallRgnByPage = (wm && typeof wm === 'object') ? wm : {}; } catch (e) { S.wallRgnByPage = {}; }   // áreas de leitura de tipos de parede (anotação)
     renderScope();
     $('#wsTitle').textContent = opts.name || 'Takeoff';
     $('#wsPrep').classList.add('hidden');
@@ -1216,6 +1217,16 @@
       ctx.setLineDash(del ? [6, 3] : []);
       ctx.strokeRect(r.x0, r.y0, r.x1 - r.x0, r.y1 - r.y0); ctx.setLineDash([]);
     }
+    // ÁREAS de leitura de tipos de parede (anotação persistente: cor + rótulo)
+    (S.wallRgnByPage && S.wallRgnByPage[S.page] || []).forEach(rg => {
+      const x = rg.x * S.scale + S.ox, y = rg.y * S.scale + S.oy, w = rg.w * S.scale, h = rg.h * S.scale;
+      ctx.fillStyle = 'rgba(139,92,246,.10)'; ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
+      const txt = F.tr('Tipos de parede (IA)');
+      ctx.font = '700 12px Inter, sans-serif'; const tw = ctx.measureText(txt).width;
+      ctx.fillStyle = '#8b5cf6'; ctx.fillRect(x, Math.max(0, y - 18), tw + 10, 18);
+      ctx.fillStyle = '#fff'; ctx.fillText(txt, x + 5, Math.max(13, y - 5));
+    });
     if (S.autoRegion) {                        // ÁREA de busca do Auto Count (arraste)
       const a = S.autoRegion;
       ctx.fillStyle = 'rgba(59,130,246,.12)';
@@ -1257,6 +1268,7 @@
     S.legendByPage[S.page] = Object.assign(cur, patch);
   }
   function legSave() { try { localStorage.setItem('fenestra_legend2_' + S.slug, JSON.stringify(S.legendByPage)); } catch (e) {} }
+  function saveWallRgns() { try { localStorage.setItem('fenestra_wallrgn_' + S.slug, JSON.stringify(S.wallRgnByPage || {})); } catch (e) {} }
 
   /** TABELA de LEGENDA (Marca · Tipo · Qtd) das marcas confirmadas desta folha,
    *  ordenada por código. Posição/escala são POR FOLHA (arraste/alça). Coords de TELA. */
@@ -2877,8 +2889,12 @@
         const [bx, by] = toImg(e.offsetX, e.offsetY);
         const rx = Math.min(ax, bx), ry = Math.min(ay, by), rw = Math.abs(bx - ax), rh = Math.abs(by - ay);
         S.wallReadArm = false; S.wallRegStart = null; S.wallRegNow = null; applyCursor();
-        if (rw > 8 && rh > 8) readWallTypesAI({ x: rx, y: ry, w: rw, h: rh });
-        else readWallTypesAI();               // clique sem arrastar → folha toda (comportamento antigo)
+        if (rw > 8 && rh > 8) {
+          S.wallRgnByPage = S.wallRgnByPage || {};
+          (S.wallRgnByPage[S.page] = S.wallRgnByPage[S.page] || []).push({ x: rx, y: ry, w: rw, h: rh });   // anotação: fica marcado pra que serve
+          saveWallRgns();
+          readWallTypesAI({ x: rx, y: ry, w: rw, h: rh });
+        } else readWallTypesAI();             // clique sem arrastar → folha toda (comportamento antigo)
         return;
       }
       if (S.rectMode && S.rectStart) {        // soltou a CAIXA da janela → cria a marca-caixa
@@ -2972,6 +2988,11 @@
       } else if (m) { m.confirmed = !m.confirmed; changed(); }
     });
     cv.addEventListener('dblclick', (e) => {
+      { const rgs = S.wallRgnByPage && S.wallRgnByPage[S.page]; if (rgs && rgs.length) {   // duplo-clique numa área de leitura = remove a anotação
+        const [ix, iy] = toImg(e.offsetX, e.offsetY);
+        const idx = rgs.findIndex(rg => ix >= rg.x && ix <= rg.x + rg.w && iy >= rg.y && iy <= rg.y + rg.h);
+        if (idx >= 0) { e.preventDefault(); rgs.splice(idx, 1); saveWallRgns(); markSaved(F.tr('Área de leitura removida')); draw(); return; }
+      } }
       if (S.areaMode) { e.preventDefault(); finishArea(); return; }   // duplo-clique fecha a Área
       if (S.lineMode) { e.preventDefault(); finishLine(); return; }   // duplo-clique finaliza o Linear
       { const ed = nearestAreaEdge(e.offsetX, e.offsetY); if (ed) { e.preventDefault(); insertAreaPoint(ed); return; } }   // duplo-clique na ARESTA = adiciona vértice
