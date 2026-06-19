@@ -16,6 +16,7 @@
     scale: 1, ox: 0, oy: 0, dragging: false, moved: false, lastX: 0, lastY: 0,
     countMode: false, autoMode: false, delMode: false, busy: false, highlight: null,
     rectMode: false, rectStart: null, rectNow: null,   // marcar JANELA por retângulo (caixa na cor da marca + tag grande)
+    autoRectMode: false,   // Auto Retângulo: clica numa caixa modelo → acha as iguais e cria a mesma caixa
     calibMode: false, measMode: false, mmPerPx: null, clickA: null, measures: [],
     lineMode: false, linePts: [], lines: [], lineSel: new Set(), hiddenTypes: new Set(),   // LINEAR + seleção + tipos ocultos
     snap: false, ortho: false, hover: null, snapData: null, lastMeas: null, dragMeas: null, selSet: null, curX: null, curY: null,
@@ -35,7 +36,7 @@
     S.pages = (opts.pages || []).map(p => ({ ...p }));
     S.onConsolidate = opts.onConsolidate || null;
     S.labelIdx = {}; S.countMode = false; S.autoMode = false; S.delMode = false;
-    S.rectMode = false; S.rectStart = null; S.rectNow = null;
+    S.rectMode = false; S.rectStart = null; S.rectNow = null; S.autoRectMode = false;
     S.calibMode = false; S.measMode = false; S.clickA = null; S.measures = [];
     S.lineMode = false; S.linePts = []; S.lines = []; S.lineSel = new Set(); S.hiddenTypes = new Set();
     S.areas = []; S.areaSel = new Set(); S.areaSeeds = [];   // áreas (Piso/Forro) + seleção + sementes da varinha em lote
@@ -2423,7 +2424,7 @@
   const autoThresh = () => (parseInt($('#wsThresh') && $('#wsThresh').value, 10) || 80) / 100;
 
   /** Auto Count: usa a marca/ponto clicado como amostra e acha todas as iguais na folha. */
-  async function doAutoCount(sx, sy, sample, region) {
+  async function doAutoCount(sx, sy, sample, region, asBox) {
     if (S.busy || !S.prov || !S.prov.autoCount) { if (!S.prov || !S.prov.autoCount) alert(F.tr('Auto Count disponível no app de desktop.')); return; }
     let box, label;
     if (sample) {
@@ -2435,7 +2436,7 @@
       label = ($('#wsLabel').value || '').trim().toUpperCase();
     }
     const target = label;            // SÓ conta o código que você clicou
-    S.busy = true; markSaved(F.tr('Auto Count…'));
+    S.busy = true; markSaved(F.tr(asBox ? 'Auto Retângulo…' : 'Auto Count…'));
     const fast = !!S.prov.autoCountFind;
     let res;
     try {
@@ -2449,7 +2450,7 @@
     // Tags de NÚMERO em círculo (①②③) são quase idênticas → o template casa TODAS.
     // Lê o código de cada candidato (OCR) e mantém só os iguais ao que você clicou.
     let labels = matches.map(mt => (mt.label || '').trim().toUpperCase());
-    const needRead = S.prov.readCodes && (fast || labels.some(l => !l));
+    const needRead = !asBox && S.prov.readCodes && (fast || labels.some(l => !l));   // Auto Retângulo: pula OCR → todas as iguais levam a MESMA tag
     if (needRead) {
       markSaved(F.tr('Auto Count: lendo {m} possíveis…', { m: matches.length }));
       try {
@@ -2463,15 +2464,16 @@
     const undoLen = (S.undoStack || []).length; pushUndo();   // snapshot ANTES (Auto Count é desfazível)
     matches.forEach((mt, i) => {
       const code = labels[i] || '';
-      if (target && code && code !== target) { skipped++; return; }   // não é o que você clicou → ignora
-      const lab = target || code || label;
+      if (!asBox && target && code && code !== target) { skipped++; return; }   // Auto Count: não é o que você clicou → ignora
+      const lab = asBox ? label : (target || code || label);
       const cx = mt.x + mt.w / 2, cy = mt.y + mt.h / 2;
       const dup = S.marks.some(m => Math.abs((m.x + m.w / 2) - cx) < mt.w * 0.6 && Math.abs((m.y + m.h / 2) - cy) < mt.h * 0.6);
-      if (!dup) { S.marks.push({ x: mt.x, y: mt.y, w: mt.w, h: mt.h, label: lab, confirmed: true, cv: false, auto: true, section: S.activeSection, layer: S.activeLayer }); added++; }
+      if (!dup) { S.marks.push({ x: mt.x, y: mt.y, w: mt.w, h: mt.h, label: lab, confirmed: true, cv: false, auto: true, box: !!asBox, section: S.activeSection, layer: S.activeLayer }); added++; }
     });
     if (added) { S.dirty = true; scheduleSave(); } else if ((S.undoStack || []).length > undoLen) S.undoStack.pop();   // nada mudou → descarta snapshot
     renderItems(); draw();
-    if (target) markSaved(F.tr('Auto Count: +{a} "{t}" · ignoradas {s} de outro código', { a: added, t: target, s: skipped }));
+    if (asBox) markSaved(F.tr('Auto Retângulo: +{a} caixa(s) de {m}', { a: added, m: matches.length }));
+    else if (target) markSaved(F.tr('Auto Count: +{a} "{t}" · ignoradas {s} de outro código', { a: added, t: target, s: skipped }));
     else markSaved(F.tr('Auto Count: +{a} de {m}', { a: added, m: matches.length }));
   }
 
@@ -2583,7 +2585,7 @@
   }
   F._updateSmartPanel = updateSmartPanel;
 
-  function toolActive() { return S.countMode || S.autoMode || S.delMode || S.calibMode || S.measMode || S.lineMode || S.areaMode || S.rectMode; }
+  function toolActive() { return S.countMode || S.autoMode || S.delMode || S.calibMode || S.measMode || S.lineMode || S.areaMode || S.rectMode || S.autoRectMode; }
   function applyCursor() { if (cv) cv.style.cursor = 'none'; }   // cruz de tela cheia é sempre o cursor
   function syncBarActive() {
     const on = { wsCount: S.countMode, wsAuto: S.autoMode, wsDelete: S.delMode, wsCalib: S.calibMode, wsMeasure: S.measMode, wsLinear: S.lineMode, wsArea: S.areaMode };
@@ -2734,7 +2736,7 @@
           S.autoRegion = null;
         }
         // pode selecionar/arrastar/laço fora dos modos de clique (Medir ou neutro)
-        const canSelect = !S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.rectMode && !S.clickA;
+        const canSelect = !S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.rectMode && !S.autoRectMode && !S.clickA;
         if (canSelect) {
           S.dragMeas = hitMeasEnd(e.offsetX, e.offsetY);   // pegar ponta de medida p/ arrastar
           const hap = S.dragMeas ? null : hitAreaPoint(e.offsetX, e.offsetY);   // pegar canto de ÁREA p/ EDITAR
@@ -2764,7 +2766,7 @@
         legSet({ pos: { x: (sx - S.ox) / (S.scale || 1), y: (sy - S.oy) / (S.scale || 1) } });
         S.moved = true; draw(); return;
       }
-      const toolMode = S.countMode || S.autoMode || S.delMode || S.calibMode || S.measMode || S.rectMode;
+      const toolMode = S.countMode || S.autoMode || S.delMode || S.calibMode || S.measMode || S.rectMode || S.autoRectMode;
       if (S.dragAreaPt) {                     // arrastando um CANTO de área (editar)
         const [ix, iy] = snapPt(mix, miy);
         S.dragAreaPt.poly[S.dragAreaPt.i] = [ix, iy];
@@ -2889,7 +2891,7 @@
         // sem arraste (só clique) → segue o fluxo normal (folha toda) abaixo
       }
       if (S.moved) return;                            // foi arraste, não clique
-      if (!S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.rectMode && !S.clickA) {  // clicar numa medida/linha = selecionar (Ctrl/Shift = múltiplas)
+      if (!S.countMode && !S.autoMode && !S.delMode && !S.calibMode && !S.lineMode && !S.areaMode && !S.rectMode && !S.autoRectMode && !S.clickA) {  // clicar numa medida/linha = selecionar (Ctrl/Shift = múltiplas)
         const hm = hitMeasLine(e.offsetX, e.offsetY);
         if (hm) { pickMeasure(hm, e); markSaved(F.tr('{n} medida(s) selecionada(s) · Del p/ apagar', { n: selSet().size })); draw(); return; }
         const hl = hitLine(e.offsetX, e.offsetY);
@@ -2903,6 +2905,11 @@
       const m = hit(e.offsetX, e.offsetY);
       if (S.delMode) { if (m) { pushUndo(); S.marks.splice(S.marks.indexOf(m), 1); changed(); } return; }
       if (S.autoMode) { doAutoCount(e.offsetX, e.offsetY, m); return; }
+      if (S.autoRectMode) {                          // clica numa CAIXA modelo → acha as iguais e cria a mesma caixa
+        if (m && m.box) doAutoCount(e.offsetX, e.offsetY, m, null, true);
+        else markSaved(F.tr('Auto Retângulo: clique numa caixa modelo (marque uma com ▭ antes).'));
+        return;
+      }
       if (S.countMode) {
         pushUndo();
         if (m) { m.confirmed = !m.confirmed; }
@@ -2937,6 +2944,7 @@
       S.lineMode = which === 'linear' && !S.lineMode;
       S.areaMode = which === 'area' && !S.areaMode;
       S.rectMode = which === 'rect' && !S.rectMode;
+      S.autoRectMode = which === 'autorect' && !S.autoRectMode;
       if (which !== 'rect') { S.rectStart = null; S.rectNow = null; }
       if (which !== 'linear') S.linePts = [];
       if (which !== 'area') { S.areaPts = []; S.areaAI = false; S.areaSeeds = []; S.areaNeg = false; S.areaRect = false; const wai = $('#wsAreaAI'); if (wai) wai.classList.remove('ring-2', 'ring-emerald-300'); const war = $('#wsAreaRect'); if (war) war.classList.remove('ring-2', 'ring-emerald-300'); if (typeof updateDetectAllBtn === 'function') updateDetectAllBtn(); }
@@ -2952,6 +2960,7 @@
       act('#wsLinear', S.lineMode);
       act('#wsArea', S.areaMode);
       act('#wsRect', S.rectMode);
+      act('#wsAutoRect', S.autoRectMode);
       const wd = $('#wsDelete'); if (wd) wd.classList.toggle('ws-tool-active-del', S.delMode);
       applyCursor(); syncBarActive();
       if (ruler && S.measMode && !S.mmPerPx) markSaved(F.tr('Calibre a escala primeiro (📏).'));
@@ -2964,6 +2973,7 @@
     }
     $('#wsCount').addEventListener('click', () => setMode('count'));
     { const wr = $('#wsRect'); if (wr) wr.addEventListener('click', () => setMode('rect')); }
+    { const war = $('#wsAutoRect'); if (war) war.addEventListener('click', () => setMode('autorect')); }
     { const wl = $('#wsLinear'); if (wl) wl.addEventListener('click', () => setMode('linear')); }
     { const dwb = $('#wsDetectWalls'); if (dwb) dwb.addEventListener('click', detectWallsAI); }
     { const rwb = $('#wsReadWalls'); if (rwb) rwb.addEventListener('click', readWallTypesAI); }
