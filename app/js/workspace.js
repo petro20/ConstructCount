@@ -199,6 +199,10 @@
   function layerById(id) { return S.layers.find(l => l.id === (id || 'default')) || null; }
   function layerVisible(id) { const l = layerById(id); return l ? l.visible !== false : true; }
   function activeLayerObj() { return layerById(S.activeLayer) || S.layers[0] || null; }
+  // camada de JANELAS E PORTAS (a default; as de ofício vêm do SCOPE_LAYER)
+  function windowLayer() {
+    return (S.layers || []).find(l => l.id === 'default' || (l.name || '').toLowerCase() === 'janelas e portas') || (S.layers || [])[0] || null;
+  }
 
   // ----------------------------------------------------------------- seções (grupos)
   function renderSections() {
@@ -2973,6 +2977,11 @@
       act('#wsRect', S.rectMode);
       act('#wsAutoRect', S.autoRectMode);
       const wd = $('#wsDelete'); if (wd) wd.classList.toggle('ws-tool-active-del', S.delMode);
+      // ferramenta de JANELA (Contar/Retângulo/Auto Retângulo/Auto Count/Apagar) → ativa a camada Janelas e Portas
+      if (S.countMode || S.rectMode || S.autoRectMode || S.autoMode || S.delMode) {
+        const wl = windowLayer();
+        if (wl && wl.id !== S.activeLayer) setActiveLayerUI(wl);
+      }
       applyCursor(); syncBarActive();
       if (ruler && S.measMode && !S.mmPerPx) markSaved(F.tr('Calibre a escala primeiro (📏).'));
       // painel inteligente: abre o painel do modo ativo
