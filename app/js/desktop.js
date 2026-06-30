@@ -94,6 +94,14 @@
     try { picked = await api.open_project(); } catch (e) { if (F.uploadMsg) F.uploadMsg(F.tr('Falha ao chamar o motor ({e}).', { e }), true); return; }
     if (!picked) return;                                  // diálogo cancelado
     if (picked.error) { if (F.uploadMsg) F.uploadMsg(F.tr('Erro ao preparar projeto: {e}', { e: picked.error }), true); return; }
+    if (picked.merged && F.uploadMsg) {                   // vários PDFs juntados num projeto só
+      const m = picked.merged;
+      let msg = F.tr('✓ {n} PDFs juntados num projeto só ({p} folhas).', { n: m.n_sources, p: m.n_pages });
+      if (m.skipped && m.skipped.length) {
+        msg += '  ' + F.tr('⚠ {k} ignorado(s): {files}.', { k: m.skipped.length, files: m.skipped.map(s => s.file).join(', ') });
+      }
+      F.uploadMsg(msg, !!(m.skipped && m.skipped.length));
+    }
     // nome do projeto (como está no projeto) — pré-preenchido com o do arquivo, editável
     const def = picked.name || '';
     let name = prompt(F.tr('Nome do projeto (como está no projeto):'), def);
