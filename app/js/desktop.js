@@ -29,6 +29,7 @@
     // atalhos na tela inicial
     const hs = document.querySelector('#homeShortcuts'); if (hs) hs.classList.remove('hidden');
     const hp = document.querySelector('#homeOpenPdf'); if (hp) hp.addEventListener('click', newProject);
+    const hf = document.querySelector('#homeOpenFolder'); if (hf) hf.addEventListener('click', newProjectFromFolder);
     const hj = document.querySelector('#homeOpenJobs'); if (hj) hj.addEventListener('click', () => { if (F._openJobs) F._openJobs(); });
     // proteção do cliente: abrir a pasta dos projetos + backup .zip de tudo
     F.openJobsFolder = () => window.pywebview.api.open_jobs_folder();
@@ -86,12 +87,9 @@
   }
   F._runLocalEngine = runLocalEngine;
 
-  /** "Novo projeto": escolhe o PDF (sem reconhecer) e segue p/ converter + selecionar folhas. */
-  async function newProject() {
-    const api = window.pywebview.api;
-    if (F.uploadMsg) F.uploadMsg('', false, true);
-    let picked;
-    try { picked = await api.open_project(); } catch (e) { if (F.uploadMsg) F.uploadMsg(F.tr('Falha ao chamar o motor ({e}).', { e }), true); return; }
+  /** Trata o resultado de open_project / open_project_folder: avisa junção, pede o
+   *  nome e segue p/ converter + selecionar folhas. */
+  async function proceedWithPicked(picked) {
     if (!picked) return;                                  // diálogo cancelado
     if (picked.error) { if (F.uploadMsg) F.uploadMsg(F.tr('Erro ao preparar projeto: {e}', { e: picked.error }), true); return; }
     if (picked.merged && F.uploadMsg) {                   // vários PDFs juntados num projeto só
@@ -102,14 +100,34 @@
       }
       F.uploadMsg(msg, !!(m.skipped && m.skipped.length));
     }
-    // nome do projeto (como está no projeto) — pré-preenchido com o do arquivo, editável
+    // nome do projeto (como está no projeto) — pré-preenchido, editável
     const def = picked.name || '';
     let name = prompt(F.tr('Nome do projeto (como está no projeto):'), def);
     if (name === null) return;                            // cancelou
     name = (name || '').trim() || def;
     await openTakeoffWorkspace(name);                     // usa o PDF escolhido (_last_pdf)
   }
+
+  /** "Novo projeto": escolhe o(s) PDF(s) (sem reconhecer) e segue p/ converter + selecionar folhas. */
+  async function newProject() {
+    const api = window.pywebview.api;
+    if (F.uploadMsg) F.uploadMsg('', false, true);
+    let picked;
+    try { picked = await api.open_project(); } catch (e) { if (F.uploadMsg) F.uploadMsg(F.tr('Falha ao chamar o motor ({e}).', { e }), true); return; }
+    await proceedWithPicked(picked);
+  }
   F._newProject = newProject;
+
+  /** "Abrir pasta do projeto": junta TODOS os PDFs da pasta escolhida num projeto só. */
+  async function newProjectFromFolder() {
+    const api = window.pywebview.api;
+    if (!api.open_project_folder) { if (F.uploadMsg) F.uploadMsg(F.tr('Atualize o app: este recurso precisa da versão nova do motor.'), true); return; }
+    if (F.uploadMsg) F.uploadMsg('', false, true);
+    let picked;
+    try { picked = await api.open_project_folder(); } catch (e) { if (F.uploadMsg) F.uploadMsg(F.tr('Falha ao chamar o motor ({e}).', { e }), true); return; }
+    await proceedWithPicked(picked);
+  }
+  F._newProjectFromFolder = newProjectFromFolder;
 
   /** Fluxo PlanSwift: prepara a pasta do projeto (rasteriza+detecta), mostra progresso,
    *  e abre o workspace de takeoff (páginas + marcas editáveis + consolidar). */
